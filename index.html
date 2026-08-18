@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Macro Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000; --panel:#0c0c0c; --panel-2:#171717; --line:rgba(255,255,255,.10);
+    --text:#ffffff; --muted:#a3a3a3; --faint:#6b6b6b;
+    --accent:#f5c451; --accent-ink:#000000;
+    --protein:#7db8ff; --carbs:#4ade80; --fat:#fbbf24; --cal:#f472b6;
+    --good:#4ade80; --warn:#fbbf24; --over:#f87171;
+    --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:16px 16px 80px}
+  h1,h2,h3{margin:0}
+  button{font-family:inherit;cursor:pointer;border:none}
+  input,select{font-family:inherit}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+  .brand .logo{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg,var(--accent),#e0a92f);
+    display:grid;place-items:center;color:var(--accent-ink);font-weight:800;font-size:19px;
+  }
+  .brand h1{font-size:20px;letter-spacing:.2px}
+  .brand small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+
+  .pill{
+    background:var(--panel-2);color:var(--text);
+    border-radius:999px;padding:9px 14px;font-size:14px;display:flex;align-items:center;gap:8px;
+  }
+  select.pill{appearance:none;-webkit-appearance:none;padding-right:30px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;}
+  .icon-btn{
+    background:var(--panel-2);color:var(--text);
+    border-radius:999px;width:40px;height:40px;font-size:18px;display:grid;place-items:center;
+  }
+  .icon-btn:hover{background:var(--line)}
+
+  /* ---------- Goal toggle ---------- */
+  .seg{display:inline-flex;background:var(--panel-2);border-radius:999px;padding:3px}
+  .seg button{
+    background:transparent;color:var(--muted);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;
+  }
+  .seg button.active{background:var(--accent);color:var(--accent-ink)}
+
+  /* ---------- Date row ---------- */
+  .daterow{display:flex;align-items:center;gap:8px;margin:4px 0 16px}
+  .daterow input[type=date]{
+    background:var(--panel-2);color:var(--text);
+    border:none;border-radius:10px;padding:8px 12px;font-size:14px;color-scheme:dark;
+  }
+  .daterow .nav{background:var(--panel-2);color:var(--text);
+    border-radius:10px;width:36px;height:36px;font-size:16px}
+  .daterow .today{margin-left:auto;font-size:13px;color:var(--muted);
+    background:var(--panel-2);border-radius:10px;padding:8px 12px}
+
+  /* ---------- Progress cards ---------- */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+  @media(max-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border-radius:var(--radius);padding:14px}
+  .card .lab{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .card .big{font-size:24px;font-weight:800;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+  .card .sub{font-size:12px;color:var(--muted)}
+  .card .sub b{color:var(--text)}
+  .bar{height:7px;background:var(--panel-2);border-radius:999px;margin-top:10px;overflow:hidden}
+  .bar > span{display:block;height:100%;border-radius:999px;transition:width .3s ease}
+  .remain-good{color:var(--good)} .remain-over{color:var(--over)}
+
+  /* ---------- Ratio strip ---------- */
+  .ratios{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 14px;font-size:12px;color:var(--muted)}
+  .suggest-cta{width:100%;justify-content:center;margin:0 0 20px;background:var(--panel-2)}
+  .suggest-cta:hover{background:var(--line)}
+  .ratios .chip{background:var(--panel-2);border-radius:999px;padding:6px 12px}
+  .ratios .chip b{color:var(--text)}
+
+  /* ---------- Section ---------- */
+  .section{background:var(--panel);border-radius:var(--radius);margin-bottom:18px;overflow:hidden}
+  .section > .head{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+  .section > .head h2{font-size:15px}
+  .section > .head .hint{font-size:12px;color:var(--muted);margin-left:auto}
+  .section > .body{padding:16px}
+
+  /* ---------- Add form ---------- */
+  .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12px;color:var(--muted);font-weight:600}
+  .field input{background:var(--panel-2);border:1px solid transparent;color:var(--text);
+    border-radius:10px;padding:11px 12px;font-size:15px;width:100%}
+  .field input:focus{outline:none;border-color:var(--accent)}
+  .macro-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .qty-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .suffix{position:relative}
+  .suffix input{padding-right:30px}
+  .suffix .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:13px;pointer-events:none}
+
+  .preview{
+    background:var(--panel-2);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;
+    display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .preview .pv{display:flex;flex-direction:column}
+  .preview .pv b{font-size:16px;font-variant-numeric:tabular-nums}
+  .preview .pv span{color:var(--muted);font-size:11px}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border-radius:11px;padding:12px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary{background:var(--accent);color:var(--accent-ink)}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost:hover{background:var(--line)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .save-lib{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+  .save-lib input{width:16px;height:16px;accent-color:var(--accent)}
+
+  /* ---------- Meals table ---------- */
+  .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+    padding:12px 14px;border-bottom:1px solid var(--line)}
+  .meal:last-child{border-bottom:none}
+  .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(245,196,81,.05) 8px,rgba(245,196,81,.05) 16px)}
+  .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--faint);background:transparent;display:grid;place-items:center;color:transparent;font-size:14px;font-weight:800;flex:none}
+  .meal .chk.on{background:var(--good);border-color:var(--good);color:#052e1a}
+  .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .meal .info .macros{font-size:12px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .meal .info .macros .m{margin-right:10px}
+  .badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:6px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+  .badge.whatif{background:rgba(245,196,81,.15);color:var(--accent);border-color:transparent}
+  .meal .right{display:flex;align-items:center;gap:6px}
+  .meal .del{background:transparent;color:var(--faint);font-size:16px;width:30px;height:30px;border-radius:8px}
+  .meal .del:hover{color:var(--over);background:var(--panel-2)}
+  .m-p{color:var(--protein)} .m-c{color:var(--carbs)} .m-f{color:var(--fat)} .m-cal{color:var(--cal)}
+  .sumrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:14px;background:var(--panel-2);font-weight:700;align-items:center}
+  .sumrow .macros{font-size:13px;font-variant-numeric:tabular-nums}
+  .empty{padding:30px 16px;text-align:center;color:var(--faint);font-size:14px}
+
+  /* ---------- Library manager ---------- */
+  .lib-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+  .lib-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel-2);border-radius:9px;font-size:13px}
+  .lib-item .lname{font-weight:600}
+  .lib-item .lmac{color:var(--muted);font-size:12px;margin-left:auto;font-variant-numeric:tabular-nums}
+  .lib-item button{background:transparent;color:var(--faint);font-size:15px;width:26px;height:26px;border-radius:6px}
+  .lib-item button:hover{color:var(--over)}
+  .lib-item .quick{background:var(--accent);color:var(--accent-ink);border-radius:7px;font-size:12px;font-weight:700;padding:5px 10px;width:auto;height:auto}
+
+  /* ---------- Modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .overlay.on{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:460px;max-height:90vh;overflow:auto}
+  .modal .head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+  .modal .head h3{font-size:16px}
+  .modal .head .x{margin-left:auto;background:transparent;color:var(--muted);font-size:20px;width:30px;height:30px}
+  .modal .body{padding:18px}
+  .targets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px 12px;align-items:center;margin-top:6px}
+  .targets-grid .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .targets-grid label{font-weight:600;font-size:14px}
+  .targets-grid input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font-size:15px;width:100%;color-scheme:dark}
+  .user-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .user-row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel-2);border-radius:11px}
+  .user-row.active{outline:2px solid var(--accent)}
+  .user-row .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#0b1220;flex:none}
+  .user-row .un{font-weight:600;flex:1}
+  .user-row .sw{font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text)}
+  .user-row .tgt{font-size:11px;color:var(--muted)}
+  .rowlang{background:var(--panel);color:var(--text);border:none;border-radius:8px;padding:6px 8px;font-size:12px;flex:none}
+  .addnew #newUserLang{flex:none}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+  .full{width:100%;justify-content:center}
+  .addnew{display:flex;gap:8px}
+  .addnew input{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font-size:14px}
+  /* ---------- Suggestion modal ---------- */
+  .sg-intro{font-size:12px;color:var(--muted);margin:0 0 14px}
+  .sg-empty{text-align:center;padding:14px 6px 6px;color:var(--muted);font-size:14px;line-height:1.5}
+  .sg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .sg-item{display:flex;align-items:center;gap:12px;padding:11px 13px;background:var(--panel-2);border-radius:11px}
+  .sg-item .sg-name{font-weight:600;font-size:14px}
+  .sg-item .sg-qty{font-size:12px;color:var(--muted)}
+  .sg-item .sg-mac{margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+  .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:16px;font-size:13px}
+  .sg-totals .row{display:flex;justify-content:space-between;gap:12px}
+  .sg-totals .row span:first-child{color:var(--muted)}
+  .sg-totals .row .v{font-variant-numeric:tabular-nums}
+  .sg-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .sg-actions .btn{flex:1;justify-content:center;min-width:130px}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div><h1>Macro Tracker</h1><small id="brandSub">Loading…</small></div>
+    </div>
+    <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
+    <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers">⚙</button>
+  </div>
+
+  <!-- Goal + date -->
+  <div class="daterow">
+    <div class="seg" id="goalSeg">
+      <button data-goal="lean" data-i18n="lean">Lean</button>
+      <button data-goal="bulk" data-i18n="bulk">Bulk</button>
+    </div>
+    <button class="nav" id="prevDay" data-i18n-title="prevDay">‹</button>
+    <input type="date" id="dateInput">
+    <button class="nav" id="nextDay" data-i18n-title="nextDay">›</button>
+    <button class="today" id="todayBtn" data-i18n="today">Today</button>
+  </div>
+
+  <!-- Progress cards -->
+  <div class="cards" id="cards"></div>
+  <div class="ratios" id="ratios"></div>
+  <button class="btn btn-ghost suggest-cta" id="suggestBtn" data-i18n="suggestCta">✨ Suggest foods to hit target</button>
+
+  <!-- Add food -->
+  <div class="section">
+    <div class="head"><h2 data-i18n="addFood">Add food</h2><span class="hint" data-i18n="addFoodHint">Enter macros per reference amount, then how much you ate</span></div>
+    <div class="body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="foodName">Food name</label>
+          <input id="fName" list="foodList" data-i18n-ph="foodNamePh" placeholder="Start typing… e.g. Chicken breast" autocomplete="off">
+          <datalist id="foodList"></datalist>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:600" data-i18n="macrosPer">Macros per reference amount</label>
+          <div class="macro-inputs" style="margin-top:8px">
+            <div class="field">
+              <label data-i18n="protein">Protein</label>
+              <div class="suffix"><input id="fP" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+            <div class="field">
+              <label data-i18n="carbs">Carbs</label>
+              <div class="suffix"><input id="fC" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+            <div class="field">
+              <label data-i18n="fat">Fat</label>
+              <div class="suffix"><input id="fF" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="qty-row">
+          <div class="field">
+            <label data-i18n="refAmount">Reference amount</label>
+            <div class="suffix"><input id="fRef" type="number" inputmode="decimal" value="100" min="0.01" step="any"><span class="u">g</span></div>
+          </div>
+          <div class="field">
+            <label data-i18n="amountAte">Amount you ate</label>
+            <div class="suffix"><input id="fQty" type="number" inputmode="decimal" data-i18n-ph="amountAtePh" placeholder="e.g. 150" min="0" step="any"><span class="u">g</span></div>
+          </div>
+        </div>
+
+        <div class="preview" id="preview">
+          <div class="pv"><b class="m-p" id="pvP">0</b><span data-i18n="protein">Protein</span></div>
+          <div class="pv"><b class="m-c" id="pvC">0</b><span data-i18n="carbs">Carbs</span></div>
+          <div class="pv"><b class="m-f" id="pvF">0</b><span data-i18n="fat">Fat</span></div>
+          <div class="pv"><b class="m-cal" id="pvCal">0</b><span data-i18n="calories">Calories</span></div>
+          <label class="save-lib" style="margin-left:auto">
+            <input type="checkbox" id="saveLib" checked> <span data-i18n="saveToFoods">Save to my foods</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="addEaten" data-i18n="addEaten">✓ Add as eaten</button>
+          <button class="btn btn-ghost" id="addWhatif" data-i18n="addWhatif">◇ Add as what-if</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's meals -->
+  <div class="section">
+    <div class="head"><h2 id="mealsTitle">Meals</h2><span class="hint" id="mealsHint"></span></div>
+    <div id="mealsBody"></div>
+  </div>
+
+  <!-- My foods -->
+  <div class="section">
+    <div class="head"><h2 data-i18n="myFoods">My foods</h2><span class="hint" data-i18n="myFoodsHint">Frequent ingredients · tap to add quickly</span></div>
+    <div class="body"><div class="lib-list" id="libList"></div></div>
+  </div>
+
+</div>
+
+<!-- Users modal -->
+<div class="overlay" id="usersOverlay">
+  <div class="modal">
+    <div class="head"><h3 data-i18n="usersTargets">Users & targets</h3><button class="x" data-close>×</button></div>
+    <div class="body">
+      <div class="user-list" id="userList"></div>
+      <div class="addnew">
+        <input id="newUserName" data-i18n-ph="newUserName" placeholder="New user name">
+        <select id="newUserLang" class="pill" data-i18n-title="language">
+          <option value="en" data-i18n="english">English</option>
+          <option value="es" data-i18n="spanish">Spanish</option>
+        </select>
+        <button class="btn btn-primary" id="addUserBtn" data-i18n="add">Add</button>
+      </div>
+      <div class="divider"></div>
+      <h3 style="font-size:14px;margin-bottom:4px" id="tgtHeading">Targets</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 4px" data-i18n="dailyGoals">Daily gram goals for each mode.</p>
+      <div class="targets-grid" id="targetsGrid"></div>
+      <button class="btn btn-primary full" id="saveTargets" style="margin-top:16px" data-i18n="saveTargets">Save targets</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suggestion modal -->
+<div class="overlay" id="suggestOverlay">
+  <div class="modal">
+    <div class="head"><h3 data-i18n="suggestTitle">Suggested to hit your targets</h3><button class="x" data-close-suggest>×</button></div>
+    <div class="body" id="suggestBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const KEY = "macroTracker.v1";
+const CAL = (p,c,f)=> p*4 + c*4 + f*9;
+const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
+const todayStr = ()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const AVATARS = ["#f5c451","#60a5fa","#34d399","#f472b6","#fb923c","#a78bfa"];
+
+/* ---------- Seed data (from your spreadsheet) ---------- */
+function seedFoods(){
+  // Start with an empty food library; foods are learned as you log them.
+  return [];
+}
+function defaultUser(name, lang){
+  return {
+    id: uid(), name,
+    lang: lang || "en",
+    goal: "lean",
+    targets: { lean:{p:215,c:240,f:65}, bulk:{p:220,c:260,f:75} },
+    foods: seedFoods(),
+    days: {}
+  };
+}
+function makeUser(name, lang, lean, bulk){
+  return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{} };
+}
+function initialUsers(){
+  return [
+    makeUser("Martin","en",{p:215,c:240,f:65},{p:220,c:260,f:75}),
+    makeUser("Leonor","es",{p:110,c:130,f:40},{p:120,c:140,f:45}),
+  ];
+}
+
+/* ---------- Translations ---------- */
+const T = {
+  en: {
+    switchUser:"Switch user", manageUsers:"Manage users & targets",
+    lean:"Lean", bulk:"Bulk", prevDay:"Previous day", nextDay:"Next day", today:"Today",
+    addFood:"Add food", addFoodHint:"Enter macros per reference amount, then how much you ate",
+    foodName:"Food name", foodNamePh:"Start typing… e.g. Chicken breast",
+    macrosPer:"Macros per reference amount",
+    protein:"Protein", carbs:"Carbs", fat:"Fat", calories:"Calories",
+    refAmount:"Reference amount", amountAte:"Amount you ate", amountAtePh:"e.g. 150",
+    saveToFoods:"Save to my foods", addEaten:"✓ Add as eaten", addWhatif:"◇ Add as what-if",
+    meals:"Meals", myFoods:"My foods", myFoodsHint:"Frequent ingredients · tap to add quickly",
+    usersTargets:"Users & targets", newUserName:"New user name", add:"Add",
+    language:"Language", english:"English", spanish:"Spanish",
+    targets:"Targets", dailyGoals:"Daily gram goals for each mode.", saveTargets:"Save targets",
+    targetsFor:"Targets for {name}",
+    left:"left", over:"over", planned:"planned", eaten:"eaten", withWhatif:"with what-if:",
+    total:"TOTAL", eatenCount:"{n} eaten", whatifCount:"{n} what-if",
+    noMeals:"No foods logged for this day yet.", addOneAbove:"Add one above ↑",
+    whatifBadge:"what-if", noFoods:"No saved foods yet.", use:"Use",
+    calorieSplit:"Calorie split (current / target)", target:"target",
+    active:"active", switchBtn:"Switch", del:"Delete",
+    confirmDelUser:"Delete this user and all their data?",
+    added:"Added {name} ✓", plannedToast:"Planned {name} ◇",
+    targetsSaved:"Targets saved", addedUser:"Added {name}",
+    suggestCta:"✨ Suggest foods to hit target",
+    suggestTitle:"Suggested to hit your targets",
+    suggestIntro:"From your saved foods, excluding what you've already eaten today.",
+    noFoodsToSuggest:"You don't have any saved foods yet. Log a few foods and they'll show up here as suggestions.",
+    addSomeFoods:"Add a food",
+    targetsMet:"You've already hit today's targets 🎉",
+    noGoodSuggestion:"Your saved foods can't get closer to today's targets right now.",
+    planAdds:"This plan adds", stillLeft:"Still left after", addAllWhatif:"Add all as what-if",
+    addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added"
+  },
+  es: {
+    switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
+    lean:"Definición", bulk:"Volumen", prevDay:"Día anterior", nextDay:"Día siguiente", today:"Hoy",
+    addFood:"Agregar alimento", addFoodHint:"Ingresa los macros por cantidad de referencia y cuánto comiste",
+    foodName:"Nombre del alimento", foodNamePh:"Escribe… p. ej. Pechuga de pollo",
+    macrosPer:"Macros por cantidad de referencia",
+    protein:"Proteína", carbs:"Carbohidratos", fat:"Grasa", calories:"Calorías",
+    refAmount:"Cantidad de referencia", amountAte:"Cantidad que comiste", amountAtePh:"p. ej. 150",
+    saveToFoods:"Guardar en mis alimentos", addEaten:"✓ Agregar como comido", addWhatif:"◇ Agregar como simulación",
+    meals:"Comidas", myFoods:"Mis alimentos", myFoodsHint:"Ingredientes frecuentes · toca para agregar rápido",
+    usersTargets:"Usuarios y objetivos", newUserName:"Nombre del nuevo usuario", add:"Agregar",
+    language:"Idioma", english:"Inglés", spanish:"Español",
+    targets:"Objetivos", dailyGoals:"Objetivos diarios en gramos para cada modo.", saveTargets:"Guardar objetivos",
+    targetsFor:"Objetivos de {name}",
+    left:"restantes", over:"de más", planned:"planeado", eaten:"comido", withWhatif:"con simulación:",
+    total:"TOTAL", eatenCount:"{n} comido", whatifCount:"{n} simulación",
+    noMeals:"Todavía no hay alimentos registrados para este día.", addOneAbove:"Agrega uno arriba ↑",
+    whatifBadge:"simulación", noFoods:"Todavía no hay alimentos guardados.", use:"Usar",
+    calorieSplit:"Distribución de calorías (actual / objetivo)", target:"objetivo",
+    active:"activo", switchBtn:"Cambiar", del:"Eliminar",
+    confirmDelUser:"¿Eliminar este usuario y todos sus datos?",
+    added:"Agregado {name} ✓", plannedToast:"Planeado {name} ◇",
+    targetsSaved:"Objetivos guardados", addedUser:"Agregado {name}",
+    suggestCta:"✨ Sugerir alimentos para el objetivo",
+    suggestTitle:"Sugerencias para alcanzar tus objetivos",
+    suggestIntro:"De tus alimentos guardados, sin incluir lo que ya comiste hoy.",
+    noFoodsToSuggest:"Todavía no tienes alimentos guardados. Registra algunos y aparecerán aquí como sugerencias.",
+    addSomeFoods:"Agregar un alimento",
+    targetsMet:"¡Ya alcanzaste los objetivos de hoy! 🎉",
+    noGoodSuggestion:"Tus alimentos guardados no pueden acercarse más a los objetivos de hoy por ahora.",
+    planAdds:"Este plan agrega", stillLeft:"Todavía falta", addAllWhatif:"Agregar todo como simulación",
+    addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada"
+  }
+};
+function lang(){ return (user().lang==="es") ? "es" : "en"; }
+function t(key, params){
+  const L=lang();
+  let s = (T[L] && T[L][key]!=null) ? T[L][key] : (T.en[key]!=null ? T.en[key] : key);
+  if(params) for(const k in params) s = s.replace("{"+k+"}", params[k]);
+  return s;
+}
+function applyI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el=> el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=> el.placeholder = t(el.dataset.i18nPh));
+  document.querySelectorAll("[data-i18n-title]").forEach(el=> el.title = t(el.dataset.i18nTitle));
+  document.documentElement.lang = lang();
+}
+
+/* ---------- State ---------- */
+let state = load();
+let curDate = todayStr();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.users && s.users.length){
+        s.migrations = s.migrations || {};
+        // One-time cleanup: clear the pre-seeded food library so users start fresh.
+        if(!s.migrations.clearedSeedFoods){
+          s.users.forEach(u=>{ u.foods = []; });
+          s.migrations.clearedSeedFoods = true;
+        }
+        // One-time setup: establish the Martin & Leonor profiles (keeps any logged data).
+        if(!s.migrations.setupProfiles){
+          let martin = s.users.find(u=>u.name==="Martin");
+          if(!martin){
+            martin = s.users.find(u=>u.name==="Me") || s.users[0];
+            martin.name = "Martin";
+            martin.lang = "en";
+            martin.targets = { lean:{p:215,c:240,f:65}, bulk:{p:220,c:260,f:75} };
+          }
+          if(!s.users.find(u=>u.name==="Leonor")){
+            s.users.push(makeUser("Leonor","es",{p:110,c:130,f:40},{p:120,c:140,f:45}));
+          }
+          if(!s.users.find(u=>u.id===s.activeId)) s.activeId = martin.id;
+          s.migrations.setupProfiles = true;
+        }
+        // One-time correction: force Martin's and Leonor's targets to the intended values
+        // (fixes any stale targets from earlier builds).
+        if(!s.migrations.fixProfileTargets){
+          const M = s.users.find(u=>u.name==="Martin");
+          if(M) M.targets = { lean:{p:215,c:240,f:65}, bulk:{p:220,c:260,f:75} };
+          const L = s.users.find(u=>u.name==="Leonor");
+          if(L) L.targets = { lean:{p:110,c:130,f:40}, bulk:{p:120,c:140,f:45} };
+          s.migrations.fixProfileTargets = true;
+        }
+        localStorage.setItem(KEY, JSON.stringify(s));
+        return s;
+      }
+    }
+  }catch(e){}
+  const users = initialUsers();
+  return { users, activeId:users[0].id, migrations:{clearedSeedFoods:true, setupProfiles:true, fixProfileTargets:true} };
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function user(){ return state.users.find(u=>u.id===state.activeId) || state.users[0]; }
+function targets(){ return user().targets[user().goal]; }
+function dayMeals(){ const u=user(); if(!u.days[curDate]) u.days[curDate]=[]; return u.days[curDate]; }
+
+/* ---------- Rendering ---------- */
+function renderAll(){
+  applyI18n();
+  renderUserSelect();
+  renderGoal();
+  renderCards();
+  renderRatios();
+  renderMeals();
+  renderLib();
+  renderDatalist();
+  document.getElementById("brandSub").textContent = user().name + " · " + t(user().goal);
+}
+
+function renderUserSelect(){
+  const sel = document.getElementById("userSelect");
+  sel.innerHTML = state.users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+  sel.value = state.activeId;
+}
+function renderGoal(){
+  document.querySelectorAll("#goalSeg button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.goal===user().goal);
+  });
+}
+
+function consumed(includeWhatif=false){
+  const t={p:0,c:0,f:0,cal:0};
+  dayMeals().forEach(m=>{
+    if(m.eaten || includeWhatif){
+      t.p+=m.ap; t.c+=m.ac; t.f+=m.af; t.cal+=CAL(m.ap,m.ac,m.af);
+    }
+  });
+  return t;
+}
+
+function renderCards(){
+  const tg = targets();
+  const eaten = consumed(false);
+  const proj = consumed(true); // eaten + what-if
+  const rows = [
+    {k:"p", lab:t("protein"), color:"var(--protein)", got:eaten.p, tgt:tg.p, projGot:proj.p, u:"g"},
+    {k:"c", lab:t("carbs"),   color:"var(--carbs)",   got:eaten.c, tgt:tg.c, projGot:proj.c, u:"g"},
+    {k:"f", lab:t("fat"),     color:"var(--fat)",     got:eaten.f, tgt:tg.f, projGot:proj.f, u:"g"},
+    {k:"cal", lab:t("calories"), color:"var(--cal)",  got:eaten.cal, tgt:CAL(tg.p,tg.c,tg.f), projGot:proj.cal, u:"kcal"},
+  ];
+  document.getElementById("cards").innerHTML = rows.map(r=>{
+    const remain = r.tgt - r.got;
+    const pct = r.tgt>0 ? Math.min(100, (r.got/r.tgt)*100) : 0;
+    const projPct = r.tgt>0 ? Math.min(100, (r.projGot/r.tgt)*100) : 0;
+    const over = remain < 0;
+    const barColor = over ? "var(--over)" : r.color;
+    const remLabel = over
+      ? `<span class="remain-over">${round(Math.abs(remain))}${r.u} ${t("over")}</span>`
+      : `<span class="remain-good">${round(remain)}${r.u} ${t("left")}</span>`;
+    // projected overlay (what-if) as lighter segment
+    const whatifExtra = Math.max(0, projPct - pct);
+    return `<div class="card">
+      <div class="lab"><span class="dot" style="background:${r.color}"></span>${r.lab}</div>
+      <div class="big">${round(r.got)}<span style="font-size:14px;color:var(--muted);font-weight:600"> / ${round(r.tgt)}${r.u==="kcal"?"":""}</span></div>
+      <div class="sub">${remLabel}${whatifExtra>0?` · <span style="color:var(--accent)">+${round(r.projGot-r.got)}${r.u} ${t("planned")}</span>`:""}</div>
+      <div class="bar">
+        <span style="width:${projPct}%;background:${barColor};opacity:.35;position:relative"></span>
+        <span style="width:${pct}%;background:${barColor};margin-top:-7px"></span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderRatios(){
+  const tg = targets();
+  const tCal = CAL(tg.p,tg.c,tg.f) || 1;
+  const eaten = consumed(false);
+  const eCal = eaten.cal || 1;
+  const fmt=(g,mult,tot)=> Math.round((g*mult/tot)*100);
+  const tgtR = {p:fmt(tg.p,4,tCal), c:fmt(tg.c,4,tCal), f:fmt(tg.f,9,tCal)};
+  const curR = {p:fmt(eaten.p,4,eCal), c:fmt(eaten.c,4,eCal), f:fmt(eaten.f,9,eCal)};
+  const chip=(lab,cur,tgt)=>`<span class="chip">${lab}: <b>${eaten.cal?cur:0}%</b> <span style="opacity:.6">/ ${t("target")} ${tgt}%</span></span>`;
+  document.getElementById("ratios").innerHTML =
+    `<span class="chip" style="color:var(--muted)">${t("calorieSplit")}</span>`+
+    chip(t("protein"),curR.p,tgtR.p)+chip(t("carbs"),curR.c,tgtR.c)+chip(t("fat"),curR.f,tgtR.f);
+}
+
+function renderMeals(){
+  const meals = dayMeals();
+  const body = document.getElementById("mealsBody");
+  document.getElementById("mealsTitle").textContent = t("meals") + " · " + prettyDate(curDate);
+  const nEaten = meals.filter(m=>m.eaten).length;
+  const nWhat = meals.length - nEaten;
+  document.getElementById("mealsHint").textContent =
+    meals.length ? `${t("eatenCount",{n:nEaten})}${nWhat?` · ${t("whatifCount",{n:nWhat})}`:""}` : "";
+
+  if(!meals.length){
+    body.innerHTML = `<div class="empty">${t("noMeals")}<br>${t("addOneAbove")}</div>`;
+    return;
+  }
+  const sum = consumed(true);
+  const eaten = consumed(false);
+  body.innerHTML = meals.map(m=>{
+    const cal = CAL(m.ap,m.ac,m.af);
+    return `<div class="meal ${m.eaten?"":"whatif"}">
+      <button class="chk ${m.eaten?"on":""}" data-toggle="${m.id}" title="${m.eaten?"Eaten — tap to make what-if":"What-if — tap to mark eaten"}">✓</button>
+      <div class="info">
+        <div class="name">${escapeHtml(m.name)} ${m.eaten?"":`<span class="badge whatif">${t("whatifBadge")}</span>`}
+          <span class="badge">${round(m.qty)}g</span></div>
+        <div class="macros">
+          <span class="m m-p">${round(m.ap)}P</span>
+          <span class="m m-c">${round(m.ac)}C</span>
+          <span class="m m-f">${round(m.af)}F</span>
+          <span class="m m-cal">${round(cal)} kcal</span>
+        </div>
+      </div>
+      <div class="right"><button class="del" data-del="${m.id}" title="Remove">🗑</button></div>
+    </div>`;
+  }).join("") + `
+    <div class="sumrow">
+      <span style="font-size:12px;color:var(--muted)">${t("total")}</span>
+      <div class="macros">
+        <span class="m-p">${round(eaten.p)}P</span> ·
+        <span class="m-c">${round(eaten.c)}C</span> ·
+        <span class="m-f">${round(eaten.f)}F</span> ·
+        <span class="m-cal">${round(eaten.cal)} kcal</span>
+        <span style="color:var(--faint)">${t("eaten")}</span>
+        ${nWhat?`<br><span style="font-weight:500;color:var(--accent);font-size:12px">${t("withWhatif")} ${round(sum.p)}P · ${round(sum.c)}C · ${round(sum.f)}F · ${round(sum.cal)} kcal</span>`:""}
+      </div>
+      <span></span>
+    </div>`;
+}
+
+function renderLib(){
+  const list = document.getElementById("libList");
+  const foods = user().foods.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(!foods.length){ list.innerHTML = `<div class="empty" style="padding:14px">${t("noFoods")}</div>`; return; }
+  list.innerHTML = foods.map(f=>`
+    <div class="lib-item">
+      <span class="lname">${escapeHtml(f.name)}</span>
+      <span class="lmac">${round(f.p)}P ${round(f.c)}C ${round(f.f)}F / ${round(f.ref)}g</span>
+      <button class="quick" data-quick="${escapeAttr(f.name)}">${t("use")}</button>
+      <button data-libdel="${escapeAttr(f.name)}" title="Delete">×</button>
+    </div>`).join("");
+}
+
+function renderDatalist(){
+  document.getElementById("foodList").innerHTML =
+    user().foods.map(f=>`<option value="${escapeAttr(f.name)}">`).join("");
+}
+
+/* ---------- Add / preview logic ---------- */
+function readForm(){
+  const name=document.getElementById("fName").value.trim();
+  const p=parseFloat(document.getElementById("fP").value)||0;
+  const c=parseFloat(document.getElementById("fC").value)||0;
+  const f=parseFloat(document.getElementById("fF").value)||0;
+  const ref=parseFloat(document.getElementById("fRef").value)||100;
+  const qty=parseFloat(document.getElementById("fQty").value)||0;
+  const mult = ref>0 ? qty/ref : 0;
+  return {name,p,c,f,ref,qty,mult, ap:p*mult, ac:c*mult, af:f*mult};
+}
+function updatePreview(){
+  const d=readForm();
+  document.getElementById("pvP").textContent=round(d.ap);
+  document.getElementById("pvC").textContent=round(d.ac);
+  document.getElementById("pvF").textContent=round(d.af);
+  document.getElementById("pvCal").textContent=round(CAL(d.ap,d.ac,d.af));
+  const ok = d.name && d.qty>0 && (d.p||d.c||d.f);
+  document.getElementById("addEaten").disabled=!ok;
+  document.getElementById("addWhatif").disabled=!ok;
+}
+function autofillFromLib(){
+  const name=document.getElementById("fName").value.trim().toLowerCase();
+  const f=user().foods.find(x=>x.name.toLowerCase()===name);
+  if(f){
+    document.getElementById("fP").value=f.p;
+    document.getElementById("fC").value=f.c;
+    document.getElementById("fF").value=f.f;
+    document.getElementById("fRef").value=f.ref;
+    document.getElementById("fQty").focus();
+    updatePreview();
+  }
+}
+function addMeal(eaten){
+  const d=readForm();
+  if(!(d.name && d.qty>0 && (d.p||d.c||d.f))) return;
+  dayMeals().push({id:uid(), name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, qty:d.qty,
+                   ap:d.ap, ac:d.ac, af:d.af, eaten});
+  // save to library
+  if(document.getElementById("saveLib").checked){
+    const foods=user().foods;
+    const i=foods.findIndex(x=>x.name.toLowerCase()===d.name.toLowerCase());
+    const entry={name:d.name,p:d.p,c:d.c,f:d.f,ref:d.ref};
+    if(i>=0) foods[i]=entry; else foods.push(entry);
+  }
+  save(); renderAll();
+  toast(eaten?t("added",{name:d.name}):t("plannedToast",{name:d.name}));
+  // reset amounts but keep for quick re-entry
+  document.getElementById("fName").value="";
+  document.getElementById("fP").value="";document.getElementById("fC").value="";
+  document.getElementById("fF").value="";document.getElementById("fRef").value="100";
+  document.getElementById("fQty").value="";
+  updatePreview();
+  document.getElementById("fName").focus();
+}
+function quickUse(name){
+  const f=user().foods.find(x=>x.name===name); if(!f) return;
+  document.getElementById("fName").value=f.name;
+  document.getElementById("fP").value=f.p;
+  document.getElementById("fC").value=f.c;
+  document.getElementById("fF").value=f.f;
+  document.getElementById("fRef").value=f.ref;
+  document.getElementById("fQty").value="";
+  updatePreview();
+  document.getElementById("fQty").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- Users modal ---------- */
+function openUsers(){
+  renderUserList();
+  renderTargets();
+  document.getElementById("usersOverlay").classList.add("on");
+}
+function renderUserList(){
+  document.getElementById("userList").innerHTML = state.users.map((u,i)=>{
+    const tg=u.targets[u.goal];
+    const langSel = `<select class="rowlang" data-userlang="${u.id}" title="${t("language")}">
+        <option value="en" ${u.lang!=="es"?"selected":""}>${t("english")}</option>
+        <option value="es" ${u.lang==="es"?"selected":""}>${t("spanish")}</option>
+      </select>`;
+    return `<div class="user-row ${u.id===state.activeId?"active":""}">
+      <div class="av" style="background:${AVATARS[i%AVATARS.length]}">${escapeHtml(u.name[0]||"?").toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div class="un">${escapeHtml(u.name)}</div>
+        <div class="tgt">${tg.p}P · ${tg.c}C · ${tg.f}F</div>
+      </div>
+      ${langSel}
+      ${u.id===state.activeId?`<span class="tgt">${t("active")}</span>`:`<button class="sw" data-switch="${u.id}">${t("switchBtn")}</button>`}
+      ${state.users.length>1?`<button class="sw" data-userdel="${u.id}" style="color:var(--over)">${t("del")}</button>`:""}
+    </div>`;
+  }).join("");
+}
+function renderTargets(){
+  const u=user();
+  document.getElementById("tgtHeading").textContent = t("targetsFor",{name:u.name});
+  const g=document.getElementById("targetsGrid");
+  g.innerHTML = `
+    <span class="h"></span><span class="h">${t("lean")}</span><span class="h">${t("bulk")}</span>
+    <label>${t("protein")}</label><input type="number" id="tLp" value="${u.targets.lean.p}"><input type="number" id="tBp" value="${u.targets.bulk.p}">
+    <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
+    <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
+}
+function saveTargets(){
+  const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
+  u.targets.lean={p:v("tLp"),c:v("tLc"),f:v("tLf")};
+  u.targets.bulk={p:v("tBp"),c:v("tBc"),f:v("tBf")};
+  save(); renderAll(); renderUserList();
+  toast(t("targetsSaved"));
+}
+
+/* ---------- Suggestions ---------- */
+// Greedily pick saved foods (and grams) to fill the day's remaining targets,
+// skipping foods already eaten today. Returns {picks:[{food,grams,add}], rem}.
+function buildSuggestion(){
+  const tg = targets();
+  const e = consumed(false); // real eaten
+  let rem = { p:Math.max(0,tg.p-e.p), c:Math.max(0,tg.c-e.c), f:Math.max(0,tg.f-e.f) };
+  const eatenNames = new Set(dayMeals().filter(m=>m.eaten).map(m=>m.name.toLowerCase()));
+  const cands = user().foods
+    .filter(f=> f.ref>0 && !eatenNames.has(f.name.toLowerCase()))
+    .map(f=>({ f, pg:{ p:f.p/f.ref, c:f.c/f.ref, f:f.f/f.ref } }));
+  const picks = [];
+  const used = new Set();
+  const TOL = 5; // grams within target counts as "met"
+  for(let step=0; step<6; step++){
+    if(rem.p<=TOL && rem.c<=TOL && rem.f<=TOL) break;
+    // target the macro with the largest remaining gap
+    const macros = [["p",rem.p],["c",rem.c],["f",rem.f]].sort((a,b)=>b[1]-a[1]);
+    let placed = false;
+    for(const [m] of macros){
+      if(rem[m]<=TOL) continue;
+      let best=null, bestv=0;
+      for(const c of cands){ if(used.has(c.f.name)) continue; const v=c.pg[m]; if(v>bestv){bestv=v; best=c;} }
+      if(!best || bestv<=0) continue;
+      let q = rem[m]/bestv; // grams to fill this macro
+      // don't overshoot the other macros by more than ~30% (+ a small grams buffer)
+      ["p","c","f"].forEach(k=>{
+        const pg=best.pg[k];
+        if(k!==m && pg>0){ const cap=(rem[k]*1.3 + 8)/pg; q=Math.min(q, cap); }
+      });
+      q = Math.round(q/5)*5;
+      if(q<=0){ used.add(best.f.name); continue; }
+      const add = { p:best.pg.p*q, c:best.pg.c*q, f:best.pg.f*q };
+      picks.push({ food:best.f, grams:q, add });
+      rem.p=Math.max(0,rem.p-add.p); rem.c=Math.max(0,rem.c-add.c); rem.f=Math.max(0,rem.f-add.f);
+      used.add(best.f.name);
+      placed=true; break;
+    }
+    if(!placed) break;
+  }
+  return { picks, rem };
+}
+function openSuggest(){
+  renderSuggest();
+  document.getElementById("suggestOverlay").classList.add("on");
+}
+function renderSuggest(){
+  const body = document.getElementById("suggestBody");
+  // No saved foods at all → encourage adding some.
+  if(!user().foods.length){
+    body.innerHTML = `<div class="sg-empty">${t("noFoodsToSuggest")}</div>
+      <div class="sg-actions"><button class="btn btn-primary" id="sgAddFood">${t("addSomeFoods")}</button></div>`;
+    return;
+  }
+  const tg = targets(), e = consumed(false);
+  const already = (tg.p-e.p)<=5 && (tg.c-e.c)<=5 && (tg.f-e.f)<=5;
+  if(already){ body.innerHTML = `<div class="sg-empty">${t("targetsMet")}</div>`; return; }
+  const {picks, rem} = buildSuggestion();
+  if(!picks.length){ body.innerHTML = `<div class="sg-empty">${t("noGoodSuggestion")}</div>`; return; }
+  const tot = picks.reduce((a,p)=>({p:a.p+p.add.p,c:a.c+p.add.c,f:a.f+p.add.f}),{p:0,c:0,f:0});
+  const items = picks.map(p=>`
+    <div class="sg-item">
+      <div>
+        <div class="sg-name">${escapeHtml(p.food.name)}</div>
+        <div class="sg-qty">${round(p.grams)}g</div>
+      </div>
+      <div class="sg-mac"><span class="m-p">${round(p.add.p)}P</span> <span class="m-c">${round(p.add.c)}C</span> <span class="m-f">${round(p.add.f)}F</span></div>
+    </div>`).join("");
+  body.innerHTML = `
+    <p class="sg-intro">${t("suggestIntro")}</p>
+    <div class="sg-list">${items}</div>
+    <div class="sg-totals">
+      <div class="row"><span>${t("planAdds")}</span><span class="v"><span class="m-p">${round(tot.p)}P</span> · <span class="m-c">${round(tot.c)}C</span> · <span class="m-f">${round(tot.f)}F</span> · <span class="m-cal">${round(CAL(tot.p,tot.c,tot.f))} kcal</span></span></div>
+      <div class="row"><span>${t("stillLeft")}</span><span class="v">${round(rem.p)}P · ${round(rem.c)}C · ${round(rem.f)}F</span></div>
+    </div>
+    <div class="sg-actions">
+      <button class="btn btn-primary" id="sgAddWhatif">${t("addAllWhatif")}</button>
+      <button class="btn btn-ghost" id="sgAddEaten">${t("addAllEaten")}</button>
+    </div>`;
+}
+function addAllSuggested(eaten){
+  const {picks} = buildSuggestion();
+  if(!picks.length) return;
+  picks.forEach(p=>{
+    dayMeals().push({ id:uid(), name:p.food.name, p:p.food.p, c:p.food.c, f:p.food.f,
+      ref:p.food.ref, qty:p.grams, ap:p.add.p, ac:p.add.c, af:p.add.f, eaten });
+  });
+  save(); renderAll();
+  document.getElementById("suggestOverlay").classList.remove("on");
+  toast(t("suggestionAdded"));
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function escapeAttr(s){return escapeHtml(s);}
+function prettyDate(s){
+  const [y,m,d]=s.split("-").map(Number);
+  const dt=new Date(y,m-1,d);
+  if(s===todayStr()) return t("today");
+  return dt.toLocaleDateString(lang()==="es"?"es-ES":"en-US",{weekday:"short",month:"short",day:"numeric"});
+}
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),1800);
+}
+
+/* ---------- Events ---------- */
+["fName","fP","fC","fF","fRef","fQty"].forEach(id=>
+  document.getElementById(id).addEventListener("input",updatePreview));
+document.getElementById("fName").addEventListener("change",autofillFromLib);
+document.getElementById("fName").addEventListener("blur",autofillFromLib);
+document.getElementById("addEaten").addEventListener("click",()=>addMeal(true));
+document.getElementById("addWhatif").addEventListener("click",()=>addMeal(false));
+
+document.getElementById("mealsBody").addEventListener("click",e=>{
+  const tog=e.target.closest("[data-toggle]"), del=e.target.closest("[data-del]");
+  if(tog){ const m=dayMeals().find(x=>x.id===tog.dataset.toggle); if(m){m.eaten=!m.eaten; save(); renderAll();} }
+  if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del); if(i>=0){meals.splice(i,1); save(); renderAll();} }
+});
+document.getElementById("libList").addEventListener("click",e=>{
+  const q=e.target.closest("[data-quick]"), d=e.target.closest("[data-libdel]");
+  if(q) quickUse(q.dataset.quick);
+  if(d){ user().foods=user().foods.filter(f=>f.name!==d.dataset.libdel); save(); renderAll(); }
+});
+
+document.getElementById("goalSeg").addEventListener("click",e=>{
+  const b=e.target.closest("[data-goal]"); if(!b) return;
+  user().goal=b.dataset.goal; save(); renderAll();
+});
+document.getElementById("userSelect").addEventListener("change",e=>{
+  state.activeId=e.target.value; save(); renderAll();
+});
+
+const dateInput=document.getElementById("dateInput");
+dateInput.value=curDate;
+dateInput.addEventListener("change",()=>{curDate=dateInput.value||todayStr(); renderAll();});
+function shiftDay(n){
+  const [y,m,d]=curDate.split("-").map(Number);
+  const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n);
+  curDate=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+  dateInput.value=curDate; renderAll();
+}
+document.getElementById("prevDay").addEventListener("click",()=>shiftDay(-1));
+document.getElementById("nextDay").addEventListener("click",()=>shiftDay(1));
+document.getElementById("todayBtn").addEventListener("click",()=>{curDate=todayStr();dateInput.value=curDate;renderAll();});
+
+document.getElementById("usersBtn").addEventListener("click",openUsers);
+document.getElementById("usersOverlay").addEventListener("click",e=>{
+  if(e.target.id==="usersOverlay"||e.target.hasAttribute("data-close"))
+    e.currentTarget.classList.remove("on");
+});
+document.getElementById("userList").addEventListener("click",e=>{
+  const sw=e.target.closest("[data-switch]"), del=e.target.closest("[data-userdel]");
+  if(sw){ state.activeId=sw.dataset.switch; save(); renderAll(); renderUserList(); renderTargets(); }
+  if(del){
+    if(state.users.length<=1) return;
+    if(!confirm(t("confirmDelUser"))) return;
+    state.users=state.users.filter(u=>u.id!==del.dataset.userdel);
+    if(state.activeId===del.dataset.userdel) state.activeId=state.users[0].id;
+    save(); renderAll(); renderUserList(); renderTargets();
+  }
+});
+document.getElementById("userList").addEventListener("change",e=>{
+  const ls=e.target.closest("[data-userlang]");
+  if(ls){
+    const u=state.users.find(x=>x.id===ls.dataset.userlang);
+    if(u){ u.lang=ls.value; save(); renderAll(); renderUserList(); renderTargets(); }
+  }
+});
+document.getElementById("addUserBtn").addEventListener("click",()=>{
+  const inp=document.getElementById("newUserName"); const name=inp.value.trim();
+  if(!name) return;
+  const lg=document.getElementById("newUserLang").value;
+  const u=defaultUser(name, lg); state.users.push(u); state.activeId=u.id;
+  inp.value=""; save(); renderAll(); renderUserList(); renderTargets();
+  toast(t("addedUser",{name}));
+});
+document.getElementById("newUserName").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addUserBtn").click();});
+document.getElementById("saveTargets").addEventListener("click",saveTargets);
+
+document.getElementById("suggestBtn").addEventListener("click",openSuggest);
+document.getElementById("suggestOverlay").addEventListener("click",e=>{
+  if(e.target.id==="suggestOverlay"||e.target.hasAttribute("data-close-suggest"))
+    e.currentTarget.classList.remove("on");
+});
+document.getElementById("suggestBody").addEventListener("click",e=>{
+  if(e.target.closest("#sgAddWhatif")) addAllSuggested(false);
+  else if(e.target.closest("#sgAddEaten")) addAllSuggested(true);
+  else if(e.target.closest("#sgAddFood")){
+    document.getElementById("suggestOverlay").classList.remove("on");
+    document.getElementById("fName").focus();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+});
+
+/* ---------- Go ---------- */
+renderAll();
+updatePreview();
+</script>
+</body>
+</html>
