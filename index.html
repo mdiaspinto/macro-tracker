@@ -848,7 +848,7 @@ function updatePreview(){
   const ok = d.name && d.qty>0 && (d.p||d.c||d.f);
   document.getElementById("addEaten").disabled=!ok;
   document.getElementById("addWhatif").disabled=!ok;
-  document.getElementById("estimateBtn").disabled=!d.name;
+  document.getElementById("estimateBtn").disabled=!(d.name && d.qty>0);
 }
 function autofillFromLib(){
   const name=document.getElementById("fName").value.trim().toLowerCase();
