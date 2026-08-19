@@ -131,6 +131,13 @@
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .save-lib{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
   .save-lib input{width:16px;height:16px;accent-color:var(--accent)}
+  .unit-select{background:var(--panel-2);border:1px solid transparent;color:var(--text);
+    border-radius:10px;padding:11px 12px;font-size:15px;width:100%;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;color-scheme:dark}
+  .unit-select:focus{outline:none;border-color:var(--accent)}
+  .qty-row.triple{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:480px){.qty-row.triple{grid-template-columns:1fr 1fr}.qty-row.triple .unit-field{grid-column:1 / -1}}
 
   /* ---------- Meals table ---------- */
   .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
@@ -139,6 +146,8 @@
   .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(245,196,81,.05) 8px,rgba(245,196,81,.05) 16px)}
   .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--faint);background:transparent;display:grid;place-items:center;color:transparent;font-size:14px;font-weight:800;flex:none}
   .meal .chk.on{background:var(--good);border-color:var(--good);color:#052e1a}
+  .meal .info{cursor:pointer;border-radius:8px;transition:background .15s;padding:2px 6px;margin:-2px -6px}
+  .meal .info:hover{background:var(--panel-2)}
   .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .meal .info .macros{font-size:12px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
   .meal .info .macros .m{margin-right:10px}
@@ -155,7 +164,10 @@
   /* ---------- Library manager ---------- */
   .lib-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
   .lib-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel-2);border-radius:9px;font-size:13px}
-  .lib-item .lname{font-weight:600}
+  .lib-item .lname{font-weight:600;cursor:pointer}
+  .lib-item .lname:hover{color:var(--accent)}
+  .lib-edit{background:transparent;color:var(--faint);font-size:14px;width:26px;height:26px;border-radius:6px}
+  .lib-edit:hover{color:var(--accent)}
   .lib-item .lmac{color:var(--muted);font-size:12px;margin-left:auto;font-variant-numeric:tabular-nums}
   .lib-item button{background:transparent;color:var(--faint);font-size:15px;width:26px;height:26px;border-radius:6px}
   .lib-item button:hover{color:var(--over)}
@@ -262,14 +274,18 @@
             </div>
           </div>
         </div>
-        <div class="qty-row">
+        <div class="qty-row triple">
+          <div class="field unit-field">
+            <label data-i18n="units">Units</label>
+            <select id="fUnit" class="unit-select"></select>
+          </div>
           <div class="field">
             <label data-i18n="refAmount">Reference amount</label>
-            <div class="suffix"><input id="fRef" type="number" inputmode="decimal" value="100" min="0.01" step="any"><span class="u">g</span></div>
+            <div class="suffix"><input id="fRef" type="number" inputmode="decimal" value="100" min="0.01" step="any"><span class="u" id="fRefU">g</span></div>
           </div>
           <div class="field">
             <label data-i18n="amountAte">Amount you ate</label>
-            <div class="suffix"><input id="fQty" type="number" inputmode="decimal" data-i18n-ph="amountAtePh" placeholder="e.g. 150" min="0" step="any"><span class="u">g</span></div>
+            <div class="suffix"><input id="fQty" type="number" inputmode="decimal" data-i18n-ph="amountAtePh" placeholder="e.g. 150" min="0" step="any"><span class="u" id="fQtyU">g</span></div>
           </div>
         </div>
 
@@ -286,6 +302,7 @@
         <div class="actions">
           <button class="btn btn-primary" id="addEaten" data-i18n="addEaten">✓ Add as eaten</button>
           <button class="btn btn-ghost" id="addWhatif" data-i18n="addWhatif">◇ Add as what-if</button>
+          <button class="btn btn-ghost" id="estimateBtn" data-i18n="estimate" data-i18n-title="estimateHint">🔎 Estimate macros</button>
         </div>
       </div>
     </div>
@@ -336,6 +353,66 @@
   </div>
 </div>
 
+<!-- Edit item modal -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="head"><h3 id="editTitle">Edit</h3><button class="x" data-close-edit>×</button></div>
+    <div class="body">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="foodName">Food name</label>
+          <input id="eName" autocomplete="off">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:600" data-i18n="macrosPer">Macros per reference amount</label>
+          <div class="macro-inputs" style="margin-top:8px">
+            <div class="field">
+              <label data-i18n="protein">Protein</label>
+              <div class="suffix"><input id="eP" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+            <div class="field">
+              <label data-i18n="carbs">Carbs</label>
+              <div class="suffix"><input id="eC" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+            <div class="field">
+              <label data-i18n="fat">Fat</label>
+              <div class="suffix"><input id="eF" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="qty-row triple">
+          <div class="field unit-field">
+            <label data-i18n="units">Units</label>
+            <select id="eUnit" class="unit-select"></select>
+          </div>
+          <div class="field">
+            <label data-i18n="refAmount">Reference amount</label>
+            <div class="suffix"><input id="eRef" type="number" inputmode="decimal" value="100" min="0.01" step="any"><span class="u" id="eRefU">g</span></div>
+          </div>
+          <div class="field" id="eQtyField">
+            <label data-i18n="amountAte">Amount you ate</label>
+            <div class="suffix"><input id="eQty" type="number" inputmode="decimal" min="0" step="any"><span class="u" id="eQtyU">g</span></div>
+          </div>
+        </div>
+
+        <label class="save-lib" id="eEatenWrap"><input type="checkbox" id="eEaten"> <span data-i18n="markEaten">Eaten (uncheck for what-if)</span></label>
+
+        <div class="preview" id="ePreview">
+          <div class="pv"><b class="m-p" id="ePvP">0</b><span data-i18n="protein">Protein</span></div>
+          <div class="pv"><b class="m-c" id="ePvC">0</b><span data-i18n="carbs">Carbs</span></div>
+          <div class="pv"><b class="m-f" id="ePvF">0</b><span data-i18n="fat">Fat</span></div>
+          <div class="pv"><b class="m-cal" id="ePvCal">0</b><span data-i18n="calories">Calories</span></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="editSave" data-i18n="saveChanges">Save changes</button>
+          <button class="btn btn-ghost" id="editDelete" style="margin-left:auto;color:var(--over)" data-i18n="del">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -346,6 +423,54 @@ const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
 const todayStr = ()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const AVATARS = ["#f5c451","#60a5fa","#34d399","#f472b6","#fb923c","#a78bfa"];
+
+/* ---------- Units (label only — ref amount & amount-ate always share one unit) ---------- */
+const UNITS = [
+  {v:"g",       s:"g"},
+  {v:"oz",      s:"oz"},
+  {v:"cup",     s:"cup"},
+  {v:"tbsp",    s:"tbsp"},
+  {v:"tsp",     s:"tsp"},
+  {v:"ml",      s:"ml"},
+  {v:"piece",   s:"pc"},
+  {v:"serving", s:"srv"},
+];
+function unitShort(v){ const u=UNITS.find(x=>x.v===v); return u?u.s:(v||"g"); }
+
+/* ---------- Offline fallback: common foods, macros per 100 g ---------- */
+const OFFLINE_FOODS = {
+  "chicken breast":[31,0,3.6], "chicken thigh":[26,0,11], "chicken":[27,0,7],
+  "turkey breast":[29,0,1], "turkey":[29,0,7], "beef":[26,0,15], "ground beef":[26,0,15],
+  "steak":[27,0,11], "pork":[27,0,9], "pork chop":[27,0,9], "bacon":[37,1.4,42],
+  "salmon":[20,0,13], "tuna":[26,0,1], "cod":[18,0,0.7], "white fish":[18,0,0.7],
+  "shrimp":[24,0.2,0.3], "egg":[13,1.1,11], "eggs":[13,1.1,11], "egg white":[11,0.7,0.2],
+  "milk":[3.4,5,3.6], "whole milk":[3.4,5,3.6], "skim milk":[3.4,5,0.1],
+  "greek yogurt":[10,3.6,0.4], "yogurt":[10,3.6,0.4], "cheese":[25,1.3,33],
+  "cheddar":[25,1.3,33], "cottage cheese":[11,3.4,4.3], "butter":[0.9,0.1,81],
+  "rice":[2.7,28,0.3], "white rice":[2.7,28,0.3], "brown rice":[2.6,23,0.9],
+  "pasta":[5,25,1.1], "spaghetti":[5,25,1.1], "bread":[9,49,3.2], "white bread":[9,49,3.2],
+  "oats":[13,67,7], "oatmeal":[13,67,7], "quinoa":[4.4,21,1.9], "potato":[2,17,0.1],
+  "sweet potato":[1.6,20,0.1], "corn":[3.4,19,1.5],
+  "banana":[1.1,23,0.3], "apple":[0.3,14,0.2], "orange":[0.9,12,0.1],
+  "strawberries":[0.7,8,0.3], "blueberries":[0.7,14,0.3], "grapes":[0.7,18,0.2],
+  "avocado":[2,9,15], "broccoli":[2.8,7,0.4], "spinach":[2.9,3.6,0.4], "carrot":[0.9,10,0.2],
+  "tomato":[0.9,3.9,0.2], "lettuce":[1.4,2.9,0.2], "cucumber":[0.7,3.6,0.1], "onion":[1.1,9,0.1],
+  "black beans":[9,24,0.5], "beans":[9,24,0.5], "lentils":[9,20,0.4], "chickpeas":[9,27,2.6],
+  "tofu":[8,2,4.8], "almonds":[21,22,49], "peanut butter":[25,20,50], "peanuts":[26,16,49],
+  "walnuts":[15,14,65], "olive oil":[0,0,100], "honey":[0.3,82,0], "sugar":[0,100,0],
+  "whey protein":[80,8,6], "protein powder":[80,8,6], "protein shake":[80,8,6],
+};
+function offlineLookup(name){
+  const q = name.trim().toLowerCase();
+  if(!q) return null;
+  if(OFFLINE_FOODS[q]) return OFFLINE_FOODS[q];
+  // best substring match (prefer the longest key that overlaps the query)
+  let best=null, bestLen=0;
+  for(const k in OFFLINE_FOODS){
+    if((q.includes(k) || k.includes(q)) && k.length>bestLen){ best=OFFLINE_FOODS[k]; bestLen=k.length; }
+  }
+  return best;
+}
 
 /* ---------- Seed data (from your spreadsheet) ---------- */
 function seedFoods(){
@@ -405,7 +530,18 @@ const T = {
     targetsMet:"You've already hit today's targets 🎉",
     noGoodSuggestion:"Your saved foods can't get closer to today's targets right now.",
     planAdds:"This plan adds", stillLeft:"Still left after", addAllWhatif:"Add all as what-if",
-    addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added"
+    addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added",
+    units:"Units",
+    estimate:"🔎 Estimate macros", estimateHint:"Look up macros online by name",
+    estimating:"Searching…",
+    estimateNoName:"Type a food name first",
+    estimateOnline:"Macros found online ✓ — adjust if needed",
+    estimateOffline:"Estimated from built-in data ✓ — adjust if needed",
+    estimateFail:"No match found. Try a simpler name or enter macros manually.",
+    editItem:"Edit item", editFood:"Edit food", saveChanges:"Save changes",
+    markEaten:"Eaten (uncheck for what-if)", saved:"Saved ✓",
+    unit_g:"grams (g)", unit_oz:"ounces (oz)", unit_cup:"cups", unit_tbsp:"tablespoons (tbsp)",
+    unit_tsp:"teaspoons (tsp)", unit_ml:"milliliters (ml)", unit_piece:"pieces", unit_serving:"servings"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -438,7 +574,18 @@ const T = {
     targetsMet:"¡Ya alcanzaste los objetivos de hoy! 🎉",
     noGoodSuggestion:"Tus alimentos guardados no pueden acercarse más a los objetivos de hoy por ahora.",
     planAdds:"Este plan agrega", stillLeft:"Todavía falta", addAllWhatif:"Agregar todo como simulación",
-    addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada"
+    addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada",
+    units:"Unidades",
+    estimate:"🔎 Estimar macros", estimateHint:"Buscar macros en línea por nombre",
+    estimating:"Buscando…",
+    estimateNoName:"Escribe primero un nombre de alimento",
+    estimateOnline:"Macros encontrados en línea ✓ — ajusta si hace falta",
+    estimateOffline:"Estimado con datos integrados ✓ — ajusta si hace falta",
+    estimateFail:"Sin coincidencias. Prueba un nombre más simple o ingresa los macros manualmente.",
+    editItem:"Editar elemento", editFood:"Editar alimento", saveChanges:"Guardar cambios",
+    markEaten:"Comido (desmarca para simulación)", saved:"Guardado ✓",
+    unit_g:"gramos (g)", unit_oz:"onzas (oz)", unit_cup:"tazas", unit_tbsp:"cucharadas",
+    unit_tsp:"cucharaditas", unit_ml:"mililitros (ml)", unit_piece:"piezas", unit_serving:"porciones"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -458,6 +605,7 @@ function applyI18n(){
 /* ---------- State ---------- */
 let state = load();
 let curDate = todayStr();
+let editCtx = null; // {type:"meal", id} | {type:"food", name}
 
 function load(){
   try{
@@ -518,7 +666,32 @@ function renderAll(){
   renderMeals();
   renderLib();
   renderDatalist();
+  renderUnitSelectors();
   document.getElementById("brandSub").textContent = user().name + " · " + t(user().goal);
+}
+
+/* ---------- Units UI ---------- */
+function unitLabel(v){ return t("unit_"+v); }
+function fillUnitSelect(el){
+  if(!el) return;
+  const cur = el.value || "g";
+  el.innerHTML = UNITS.map(u=>`<option value="${u.v}">${escapeHtml(unitLabel(u.v))}</option>`).join("");
+  el.value = cur;
+}
+function renderUnitSelectors(){
+  const f = document.getElementById("fUnit");
+  fillUnitSelect(f);
+  setUnit(f.value || "g");
+}
+function setUnit(v){
+  const s = unitShort(v);
+  document.getElementById("fRefU").textContent = s;
+  document.getElementById("fQtyU").textContent = s;
+}
+function setEditUnit(v){
+  const s = unitShort(v);
+  document.getElementById("eRefU").textContent = s;
+  document.getElementById("eQtyU").textContent = s;
 }
 
 function renderUserSelect(){
@@ -608,9 +781,9 @@ function renderMeals(){
     const cal = CAL(m.ap,m.ac,m.af);
     return `<div class="meal ${m.eaten?"":"whatif"}">
       <button class="chk ${m.eaten?"on":""}" data-toggle="${m.id}" title="${m.eaten?"Eaten — tap to make what-if":"What-if — tap to mark eaten"}">✓</button>
-      <div class="info">
+      <div class="info" data-edit="${m.id}" title="${t("editItem")}">
         <div class="name">${escapeHtml(m.name)} ${m.eaten?"":`<span class="badge whatif">${t("whatifBadge")}</span>`}
-          <span class="badge">${round(m.qty)}g</span></div>
+          <span class="badge">${round(m.qty)}${unitShort(m.unit)}</span></div>
         <div class="macros">
           <span class="m m-p">${round(m.ap)}P</span>
           <span class="m m-c">${round(m.ac)}C</span>
@@ -641,9 +814,10 @@ function renderLib(){
   if(!foods.length){ list.innerHTML = `<div class="empty" style="padding:14px">${t("noFoods")}</div>`; return; }
   list.innerHTML = foods.map(f=>`
     <div class="lib-item">
-      <span class="lname">${escapeHtml(f.name)}</span>
-      <span class="lmac">${round(f.p)}P ${round(f.c)}C ${round(f.f)}F / ${round(f.ref)}g</span>
+      <span class="lname" data-libedit="${escapeAttr(f.name)}" title="${t("editFood")}">${escapeHtml(f.name)}</span>
+      <span class="lmac">${round(f.p)}P ${round(f.c)}C ${round(f.f)}F / ${round(f.ref)}${unitShort(f.unit)}</span>
       <button class="quick" data-quick="${escapeAttr(f.name)}">${t("use")}</button>
+      <button class="lib-edit" data-libedit="${escapeAttr(f.name)}" title="${t("editFood")}">✎</button>
       <button data-libdel="${escapeAttr(f.name)}" title="Delete">×</button>
     </div>`).join("");
 }
@@ -661,8 +835,9 @@ function readForm(){
   const f=parseFloat(document.getElementById("fF").value)||0;
   const ref=parseFloat(document.getElementById("fRef").value)||100;
   const qty=parseFloat(document.getElementById("fQty").value)||0;
+  const unit=document.getElementById("fUnit").value||"g";
   const mult = ref>0 ? qty/ref : 0;
-  return {name,p,c,f,ref,qty,mult, ap:p*mult, ac:c*mult, af:f*mult};
+  return {name,p,c,f,ref,qty,unit,mult, ap:p*mult, ac:c*mult, af:f*mult};
 }
 function updatePreview(){
   const d=readForm();
@@ -673,6 +848,7 @@ function updatePreview(){
   const ok = d.name && d.qty>0 && (d.p||d.c||d.f);
   document.getElementById("addEaten").disabled=!ok;
   document.getElementById("addWhatif").disabled=!ok;
+  document.getElementById("estimateBtn").disabled=!d.name;
 }
 function autofillFromLib(){
   const name=document.getElementById("fName").value.trim().toLowerCase();
@@ -682,6 +858,8 @@ function autofillFromLib(){
     document.getElementById("fC").value=f.c;
     document.getElementById("fF").value=f.f;
     document.getElementById("fRef").value=f.ref;
+    document.getElementById("fUnit").value=f.unit||"g";
+    setUnit(f.unit||"g");
     document.getElementById("fQty").focus();
     updatePreview();
   }
@@ -689,13 +867,13 @@ function autofillFromLib(){
 function addMeal(eaten){
   const d=readForm();
   if(!(d.name && d.qty>0 && (d.p||d.c||d.f))) return;
-  dayMeals().push({id:uid(), name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, qty:d.qty,
+  dayMeals().push({id:uid(), name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, qty:d.qty, unit:d.unit,
                    ap:d.ap, ac:d.ac, af:d.af, eaten});
   // save to library
   if(document.getElementById("saveLib").checked){
     const foods=user().foods;
     const i=foods.findIndex(x=>x.name.toLowerCase()===d.name.toLowerCase());
-    const entry={name:d.name,p:d.p,c:d.c,f:d.f,ref:d.ref};
+    const entry={name:d.name,p:d.p,c:d.c,f:d.f,ref:d.ref,unit:d.unit};
     if(i>=0) foods[i]=entry; else foods.push(entry);
   }
   save(); renderAll();
@@ -705,6 +883,7 @@ function addMeal(eaten){
   document.getElementById("fP").value="";document.getElementById("fC").value="";
   document.getElementById("fF").value="";document.getElementById("fRef").value="100";
   document.getElementById("fQty").value="";
+  document.getElementById("fUnit").value="g"; setUnit("g");
   updatePreview();
   document.getElementById("fName").focus();
 }
@@ -715,6 +894,8 @@ function quickUse(name){
   document.getElementById("fC").value=f.c;
   document.getElementById("fF").value=f.f;
   document.getElementById("fRef").value=f.ref;
+  document.getElementById("fUnit").value=f.unit||"g";
+  setUnit(f.unit||"g");
   document.getElementById("fQty").value="";
   updatePreview();
   document.getElementById("fQty").focus();
@@ -828,7 +1009,7 @@ function renderSuggest(){
     <div class="sg-item">
       <div>
         <div class="sg-name">${escapeHtml(p.food.name)}</div>
-        <div class="sg-qty">${round(p.grams)}g</div>
+        <div class="sg-qty">${round(p.grams)}${unitShort(p.food.unit)}</div>
       </div>
       <div class="sg-mac"><span class="m-p">${round(p.add.p)}P</span> <span class="m-c">${round(p.add.c)}C</span> <span class="m-f">${round(p.add.f)}F</span></div>
     </div>`).join("");
@@ -849,11 +1030,139 @@ function addAllSuggested(eaten){
   if(!picks.length) return;
   picks.forEach(p=>{
     dayMeals().push({ id:uid(), name:p.food.name, p:p.food.p, c:p.food.c, f:p.food.f,
-      ref:p.food.ref, qty:p.grams, ap:p.add.p, ac:p.add.c, af:p.add.f, eaten });
+      ref:p.food.ref, qty:p.grams, unit:p.food.unit||"g", ap:p.add.p, ac:p.add.c, af:p.add.f, eaten });
   });
   save(); renderAll();
   document.getElementById("suggestOverlay").classList.remove("on");
   toast(t("suggestionAdded"));
+}
+
+/* ---------- Estimate macros (online lookup, offline fallback) ---------- */
+// Fills protein/carbs/fat with values per 100 g and sets the reference to 100 g.
+async function estimateMacros(){
+  const name = document.getElementById("fName").value.trim();
+  if(!name){ toast(t("estimateNoName")); document.getElementById("fName").focus(); return; }
+  const btn = document.getElementById("estimateBtn");
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = t("estimating");
+  let macros = null, fromOnline = false;
+  // 1) Try Open Food Facts (free, no key, CORS-enabled). Blocked inside the sandboxed Artifact.
+  try{
+    const url = "https://world.openfoodfacts.org/cgi/search.pl?search_terms="+
+      encodeURIComponent(name)+"&search_simple=1&action=process&json=1&page_size=15"+
+      "&fields=product_name,nutriments";
+    const res = await fetch(url, {headers:{"Accept":"application/json"}});
+    if(res.ok){
+      const data = await res.json();
+      const prod = (data.products||[]).find(pr=>{
+        const n = pr.nutriments||{};
+        return [n.proteins_100g,n.carbohydrates_100g,n.fat_100g].some(v=>typeof v==="number");
+      });
+      if(prod){
+        const n = prod.nutriments;
+        macros = [n.proteins_100g||0, n.carbohydrates_100g||0, n.fat_100g||0];
+        fromOnline = true;
+      }
+    }
+  }catch(e){ /* network blocked or offline — fall through */ }
+  // 2) Offline fallback: built-in common-foods table.
+  if(!macros){ macros = offlineLookup(name); }
+
+  if(!macros){ toast(t("estimateFail")); btn.disabled=false; btn.textContent=orig; return; }
+  document.getElementById("fP").value = round(macros[0],1);
+  document.getElementById("fC").value = round(macros[1],1);
+  document.getElementById("fF").value = round(macros[2],1);
+  document.getElementById("fUnit").value = "g"; setUnit("g");
+  document.getElementById("fRef").value = 100;
+  updatePreview();
+  if(!(parseFloat(document.getElementById("fQty").value)>0)) document.getElementById("fQty").focus();
+  btn.disabled = false; btn.textContent = orig;
+  toast(fromOnline ? t("estimateOnline") : t("estimateOffline"));
+}
+
+/* ---------- Edit item modal (meals & saved foods) ---------- */
+function openEditMeal(id){
+  const m = dayMeals().find(x=>x.id===id); if(!m) return;
+  editCtx = {type:"meal", id};
+  document.getElementById("editTitle").textContent = t("editItem");
+  fillUnitSelect(document.getElementById("eUnit"));
+  document.getElementById("eName").value = m.name;
+  document.getElementById("eP").value = m.p;
+  document.getElementById("eC").value = m.c;
+  document.getElementById("eF").value = m.f;
+  document.getElementById("eUnit").value = m.unit||"g";
+  document.getElementById("eRef").value = m.ref;
+  document.getElementById("eQty").value = m.qty;
+  document.getElementById("eEaten").checked = !!m.eaten;
+  document.getElementById("eQtyField").style.display = "";
+  document.getElementById("eEatenWrap").style.display = "";
+  setEditUnit(m.unit||"g");
+  updateEditPreview();
+  document.getElementById("editOverlay").classList.add("on");
+}
+function openEditFood(name){
+  const f = user().foods.find(x=>x.name===name); if(!f) return;
+  editCtx = {type:"food", name};
+  document.getElementById("editTitle").textContent = t("editFood");
+  fillUnitSelect(document.getElementById("eUnit"));
+  document.getElementById("eName").value = f.name;
+  document.getElementById("eP").value = f.p;
+  document.getElementById("eC").value = f.c;
+  document.getElementById("eF").value = f.f;
+  document.getElementById("eUnit").value = f.unit||"g";
+  document.getElementById("eRef").value = f.ref;
+  document.getElementById("eQtyField").style.display = "none";
+  document.getElementById("eEatenWrap").style.display = "none";
+  setEditUnit(f.unit||"g");
+  updateEditPreview();
+  document.getElementById("editOverlay").classList.add("on");
+}
+function readEdit(){
+  const g=id=>document.getElementById(id);
+  const name=g("eName").value.trim();
+  const p=parseFloat(g("eP").value)||0, c=parseFloat(g("eC").value)||0, f=parseFloat(g("eF").value)||0;
+  const ref=parseFloat(g("eRef").value)||100;
+  const unit=g("eUnit").value||"g";
+  const qty=parseFloat(g("eQty").value)||0;
+  const mult=(editCtx && editCtx.type==="meal") ? (ref>0?qty/ref:0) : 1;
+  return {name,p,c,f,ref,unit,qty,mult, ap:p*mult, ac:c*mult, af:f*mult};
+}
+function updateEditPreview(){
+  const d=readEdit();
+  document.getElementById("ePvP").textContent=round(d.ap);
+  document.getElementById("ePvC").textContent=round(d.ac);
+  document.getElementById("ePvF").textContent=round(d.af);
+  document.getElementById("ePvCal").textContent=round(CAL(d.ap,d.ac,d.af));
+}
+function saveEdit(){
+  if(!editCtx) return;
+  const d=readEdit();
+  if(!d.name) return;
+  if(editCtx.type==="meal"){
+    const m=dayMeals().find(x=>x.id===editCtx.id); if(!m) return;
+    Object.assign(m,{name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, unit:d.unit, qty:d.qty,
+      ap:d.ap, ac:d.ac, af:d.af, eaten:document.getElementById("eEaten").checked});
+  } else {
+    const foods=user().foods;
+    const i=foods.findIndex(x=>x.name===editCtx.name);
+    const entry={name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, unit:d.unit};
+    if(i>=0) foods[i]=entry; else foods.push(entry);
+  }
+  save(); renderAll();
+  document.getElementById("editOverlay").classList.remove("on");
+  editCtx=null;
+  toast(t("saved"));
+}
+function deleteEdit(){
+  if(!editCtx) return;
+  if(editCtx.type==="meal"){
+    const meals=dayMeals(); const i=meals.findIndex(x=>x.id===editCtx.id); if(i>=0) meals.splice(i,1);
+  } else {
+    user().foods=user().foods.filter(f=>f.name!==editCtx.name);
+  }
+  save(); renderAll();
+  document.getElementById("editOverlay").classList.remove("on");
+  editCtx=null;
 }
 
 /* ---------- Helpers ---------- */
@@ -876,18 +1185,22 @@ function toast(msg){
   document.getElementById(id).addEventListener("input",updatePreview));
 document.getElementById("fName").addEventListener("change",autofillFromLib);
 document.getElementById("fName").addEventListener("blur",autofillFromLib);
+document.getElementById("fUnit").addEventListener("change",e=>setUnit(e.target.value));
 document.getElementById("addEaten").addEventListener("click",()=>addMeal(true));
 document.getElementById("addWhatif").addEventListener("click",()=>addMeal(false));
+document.getElementById("estimateBtn").addEventListener("click",estimateMacros);
 
 document.getElementById("mealsBody").addEventListener("click",e=>{
-  const tog=e.target.closest("[data-toggle]"), del=e.target.closest("[data-del]");
-  if(tog){ const m=dayMeals().find(x=>x.id===tog.dataset.toggle); if(m){m.eaten=!m.eaten; save(); renderAll();} }
-  if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del); if(i>=0){meals.splice(i,1); save(); renderAll();} }
+  const tog=e.target.closest("[data-toggle]"), del=e.target.closest("[data-del]"), ed=e.target.closest("[data-edit]");
+  if(tog){ const m=dayMeals().find(x=>x.id===tog.dataset.toggle); if(m){m.eaten=!m.eaten; save(); renderAll();} return; }
+  if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del); if(i>=0){meals.splice(i,1); save(); renderAll();} return; }
+  if(ed){ openEditMeal(ed.dataset.edit); }
 });
 document.getElementById("libList").addEventListener("click",e=>{
-  const q=e.target.closest("[data-quick]"), d=e.target.closest("[data-libdel]");
-  if(q) quickUse(q.dataset.quick);
-  if(d){ user().foods=user().foods.filter(f=>f.name!==d.dataset.libdel); save(); renderAll(); }
+  const q=e.target.closest("[data-quick]"), d=e.target.closest("[data-libdel]"), ed=e.target.closest("[data-libedit]");
+  if(q){ quickUse(q.dataset.quick); return; }
+  if(d){ user().foods=user().foods.filter(f=>f.name!==d.dataset.libdel); save(); renderAll(); return; }
+  if(ed){ openEditFood(ed.dataset.libedit); }
 });
 
 document.getElementById("goalSeg").addEventListener("click",e=>{
@@ -957,6 +1270,18 @@ document.getElementById("suggestBody").addEventListener("click",e=>{
     document.getElementById("suggestOverlay").classList.remove("on");
     document.getElementById("fName").focus();
     window.scrollTo({top:0,behavior:"smooth"});
+  }
+});
+
+// Edit modal
+["eName","eP","eC","eF","eRef","eQty"].forEach(id=>
+  document.getElementById(id).addEventListener("input",updateEditPreview));
+document.getElementById("eUnit").addEventListener("change",e=>{ setEditUnit(e.target.value); updateEditPreview(); });
+document.getElementById("editSave").addEventListener("click",saveEdit);
+document.getElementById("editDelete").addEventListener("click",deleteEdit);
+document.getElementById("editOverlay").addEventListener("click",e=>{
+  if(e.target.id==="editOverlay"||e.target.hasAttribute("data-close-edit")){
+    e.currentTarget.classList.remove("on"); editCtx=null;
   }
 });
 
