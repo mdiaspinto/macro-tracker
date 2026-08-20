@@ -202,10 +202,16 @@
   .sg-intro{font-size:12px;color:var(--muted);margin:0 0 14px}
   .sg-empty{text-align:center;padding:14px 6px 6px;color:var(--muted);font-size:14px;line-height:1.5}
   .sg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-  .sg-item{display:flex;align-items:center;gap:12px;padding:11px 13px;background:var(--panel-2);border-radius:11px}
-  .sg-item .sg-name{font-weight:600;font-size:14px}
-  .sg-item .sg-qty{font-size:12px;color:var(--muted)}
-  .sg-item .sg-mac{margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+  .sg-item{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:11px 13px;background:var(--panel-2);border-radius:11px}
+  .sg-item .sg-main{flex:1 1 150px;min-width:0}
+  .sg-item .sg-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .sg-item .sg-qty{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px}
+  .sg-checks{display:flex;flex-direction:column;gap:7px;flex:none;margin-left:auto}
+  .sg-checks label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;user-select:none;white-space:nowrap}
+  .sg-checks label.sg-off{color:var(--muted);cursor:default}
+  .sg-checks input{width:15px;height:15px;accent-color:var(--accent);flex:none}
+  .sg-checks input:disabled{cursor:default}
+  .badge.common{background:rgba(125,184,255,.15);color:var(--protein);border-color:transparent}
   .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:16px;font-size:13px}
   .sg-totals .row{display:flex;justify-content:space-between;gap:12px}
   .sg-totals .row span:first-child{color:var(--muted)}
@@ -524,7 +530,7 @@ const T = {
     targetsSaved:"Targets saved", addedUser:"Added {name}",
     suggestCta:"✨ Suggest foods to hit target",
     suggestTitle:"Suggested to hit your targets",
-    suggestIntro:"From your saved foods, excluding what you've already eaten today.",
+    suggestIntro:"Built from your foods plus common foods, to fill what's left today. Pick what to add.",
     noFoodsToSuggest:"You don't have any saved foods yet. Log a few foods and they'll show up here as suggestions.",
     addSomeFoods:"Add a food",
     targetsMet:"You've already hit today's targets 🎉",
@@ -541,7 +547,9 @@ const T = {
     editItem:"Edit item", editFood:"Edit food", saveChanges:"Save changes",
     markEaten:"Eaten (uncheck for what-if)", saved:"Saved ✓",
     unit_g:"grams (g)", unit_oz:"ounces (oz)", unit_cup:"cups", unit_tbsp:"tablespoons (tbsp)",
-    unit_tsp:"teaspoons (tsp)", unit_ml:"milliliters (ml)", unit_piece:"pieces", unit_serving:"servings"
+    unit_tsp:"teaspoons (tsp)", unit_ml:"milliliters (ml)", unit_piece:"pieces", unit_serving:"servings",
+    commonFood:"common", inMyFoods:"In My Foods", addToToday:"Add to today",
+    addSelected:"Add selected", nothingSelected:"Nothing selected"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -568,7 +576,7 @@ const T = {
     targetsSaved:"Objetivos guardados", addedUser:"Agregado {name}",
     suggestCta:"✨ Sugerir alimentos para el objetivo",
     suggestTitle:"Sugerencias para alcanzar tus objetivos",
-    suggestIntro:"De tus alimentos guardados, sin incluir lo que ya comiste hoy.",
+    suggestIntro:"Con tus alimentos y alimentos comunes, para completar lo que falta hoy. Elige qué agregar.",
     noFoodsToSuggest:"Todavía no tienes alimentos guardados. Registra algunos y aparecerán aquí como sugerencias.",
     addSomeFoods:"Agregar un alimento",
     targetsMet:"¡Ya alcanzaste los objetivos de hoy! 🎉",
@@ -585,7 +593,9 @@ const T = {
     editItem:"Editar elemento", editFood:"Editar alimento", saveChanges:"Guardar cambios",
     markEaten:"Comido (desmarca para simulación)", saved:"Guardado ✓",
     unit_g:"gramos (g)", unit_oz:"onzas (oz)", unit_cup:"tazas", unit_tbsp:"cucharadas",
-    unit_tsp:"cucharaditas", unit_ml:"mililitros (ml)", unit_piece:"piezas", unit_serving:"porciones"
+    unit_tsp:"cucharaditas", unit_ml:"mililitros (ml)", unit_piece:"piezas", unit_serving:"porciones",
+    commonFood:"común", inMyFoods:"En Mis alimentos", addToToday:"Agregar a hoy",
+    addSelected:"Agregar seleccionados", nothingSelected:"Nada seleccionado"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -606,6 +616,7 @@ function applyI18n(){
 let state = load();
 let curDate = todayStr();
 let editCtx = null; // {type:"meal", id} | {type:"food", name}
+let suggestPicks = []; // current suggestion rows shown in the modal
 
 function load(){
   try{
@@ -946,16 +957,47 @@ function saveTargets(){
 }
 
 /* ---------- Suggestions ---------- */
-// Greedily pick saved foods (and grams) to fill the day's remaining targets,
-// skipping foods already eaten today. Returns {picks:[{food,grams,add}], rem}.
+function sentenceCase(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+// Candidate pool for suggestions: your saved foods FIRST, then common foods
+// (the same built-in table the Estimate feature uses) that you haven't saved.
+// Listing yours first means ties are resolved in favour of your own foods.
+// Excludes anything already eaten today. Fully deterministic — no network.
+function suggestionCandidates(){
+  const eatenNames = new Set(dayMeals().filter(m=>m.eaten).map(m=>m.name.toLowerCase()));
+  const savedNames = new Set(user().foods.map(f=>f.name.toLowerCase()));
+  const mine = user().foods
+    .filter(f=> f.ref>0 && !eatenNames.has(f.name.toLowerCase()))
+    .map(f=>({ source:"mine",
+      food:{ name:f.name, p:f.p, c:f.c, f:f.f, ref:f.ref, unit:f.unit||"g" },
+      pg:{ p:f.p/f.ref, c:f.c/f.ref, f:f.f/f.ref } }));
+  // Pure sweeteners/oils are fine to look up but make silly standalone suggestions
+  // ("eat 240 g of sugar"), so keep them out of the suggestion pool.
+  const PURE_SKIP = new Set(["sugar","honey","olive oil","butter"]);
+  const seenSig = new Set();
+  const common = Object.keys(OFFLINE_FOODS)
+    .filter(name=> !savedNames.has(name) && !eatenNames.has(name) && !PURE_SKIP.has(name))
+    .filter(name=>{ // drop duplicate synonyms (same macros) — keep the first listed
+      const sig = OFFLINE_FOODS[name].join(",");
+      if(seenSig.has(sig)) return false;
+      seenSig.add(sig); return true;
+    })
+    .map(name=>{
+      const [p,c,f] = OFFLINE_FOODS[name];
+      return { source:"common",
+        food:{ name:sentenceCase(name), p, c, f, ref:100, unit:"g" },
+        pg:{ p:p/100, c:c/100, f:f/100 } };
+    });
+  return mine.concat(common); // yours first → ties go to your foods
+}
+
+// Greedily pick foods (and grams) to fill the day's remaining targets.
+// Returns {picks:[{food,grams,add,source}], rem}.
 function buildSuggestion(){
   const tg = targets();
   const e = consumed(false); // real eaten
   let rem = { p:Math.max(0,tg.p-e.p), c:Math.max(0,tg.c-e.c), f:Math.max(0,tg.f-e.f) };
-  const eatenNames = new Set(dayMeals().filter(m=>m.eaten).map(m=>m.name.toLowerCase()));
-  const cands = user().foods
-    .filter(f=> f.ref>0 && !eatenNames.has(f.name.toLowerCase()))
-    .map(f=>({ f, pg:{ p:f.p/f.ref, c:f.c/f.ref, f:f.f/f.ref } }));
+  const cands = suggestionCandidates();
   const picks = [];
   const used = new Set();
   const TOL = 5; // grams within target counts as "met"
@@ -966,8 +1008,9 @@ function buildSuggestion(){
     let placed = false;
     for(const [m] of macros){
       if(rem[m]<=TOL) continue;
+      // Strict '>' with your-foods-first ordering keeps ties on your own foods.
       let best=null, bestv=0;
-      for(const c of cands){ if(used.has(c.f.name)) continue; const v=c.pg[m]; if(v>bestv){bestv=v; best=c;} }
+      for(const c of cands){ if(used.has(c.food.name)) continue; const v=c.pg[m]; if(v>bestv){bestv=v; best=c;} }
       if(!best || bestv<=0) continue;
       let q = rem[m]/bestv; // grams to fill this macro
       // don't overshoot the other macros by more than ~30% (+ a small grams buffer)
@@ -976,11 +1019,11 @@ function buildSuggestion(){
         if(k!==m && pg>0){ const cap=(rem[k]*1.3 + 8)/pg; q=Math.min(q, cap); }
       });
       q = Math.round(q/5)*5;
-      if(q<=0){ used.add(best.f.name); continue; }
+      if(q<=0){ used.add(best.food.name); continue; }
       const add = { p:best.pg.p*q, c:best.pg.c*q, f:best.pg.f*q };
-      picks.push({ food:best.f, grams:q, add });
+      picks.push({ food:best.food, grams:q, add, source:best.source });
       rem.p=Math.max(0,rem.p-add.p); rem.c=Math.max(0,rem.c-add.c); rem.f=Math.max(0,rem.f-add.f);
-      used.add(best.f.name);
+      used.add(best.food.name);
       placed=true; break;
     }
     if(!placed) break;
@@ -993,26 +1036,33 @@ function openSuggest(){
 }
 function renderSuggest(){
   const body = document.getElementById("suggestBody");
-  // No saved foods at all → encourage adding some.
-  if(!user().foods.length){
-    body.innerHTML = `<div class="sg-empty">${t("noFoodsToSuggest")}</div>
-      <div class="sg-actions"><button class="btn btn-primary" id="sgAddFood">${t("addSomeFoods")}</button></div>`;
-    return;
-  }
   const tg = targets(), e = consumed(false);
   const already = (tg.p-e.p)<=5 && (tg.c-e.c)<=5 && (tg.f-e.f)<=5;
-  if(already){ body.innerHTML = `<div class="sg-empty">${t("targetsMet")}</div>`; return; }
+  if(already){ suggestPicks=[]; body.innerHTML = `<div class="sg-empty">${t("targetsMet")}</div>`; return; }
   const {picks, rem} = buildSuggestion();
+  suggestPicks = picks;
   if(!picks.length){ body.innerHTML = `<div class="sg-empty">${t("noGoodSuggestion")}</div>`; return; }
   const tot = picks.reduce((a,p)=>({p:a.p+p.add.p,c:a.c+p.add.c,f:a.f+p.add.f}),{p:0,c:0,f:0});
-  const items = picks.map(p=>`
+  const items = picks.map((p,i)=>{
+    const isMine = p.source==="mine";
+    const badge = isMine ? "" : `<span class="badge common">${t("commonFood")}</span>`;
+    // "Save to My Foods" is meaningless for foods you already have → show it as a
+    // disabled, ticked box that reads "In My Foods".
+    const saveBox = isMine
+      ? `<label class="sg-off"><input type="checkbox" class="sg-save" data-i="${i}" checked disabled> ${t("inMyFoods")}</label>`
+      : `<label><input type="checkbox" class="sg-save" data-i="${i}" checked> ${t("saveToFoods")}</label>`;
+    return `
     <div class="sg-item">
-      <div>
-        <div class="sg-name">${escapeHtml(p.food.name)}</div>
-        <div class="sg-qty">${round(p.grams)}${unitShort(p.food.unit)}</div>
+      <div class="sg-main">
+        <div class="sg-name">${escapeHtml(p.food.name)} ${badge}</div>
+        <div class="sg-qty">${round(p.grams)}${unitShort(p.food.unit)} · <span class="m-p">${round(p.add.p)}P</span> <span class="m-c">${round(p.add.c)}C</span> <span class="m-f">${round(p.add.f)}F</span></div>
       </div>
-      <div class="sg-mac"><span class="m-p">${round(p.add.p)}P</span> <span class="m-c">${round(p.add.c)}C</span> <span class="m-f">${round(p.add.f)}F</span></div>
-    </div>`).join("");
+      <div class="sg-checks">
+        <label><input type="checkbox" class="sg-today" data-i="${i}" checked> ${t("addToToday")}</label>
+        ${saveBox}
+      </div>
+    </div>`;
+  }).join("");
   body.innerHTML = `
     <p class="sg-intro">${t("suggestIntro")}</p>
     <div class="sg-list">${items}</div>
@@ -1021,17 +1071,32 @@ function renderSuggest(){
       <div class="row"><span>${t("stillLeft")}</span><span class="v">${round(rem.p)}P · ${round(rem.c)}C · ${round(rem.f)}F</span></div>
     </div>
     <div class="sg-actions">
-      <button class="btn btn-primary" id="sgAddWhatif">${t("addAllWhatif")}</button>
-      <button class="btn btn-ghost" id="sgAddEaten">${t("addAllEaten")}</button>
+      <button class="btn btn-primary" id="sgApply">${t("addSelected")}</button>
     </div>`;
 }
-function addAllSuggested(eaten){
-  const {picks} = buildSuggestion();
-  if(!picks.length) return;
-  picks.forEach(p=>{
-    dayMeals().push({ id:uid(), name:p.food.name, p:p.food.p, c:p.food.c, f:p.food.f,
-      ref:p.food.ref, qty:p.grams, unit:p.food.unit||"g", ap:p.add.p, ac:p.add.c, af:p.add.f, eaten });
+// Apply the per-row choices: "Add to today" logs the food as a what-if for the day;
+// "Save to My Foods" writes it into the library. The two are independent.
+function applySuggestion(){
+  if(!suggestPicks.length) return;
+  let added=0, saved=0;
+  suggestPicks.forEach((p,i)=>{
+    const today = document.querySelector(`.sg-today[data-i="${i}"]`);
+    const saveb = document.querySelector(`.sg-save[data-i="${i}"]`);
+    if(today && today.checked){
+      dayMeals().push({ id:uid(), name:p.food.name, p:p.food.p, c:p.food.c, f:p.food.f,
+        ref:p.food.ref, qty:p.grams, unit:p.food.unit||"g",
+        ap:p.add.p, ac:p.add.c, af:p.add.f, eaten:false });
+      added++;
+    }
+    if(saveb && saveb.checked && !saveb.disabled){
+      const foods=user().foods;
+      const idx=foods.findIndex(x=>x.name.toLowerCase()===p.food.name.toLowerCase());
+      const entry={ name:p.food.name, p:p.food.p, c:p.food.c, f:p.food.f, ref:p.food.ref, unit:p.food.unit||"g" };
+      if(idx>=0) foods[idx]=entry; else foods.push(entry);
+      saved++;
+    }
   });
+  if(!added && !saved){ toast(t("nothingSelected")); return; }
   save(); renderAll();
   document.getElementById("suggestOverlay").classList.remove("on");
   toast(t("suggestionAdded"));
@@ -1264,13 +1329,7 @@ document.getElementById("suggestOverlay").addEventListener("click",e=>{
     e.currentTarget.classList.remove("on");
 });
 document.getElementById("suggestBody").addEventListener("click",e=>{
-  if(e.target.closest("#sgAddWhatif")) addAllSuggested(false);
-  else if(e.target.closest("#sgAddEaten")) addAllSuggested(true);
-  else if(e.target.closest("#sgAddFood")){
-    document.getElementById("suggestOverlay").classList.remove("on");
-    document.getElementById("fName").focus();
-    window.scrollTo({top:0,behavior:"smooth"});
-  }
+  if(e.target.closest("#sgApply")) applySuggestion();
 });
 
 // Edit modal
