@@ -549,7 +549,8 @@ const T = {
     unit_g:"grams (g)", unit_oz:"ounces (oz)", unit_cup:"cups", unit_tbsp:"tablespoons (tbsp)",
     unit_tsp:"teaspoons (tsp)", unit_ml:"milliliters (ml)", unit_piece:"pieces", unit_serving:"servings",
     commonFood:"common", inMyFoods:"In My Foods", addToToday:"Add to today",
-    addSelected:"Add selected", nothingSelected:"Nothing selected"
+    addSelected:"Add selected", nothingSelected:"Nothing selected",
+    offTarget:"Off target (− = over)"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -595,7 +596,8 @@ const T = {
     unit_g:"gramos (g)", unit_oz:"onzas (oz)", unit_cup:"tazas", unit_tbsp:"cucharadas",
     unit_tsp:"cucharaditas", unit_ml:"mililitros (ml)", unit_piece:"piezas", unit_serving:"porciones",
     commonFood:"común", inMyFoods:"En Mis alimentos", addToToday:"Agregar a hoy",
-    addSelected:"Agregar seleccionados", nothingSelected:"Nada seleccionado"
+    addSelected:"Agregar seleccionados", nothingSelected:"Nada seleccionado",
+    offTarget:"Fuera de objetivo (− = de más)"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -991,43 +993,85 @@ function suggestionCandidates(){
   return mine.concat(common); // yours first → ties go to your foods
 }
 
-// Greedily pick foods (and grams) to fill the day's remaining targets.
-// Returns {picks:[{food,grams,add,source}], rem}.
+/* Suggestion tuning */
+const PORTION_CAP_MULT   = 3;    // max portion of any one food = 3× its reference amount
+const SUGGEST_MAX_ITEMS  = 5;    // never propose more than this many ingredients
+const SUGGEST_MIN_IMPROVE= 0.04; // a new ingredient must cut the normalized error by this much
+
+// Build the smallest capped-portion ingredient list that lands CLOSEST to the day's
+// remaining macros. Distance is normalized per macro and penalizes overshoot and
+// undershoot equally, so the plan no longer chases zeros at the cost of going over.
+// Returns {picks:[{food,grams,add,source}], rem} where rem is signed (– = overshoot).
 function buildSuggestion(){
   const tg = targets();
-  const e = consumed(false); // real eaten
-  let rem = { p:Math.max(0,tg.p-e.p), c:Math.max(0,tg.c-e.c), f:Math.max(0,tg.f-e.f) };
-  const cands = suggestionCandidates();
-  const picks = [];
-  const used = new Set();
-  const TOL = 5; // grams within target counts as "met"
-  for(let step=0; step<6; step++){
-    if(rem.p<=TOL && rem.c<=TOL && rem.f<=TOL) break;
-    // target the macro with the largest remaining gap
-    const macros = [["p",rem.p],["c",rem.c],["f",rem.f]].sort((a,b)=>b[1]-a[1]);
-    let placed = false;
-    for(const [m] of macros){
-      if(rem[m]<=TOL) continue;
-      // Strict '>' with your-foods-first ordering keeps ties on your own foods.
-      let best=null, bestv=0;
-      for(const c of cands){ if(used.has(c.food.name)) continue; const v=c.pg[m]; if(v>bestv){bestv=v; best=c;} }
-      if(!best || bestv<=0) continue;
-      let q = rem[m]/bestv; // grams to fill this macro
-      // don't overshoot the other macros by more than ~30% (+ a small grams buffer)
-      ["p","c","f"].forEach(k=>{
-        const pg=best.pg[k];
-        if(k!==m && pg>0){ const cap=(rem[k]*1.3 + 8)/pg; q=Math.min(q, cap); }
-      });
-      q = Math.round(q/5)*5;
-      if(q<=0){ used.add(best.food.name); continue; }
-      const add = { p:best.pg.p*q, c:best.pg.c*q, f:best.pg.f*q };
-      picks.push({ food:best.food, grams:q, add, source:best.source });
-      rem.p=Math.max(0,rem.p-add.p); rem.c=Math.max(0,rem.c-add.c); rem.f=Math.max(0,rem.f-add.f);
-      used.add(best.food.name);
-      placed=true; break;
+  const e = consumed(false);                 // real eaten so far today
+  const need = { p:tg.p-e.p, c:tg.c-e.c, f:tg.f-e.f };   // may be negative if already over
+  const base = { p:Math.max(1,tg.p), c:Math.max(1,tg.c), f:Math.max(1,tg.f) };
+  const w2 = { p:1/base.p**2, c:1/base.c**2, f:1/base.f**2 };
+  const cands = suggestionCandidates();      // your foods first, then common foods
+
+  // Normalized distance of a plan total `v` from `need` (0 = perfect).
+  const score = v => Math.sqrt((
+    ((v.p-need.p)/base.p)**2 +
+    ((v.c-need.c)/base.c)**2 +
+    ((v.f-need.f)/base.f)**2 ) / 3);
+
+  const totalOf = items => items.reduce((a,it)=>(
+    { p:a.p+it.c.pg.p*it.q, c:a.c+it.c.pg.c*it.q, f:a.f+it.c.pg.f*it.q }), {p:0,c:0,f:0});
+
+  // Optimal portion of one food given everything ELSE already in the plan — the q
+  // (capped & rounded) minimizing the weighted squared error. Closed form.
+  const optQty = (c, others) => {
+    let num=0, den=0;
+    for(const m of ["p","c","f"]){
+      num += w2[m] * c.pg[m] * (need[m]-others[m]);
+      den += w2[m] * c.pg[m] * c.pg[m];
     }
-    if(!placed) break;
+    if(den<=0) return 0;
+    const cap = PORTION_CAP_MULT * c.food.ref;
+    let q = Math.max(0, Math.min(cap, num/den));
+    const step = (c.food.unit==="g"||c.food.unit==="ml") ? 5 : 0.25;
+    return Math.min(Math.round(q/step)*step, cap);
+  };
+
+  // Jointly refine the portions of a fixed food set (coordinate descent). This lets an
+  // earlier food SHRINK when a complementary one joins, so the plan stops overshooting.
+  const refine = items => {
+    for(let iter=0; iter<8; iter++){
+      let changed=false;
+      for(const it of items){
+        const nq = optQty(it.c, totalOf(items.filter(x=>x!==it)));
+        if(nq!==it.q){ it.q=nq; changed=true; }
+      }
+      if(!changed) break;
+    }
+    return items.filter(it=>it.q>0);
+  };
+
+  // Greedily grow the set by the food that (after re-optimizing all portions) lands
+  // closest, stopping once another ingredient no longer earns its place.
+  let chosen = [];
+  let curScore = score({p:0,c:0,f:0});
+  for(let step=0; step<SUGGEST_MAX_ITEMS; step++){
+    let best=null;
+    for(const c of cands){
+      if(chosen.some(it=>it.c.food.name===c.food.name)) continue;
+      let trial = refine(chosen.map(it=>({c:it.c,q:it.q})).concat([{c,q:0}]));
+      if(!trial.some(it=>it.c.food.name===c.food.name)) continue; // new food refined away
+      const s = score(totalOf(trial));
+      // strict '<' keeps the earlier (your-foods-first) candidate on ties
+      if(best===null || s < best.s) best = { trial, s };
+    }
+    if(!best) break;
+    if(curScore - best.s < SUGGEST_MIN_IMPROVE) break;  // not worth another ingredient
+    chosen = best.trial;
+    curScore = best.s;
   }
+
+  const total = totalOf(chosen);
+  const picks = chosen.map(it=>({ food:it.c.food, grams:it.q, source:it.c.source,
+    add:{ p:it.c.pg.p*it.q, c:it.c.pg.c*it.q, f:it.c.pg.f*it.q } }));
+  const rem = { p:need.p-total.p, c:need.c-total.c, f:need.f-total.f };
   return { picks, rem };
 }
 function openSuggest(){
@@ -1068,7 +1112,7 @@ function renderSuggest(){
     <div class="sg-list">${items}</div>
     <div class="sg-totals">
       <div class="row"><span>${t("planAdds")}</span><span class="v"><span class="m-p">${round(tot.p)}P</span> · <span class="m-c">${round(tot.c)}C</span> · <span class="m-f">${round(tot.f)}F</span> · <span class="m-cal">${round(CAL(tot.p,tot.c,tot.f))} kcal</span></span></div>
-      <div class="row"><span>${t("stillLeft")}</span><span class="v">${round(rem.p)}P · ${round(rem.c)}C · ${round(rem.f)}F</span></div>
+      <div class="row"><span>${t("offTarget")}</span><span class="v">${round(rem.p)}P · ${round(rem.c)}C · ${round(rem.f)}F</span></div>
     </div>
     <div class="sg-actions">
       <button class="btn btn-primary" id="sgApply">${t("addSelected")}</button>
