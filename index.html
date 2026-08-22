@@ -236,6 +236,10 @@
     border-radius:9px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
     transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
   .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
+  .chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+  .chart-legend .lg{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  .chart-legend .lg .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .chart-legend .lg b{color:var(--text);font-weight:600}
   .weight-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
   .weight-form .field{gap:6px}
   .weight-form input{color-scheme:dark}
@@ -390,6 +394,14 @@
       <div class="body">
         <div class="chart-stats" id="calStats"></div>
         <div class="chart-wrap" id="calChart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="head"><h2 data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
+      <div class="body">
+        <div class="chart-legend" id="macroLegend"></div>
+        <div class="chart-wrap" id="macroChart"></div>
       </div>
     </div>
 
@@ -683,6 +695,7 @@ const T = {
     signedInAs:"Signed in as {name}", logout:"Log out", checking:"Checking…",
     tabTracker:"Tracker", tabMetrics:"Metrics",
     metricsCalTitle:"Calorie intake", metricsCalHint:"Calories eaten per day",
+    metricsMacroTitle:"Macros", metricsMacroHint:"Protein, carbs & fat eaten per day",
     metricsWeightTitle:"Weight", metricsWeightHint:"Log your weight to track it over time",
     weightDate:"Date", weightLabel:"Weight", logWeightBtn:"Log weight",
     unitKg:"kg", unitLb:"lb",
@@ -749,6 +762,7 @@ const T = {
     signedInAs:"Sesión de {name}", logout:"Cerrar sesión", checking:"Comprobando…",
     tabTracker:"Registro", tabMetrics:"Métricas",
     metricsCalTitle:"Consumo de calorías", metricsCalHint:"Calorías consumidas por día",
+    metricsMacroTitle:"Macros", metricsMacroHint:"Proteína, carbohidratos y grasa por día",
     metricsWeightTitle:"Peso", metricsWeightHint:"Registra tu peso para seguirlo con el tiempo",
     weightDate:"Fecha", weightLabel:"Peso", logWeightBtn:"Registrar peso",
     unitKg:"kg", unitLb:"lb",
@@ -1503,14 +1517,35 @@ function weightSeries(){
   pts.sort((a,b)=> a.date<b.date ? -1 : 1);
   return pts;
 }
+// Protein / carbs / fat eaten per day — three aligned series over the same dates.
+function macroSeries(){
+  const days=user().days||{};
+  const dates=Object.keys(days).filter(d=> dayEatenCalories(days[d])>0).sort((a,b)=> a<b ? -1 : 1);
+  const build=key=> dates.map(d=>{ let s=0; days[d].forEach(m=>{ if(m.eaten) s+=m[key]; }); return {date:d, value:s}; });
+  return [
+    {key:"p", label:t("protein"), short:"P", color:"#7db8ff", points:build("ap")},
+    {key:"c", label:t("carbs"),   short:"C", color:"#4ade80", points:build("ac")},
+    {key:"f", label:t("fat"),     short:(lang()==="es"?"G":"F"), color:"#fbbf24", points:build("af")},
+  ];
+}
 
 /* ---- render metrics ---- */
 function renderMetrics(){
   document.getElementById("wUnit").value = weightUnit();
   if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
   renderCalChart();
+  renderMacroChart();
   renderWeightChart();
   renderRecentWeights();
+}
+function renderMacroChart(){
+  const series=macroSeries();
+  const legend=document.getElementById("macroLegend");
+  const el=document.getElementById("macroChart");
+  if(!series.some(s=>s.points.length)){ legend.innerHTML=""; drawMultiLineChart(el, series, {empty:t("noCalData")}); return; }
+  legend.innerHTML = series.map(s=>
+    `<span class="lg"><span class="sw" style="background:${s.color}"></span><b>${escapeHtml(s.label)}</b></span>`).join("");
+  drawMultiLineChart(el, series, { ytick:v=>round(v), unit:"g" });
 }
 function renderCalChart(){
   const pts=calorieSeries();
@@ -1678,6 +1713,98 @@ function drawLineChart(container, points, opts){
   svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); cxDot.setAttribute("opacity","0"); });
 }
 
+/* ---- multi-series line chart (macros: protein / carbs / fat) ---- */
+function drawMultiLineChart(container, series, opts){
+  opts=opts||{};
+  const active=series.filter(s=>s.points && s.points.length);
+  if(!active.length){
+    container.innerHTML=`<div class="chart-empty">${escapeHtml(opts.empty||"")}</div>`;
+    return;
+  }
+  const W=Math.max(260, Math.round(container.clientWidth || container.getBoundingClientRect().width || 320));
+  const H=240, padL=46, padR=34, padT=16, padB=26;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+
+  const allDates=[...new Set(active.flatMap(s=>s.points.map(p=>p.date)))].sort((a,b)=> a<b ? -1 : 1);
+  const times=allDates.map(dateToNum);
+  const minT=Math.min(...times), maxT=Math.max(...times);
+  const vals=active.flatMap(s=>s.points.map(p=>p.value));
+  let minV=Math.min(0, ...vals), maxV=Math.max(...vals);   // macros read best from a 0 baseline
+  if(minV===maxV){ maxV=minV+1; } else { maxV += (maxV-minV)*0.12; }
+  const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
+  const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
+
+  const ticks=(function(min,max,n){
+    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
+    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
+  })(minV,maxV,4);
+
+  let g="";
+  ticks.forEach(v=>{
+    const y=yOf(v);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
+  });
+  const xIdx=(function(n){
+    if(n<=1) return [0];
+    if(n<=4) return allDates.map((_,i)=>i);
+    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
+  })(allDates.length);
+  xIdx.forEach(i=>{
+    const x=xOf(times[i]);
+    const anchor = i===0 ? "start" : i===allDates.length-1 ? "end" : "middle";
+    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(allDates[i]))}</text>`;
+  });
+  // one polyline + dots + a direct end-label per series
+  const perSeries=active.map(s=>{
+    const coords=s.points.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
+    if(coords.length>1)
+      g+=`<polyline points="${coords.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if(coords.length<=45) coords.forEach(c=> g+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.3" fill="${s.color}"/>`);
+    const last=coords[coords.length-1];
+    g+=`<text x="${Math.min(W-2,last[0]+6).toFixed(1)}" y="${(last[1]+4).toFixed(1)}" style="fill:${s.color};font-size:11px;font-weight:700">${escapeHtml(s.short)}</text>`;
+    const map={}; s.points.forEach((p,i)=> map[p.date]=coords[i]);
+    return {s, map};
+  });
+  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" stroke="rgba(255,255,255,.28)" stroke-width="1" opacity="0"/>`;
+  active.forEach((s,i)=> g+=`<circle class="cx-dot cx-dot-${i}" r="4.5" fill="${s.color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`);
+  g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="chart">${g}</svg><div class="chart-tip"></div>`;
+
+  const svg=container.querySelector("svg"), tip=container.querySelector(".chart-tip");
+  const cxLine=svg.querySelector(".cx-line"), hit=svg.querySelector(".cx-hit");
+  const dots=active.map((s,i)=> svg.querySelector(".cx-dot-"+i));
+  const xsByDate=allDates.map(d=>xOf(dateToNum(d)));
+  function onMove(ev){
+    const rect=svg.getBoundingClientRect();
+    const sx=(ev.clientX-rect.left)*(W/rect.width);
+    let bi=0, bd=Infinity;
+    xsByDate.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
+    const date=allDates[bi], px=xsByDate[bi];
+    cxLine.setAttribute("x1",px); cxLine.setAttribute("x2",px); cxLine.setAttribute("opacity","1");
+    let topY=Infinity, rows="";
+    perSeries.forEach((ps,i)=>{
+      const c=ps.map[date];
+      if(c){
+        dots[i].setAttribute("cx",c[0]); dots[i].setAttribute("cy",c[1]); dots[i].setAttribute("opacity","1");
+        topY=Math.min(topY, c[1]);
+        const pt=ps.s.points.find(p=>p.date===date);
+        rows+=`<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${ps.s.color};display:inline-block"></span>${escapeHtml(ps.s.label)}: <b>${round(pt.value)}${opts.unit||""}</b></div>`;
+      } else { dots[i].setAttribute("opacity","0"); }
+    });
+    if(!isFinite(topY)) topY=padT;
+    tip.style.left = (px*(rect.width/W)) + "px";
+    tip.style.top  = (topY*(rect.height/H)) + "px";
+    tip.style.opacity="1";
+    tip.innerHTML = `<div style="color:var(--muted);font-size:11px;margin-bottom:2px">${escapeHtml(fmtAxisDate(date))}</div>${rows}`;
+  }
+  hit.addEventListener("pointermove",onMove);
+  hit.addEventListener("pointerdown",onMove);
+  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); dots.forEach(d=>d.setAttribute("opacity","0")); });
+}
+
 /* ---------- Events ---------- */
 document.getElementById("tabs").addEventListener("click",e=>{
   const b=e.target.closest("[data-tab]"); if(b) switchTab(b.dataset.tab);
@@ -1697,7 +1824,7 @@ let metricsResizeTimer;
 window.addEventListener("resize",()=>{
   if(curTab!=="metrics") return;
   clearTimeout(metricsResizeTimer);
-  metricsResizeTimer=setTimeout(()=>{ renderCalChart(); renderWeightChart(); },150);
+  metricsResizeTimer=setTimeout(()=>{ renderCalChart(); renderMacroChart(); renderWeightChart(); },150);
 });
 
 ["fName","fP","fC","fF","fRef","fQty"].forEach(id=>
