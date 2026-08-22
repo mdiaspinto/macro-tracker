@@ -219,6 +219,21 @@
   .sg-actions{display:flex;gap:10px;flex-wrap:wrap}
   .sg-actions .btn{flex:1;justify-content:center;min-width:130px}
 
+  /* ---------- Auth gate ---------- */
+  #authOverlay{z-index:70;background:rgba(0,0,0,.85)}
+  .auth-modal{max-width:400px}
+  .auth-modal .body{padding:24px}
+  .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .auth-brand .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#e0a92f);display:grid;place-items:center;color:var(--accent-ink);font-weight:800;font-size:20px}
+  .auth-brand h3{font-size:18px}
+  .auth-intro{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+  .auth-modal .actions .btn{flex:1;justify-content:center}
+  .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
+  .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--faint);font-size:12px;text-decoration:underline}
+  .auth-offline:hover{color:var(--muted)}
+  .account-bar{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:14px}
+  .account-bar .acc-who{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .account-bar .acc-who b{color:var(--accent)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -333,6 +348,10 @@
   <div class="modal">
     <div class="head"><h3 data-i18n="usersTargets">Users & targets</h3><button class="x" data-close>×</button></div>
     <div class="body">
+      <div class="account-bar" id="accountBar" style="display:none">
+        <span class="acc-who" id="accWho"></span>
+        <button class="sw" id="logoutBtn" data-i18n="logout">Log out</button>
+      </div>
       <div class="user-list" id="userList"></div>
       <div class="addnew">
         <input id="newUserName" data-i18n-ph="newUserName" placeholder="New user name">
@@ -347,6 +366,26 @@
       <p style="font-size:12px;color:var(--muted);margin:0 0 4px" data-i18n="dailyGoals">Daily gram goals for each mode.</p>
       <div class="targets-grid" id="targetsGrid"></div>
       <button class="btn btn-primary full" id="saveTargets" style="margin-top:16px" data-i18n="saveTargets">Save targets</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth / account gate -->
+<div class="overlay" id="authOverlay">
+  <div class="modal auth-modal">
+    <div class="body">
+      <div class="auth-brand"><div class="logo">M</div><h3 data-i18n="authTitle">Log in to sync</h3></div>
+      <p class="auth-intro" data-i18n="authIntro">Enter a username to sync your logs across your devices.</p>
+      <div class="field">
+        <label data-i18n="authUsername">Username</label>
+        <input id="authInput" autocomplete="off" autocapitalize="none" spellcheck="false" data-i18n-ph="authUsernamePh" placeholder="e.g. martin">
+      </div>
+      <div class="auth-error" id="authError"></div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn btn-primary" id="authLoginBtn" data-i18n="authLogin">Log in</button>
+        <button class="btn btn-ghost" id="authCreateBtn" data-i18n="authCreate">Create account</button>
+      </div>
+      <button class="auth-offline" id="authOfflineBtn" data-i18n="authContinueOffline">Continue offline</button>
     </div>
   </div>
 </div>
@@ -550,7 +589,16 @@ const T = {
     unit_tsp:"teaspoons (tsp)", unit_ml:"milliliters (ml)", unit_piece:"pieces", unit_serving:"servings",
     commonFood:"common", inMyFoods:"In My Foods", addToToday:"Add to today",
     addSelected:"Add selected", nothingSelected:"Nothing selected",
-    offTarget:"Off target (− = over)"
+    offTarget:"Off target (− = over)",
+    authTitle:"Log in to sync", authIntro:"Enter a username to sync your logs across your devices.",
+    authUsername:"Username", authUsernamePh:"e.g. martin",
+    authLogin:"Log in", authCreate:"Create account", authContinueOffline:"Continue offline",
+    authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
+    authNoAccount:"No account with that username — create one.",
+    authNet:"Network error. Check your connection and try again.",
+    authCreated:"Account created — syncing ✓", authWelcome:"Welcome back, {name} ✓",
+    authOffline:"Continuing offline — changes won't sync",
+    signedInAs:"Signed in as {name}", logout:"Log out", checking:"Checking…"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -597,7 +645,16 @@ const T = {
     unit_tsp:"cucharaditas", unit_ml:"mililitros (ml)", unit_piece:"piezas", unit_serving:"porciones",
     commonFood:"común", inMyFoods:"En Mis alimentos", addToToday:"Agregar a hoy",
     addSelected:"Agregar seleccionados", nothingSelected:"Nada seleccionado",
-    offTarget:"Fuera de objetivo (− = de más)"
+    offTarget:"Fuera de objetivo (− = de más)",
+    authTitle:"Inicia sesión para sincronizar", authIntro:"Ingresa un usuario para sincronizar tus registros entre tus dispositivos.",
+    authUsername:"Usuario", authUsernamePh:"p. ej. martin",
+    authLogin:"Iniciar sesión", authCreate:"Crear cuenta", authContinueOffline:"Continuar sin conexión",
+    authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
+    authNoAccount:"No existe ese usuario — crea una cuenta.",
+    authNet:"Error de red. Revisa tu conexión e inténtalo de nuevo.",
+    authCreated:"Cuenta creada — sincronizando ✓", authWelcome:"Bienvenido de nuevo, {name} ✓",
+    authOffline:"Continuando sin conexión — los cambios no se sincronizan",
+    signedInAs:"Sesión de {name}", logout:"Cerrar sesión", checking:"Comprobando…"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -664,7 +721,7 @@ function load(){
   const users = initialUsers();
   return { users, activeId:users[0].id, migrations:{clearedSeedFoods:true, setupProfiles:true, fixProfileTargets:true} };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); scheduleCloudSync(); }
 function user(){ return state.users.find(u=>u.id===state.activeId) || state.users[0]; }
 function targets(){ return user().targets[user().goal]; }
 function dayMeals(){ const u=user(); if(!u.days[curDate]) u.days[curDate]=[]; return u.days[curDate]; }
@@ -919,6 +976,7 @@ function quickUse(name){
 function openUsers(){
   renderUserList();
   renderTargets();
+  updateAccountUI();
   document.getElementById("usersOverlay").classList.add("on");
 }
 function renderUserList(){
@@ -1388,9 +1446,157 @@ document.getElementById("editOverlay").addEventListener("click",e=>{
   }
 });
 
+/* ========================================================================
+   Account system (optional cloud sync via Firebase Realtime Database REST).
+   Stays completely inactive until FIREBASE.databaseURL is filled in — the
+   app then works exactly as the local-only version it is today.
+   ======================================================================== */
+const FIREBASE = {
+  // Paste your Realtime Database URL here to turn on cross-device sync, e.g.
+  // "https://macro-tracker-xxxx-default-rtdb.firebaseio.com"
+  databaseURL: "https://macro-tracker-d8908-default-rtdb.firebaseio.com"
+};
+const SESSION_KEY = "macroTracker.session";
+let session = (()=>{ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||"null"); }catch(e){ return null; } })();
+let cloudTimer = null;
+let focusHooked = false;
+
+function cloudEnabled(){ return !!(FIREBASE.databaseURL && FIREBASE.databaseURL.trim()); }
+function normUser(u){ return String(u||"").trim().toLowerCase(); }
+function validUser(u){ return /^[a-z0-9_]{2,20}$/i.test(String(u||"").trim()); }
+function accountsUrl(u){ return FIREBASE.databaseURL.replace(/\/+$/,"") + "/accounts/" + encodeURIComponent(normUser(u)) + ".json"; }
+async function cloudGet(u){ const r=await fetch(accountsUrl(u),{cache:"no-store"}); if(!r.ok) throw new Error("net"); return await r.json(); }
+async function cloudPut(u,payload){
+  const r=await fetch(accountsUrl(u),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  if(!r.ok) throw new Error("net");
+}
+function payloadOf(){ return { username: session && session.username, state, updatedAt: Date.now() }; }
+
+/* ---- merge two app states (union of foods & day-logs so nothing is lost) ---- */
+function unionFoods(a,b){
+  const out=[], seen=new Set();
+  [...(a||[]),...(b||[])].forEach(f=>{ const k=(f&&f.name||"").toLowerCase(); if(k && !seen.has(k)){ seen.add(k); out.push(f); } });
+  return out;
+}
+function unionDays(a,b){
+  const out={}, dates=new Set([...Object.keys(a||{}),...Object.keys(b||{})]);
+  dates.forEach(d=>{
+    const meals=[], ids=new Set();
+    [...((a||{})[d]||[]),...((b||{})[d]||[])].forEach(m=>{ if(m && m.id && !ids.has(m.id)){ ids.add(m.id); meals.push(m); } });
+    out[d]=meals;
+  });
+  return out;
+}
+function mergeUser(primary,secondary){
+  return Object.assign({}, secondary, primary, {
+    foods: unionFoods(primary.foods, secondary.foods),
+    days:  unionDays(primary.days,  secondary.days)
+  });
+}
+// `primary` wins on scalar conflicts (targets/goal/lang); collections are unioned.
+function mergeState(primary,secondary){
+  if(!secondary || !secondary.users || !secondary.users.length) return primary;
+  if(!primary   || !primary.users   || !primary.users.length)   return secondary;
+  const byName={}, order=[];
+  primary.users.forEach(u=>{ const k=u.name.toLowerCase(); byName[k]=u; order.push(k); });
+  secondary.users.forEach(u=>{ const k=u.name.toLowerCase();
+    if(byName[k]) byName[k]=mergeUser(byName[k],u); else { byName[k]=u; order.push(k); } });
+  const users=order.map(k=>byName[k]);
+  let activeId=primary.activeId;
+  if(!users.find(u=>u.id===activeId)) activeId=users[0] && users[0].id;
+  const migrations=Object.assign({}, secondary.migrations, primary.migrations);
+  return { users, activeId, migrations };
+}
+
+/* ---- background sync ---- */
+function scheduleCloudSync(){
+  if(!cloudEnabled() || !session) return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>{ cloudPut(session.username, payloadOf()).catch(()=>{}); }, 1500);
+}
+async function pullRemote(){
+  if(!cloudEnabled() || !session) return;
+  try{
+    const remote=await cloudGet(session.username);
+    if(remote && remote.state){
+      state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
+      localStorage.setItem(KEY, JSON.stringify(state));
+      renderAll();
+    }
+  }catch(e){}
+}
+
+/* ---- auth UI ---- */
+function authEl(id){ return document.getElementById(id); }
+function openAuth(){ authEl("authError").textContent=""; authEl("authOverlay").classList.add("on"); setTimeout(()=>authEl("authInput").focus(),50); }
+function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
+function authError(msg){ authEl("authError").textContent=msg; }
+function authBusy(on){
+  ["authLoginBtn","authCreateBtn","authInput"].forEach(id=>authEl(id).disabled=on);
+  authEl("authLoginBtn").textContent = on ? t("checking") : t("authLogin");
+}
+async function doCreate(){
+  const u=authEl("authInput").value.trim();
+  if(!validUser(u)){ authError(t("authBadName")); return; }
+  authBusy(true);
+  try{
+    const existing=await cloudGet(u);
+    if(existing){ authError(t("authTaken")); authBusy(false); return; }
+    session={username:u}; localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    await cloudPut(u, payloadOf());   // current device data seeds the new account
+    authBusy(false); startApp(); toast(t("authCreated",{name:u}));
+  }catch(e){ authError(t("authNet")); authBusy(false); }
+}
+async function doLogin(){
+  const u=authEl("authInput").value.trim();
+  if(!validUser(u)){ authError(t("authBadName")); return; }
+  authBusy(true);
+  try{
+    const remote=await cloudGet(u);
+    if(!remote || !remote.state){ authError(t("authNoAccount")); authBusy(false); return; }
+    state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
+    session={username:u}; localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem(KEY, JSON.stringify(state));
+    await cloudPut(u, payloadOf());        // push merged back so the account gains local logs
+    authBusy(false); startApp(); toast(t("authWelcome",{name:u}));
+  }catch(e){ authError(t("authNet")); authBusy(false); }
+}
+function doLogout(){
+  session=null; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
+  authEl("usersOverlay").classList.remove("on");
+  openAuth();
+}
+function authOffline(){ startApp(); toast(t("authOffline")); }
+function updateAccountUI(){
+  const bar=authEl("accountBar");
+  if(cloudEnabled() && session){ bar.style.display="flex"; authEl("accWho").innerHTML=t("signedInAs",{name:`<b>${escapeHtml(session.username)}</b>`}); }
+  else bar.style.display="none";
+}
+
+/* ---- boot ---- */
+function startApp(){
+  closeAuth();
+  renderAll();
+  updateAccountUI();
+  if(cloudEnabled() && session){
+    pullRemote();
+    if(!focusHooked){ window.addEventListener("focus", pullRemote); focusHooked=true; }
+  }
+}
+function boot(){
+  if(cloudEnabled() && !session) openAuth();   // gate first launch until they log in / create
+  else startApp();
+  updatePreview();
+}
+
+authEl("authLoginBtn").addEventListener("click", doLogin);
+authEl("authCreateBtn").addEventListener("click", doCreate);
+authEl("authOfflineBtn").addEventListener("click", authOffline);
+authEl("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+authEl("logoutBtn").addEventListener("click", doLogout);
+
 /* ---------- Go ---------- */
-renderAll();
-updatePreview();
+boot();
 </script>
 </body>
 </html>
