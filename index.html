@@ -269,8 +269,11 @@
   .account-bar{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:14px}
   .account-bar .acc-who{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .account-bar .acc-who b{color:var(--accent)}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60}
-  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60;
+    display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+  .toast .undo-btn{background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;flex:none}
+  .toast .undo-btn:hover{filter:brightness(1.05)}
 </style>
 </head>
 <body>
@@ -703,7 +706,8 @@ const T = {
     noWeightData:"No weight logged yet. Add your first entry above.",
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
     statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
-    targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries"
+    targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
+    undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -770,7 +774,8 @@ const T = {
     noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
     statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
-    targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes"
+    targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
+    undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -1440,12 +1445,15 @@ function saveEdit(){
 }
 function deleteEdit(){
   if(!editCtx) return;
-  if(editCtx.type==="meal"){
-    const meals=dayMeals(); const i=meals.findIndex(x=>x.id===editCtx.id); if(i>=0) meals.splice(i,1);
-  } else {
-    user().foods=user().foods.filter(f=>f.name!==editCtx.name);
-  }
-  save(); renderAll();
+  const ctx=editCtx;
+  const name = ctx.type==="meal" ? ((dayMeals().find(x=>x.id===ctx.id)||{}).name || "") : ctx.name;
+  deleteWithUndo(()=>{
+    if(ctx.type==="meal"){
+      const meals=dayMeals(); const i=meals.findIndex(x=>x.id===ctx.id); if(i>=0) meals.splice(i,1);
+    } else {
+      user().foods=user().foods.filter(f=>f.name!==ctx.name);
+    }
+  }, t("deletedItem",{name}));
   document.getElementById("editOverlay").classList.remove("on");
   editCtx=null;
 }
@@ -1460,9 +1468,35 @@ function prettyDate(s){
   return dt.toLocaleDateString(lang()==="es"?"es-ES":"en-US",{weekday:"short",month:"short",day:"numeric"});
 }
 let toastTimer;
-function toast(msg){
-  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),1800);
+function toast(msg, undoFn){
+  const el=document.getElementById("toast");
+  el.innerHTML="";
+  const span=document.createElement("span"); span.className="toast-msg"; span.textContent=msg;
+  el.appendChild(span);
+  if(undoFn){
+    const b=document.createElement("button"); b.className="undo-btn"; b.textContent=t("undo");
+    b.addEventListener("click",()=>{ el.classList.remove("on"); clearTimeout(toastTimer); undoFn(); });
+    el.appendChild(b);
+  }
+  el.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove("on"), undoFn?6000:1800);
+}
+
+/* ---- one-level undo for accidental deletions ----
+   Snapshot the whole state before a delete, then offer Undo in the toast. */
+let undoSnapshot=null;
+function deleteWithUndo(mutate, msg){
+  undoSnapshot=JSON.stringify(state);
+  mutate();
+  save(); renderAll();
+  toast(msg, ()=>{
+    if(undoSnapshot==null) return;
+    state=JSON.parse(undoSnapshot); undoSnapshot=null;
+    save(); renderAll();
+    if(document.getElementById("usersOverlay").classList.contains("on")){ renderUserList(); renderTargets(); }
+    toast(t("undone"));
+  });
 }
 
 /* ========================================================================
@@ -1817,8 +1851,8 @@ document.getElementById("wUnit").addEventListener("change",e=>{
 });
 document.getElementById("wRecent").addEventListener("click",e=>{
   const b=e.target.closest("[data-wdel]"); if(!b) return;
-  delete userWeights()[b.dataset.wdel];
-  save(); renderMetrics(); toast(t("weightRemoved"));
+  const dt=b.dataset.wdel;
+  deleteWithUndo(()=>{ delete userWeights()[dt]; }, t("weightRemoved"));
 });
 let metricsResizeTimer;
 window.addEventListener("resize",()=>{
@@ -1839,13 +1873,14 @@ document.getElementById("estimateBtn").addEventListener("click",estimateMacros);
 document.getElementById("mealsBody").addEventListener("click",e=>{
   const tog=e.target.closest("[data-toggle]"), del=e.target.closest("[data-del]"), ed=e.target.closest("[data-edit]");
   if(tog){ const m=dayMeals().find(x=>x.id===tog.dataset.toggle); if(m){m.eaten=!m.eaten; save(); renderAll();} return; }
-  if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del); if(i>=0){meals.splice(i,1); save(); renderAll();} return; }
+  if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del);
+    if(i>=0){ const nm=meals[i].name; deleteWithUndo(()=>meals.splice(i,1), t("deletedItem",{name:nm})); } return; }
   if(ed){ openEditMeal(ed.dataset.edit); }
 });
 document.getElementById("libList").addEventListener("click",e=>{
   const q=e.target.closest("[data-quick]"), d=e.target.closest("[data-libdel]"), ed=e.target.closest("[data-libedit]");
   if(q){ quickUse(q.dataset.quick); return; }
-  if(d){ user().foods=user().foods.filter(f=>f.name!==d.dataset.libdel); save(); renderAll(); return; }
+  if(d){ const nm=d.dataset.libdel; deleteWithUndo(()=>{ user().foods=user().foods.filter(f=>f.name!==nm); }, t("deletedItem",{name:nm})); return; }
   if(ed){ openEditFood(ed.dataset.libedit); }
 });
 
@@ -1881,9 +1916,12 @@ document.getElementById("userList").addEventListener("click",e=>{
   if(del){
     if(state.users.length<=1) return;
     if(!confirm(t("confirmDelUser"))) return;
-    state.users=state.users.filter(u=>u.id!==del.dataset.userdel);
-    if(state.activeId===del.dataset.userdel) state.activeId=state.users[0].id;
-    save(); renderAll(); renderUserList(); renderTargets();
+    const id=del.dataset.userdel;
+    deleteWithUndo(()=>{
+      state.users=state.users.filter(u=>u.id!==id);
+      if(state.activeId===id) state.activeId=state.users[0].id;
+    }, t("deletedUser"));
+    renderUserList(); renderTargets();
   }
 });
 document.getElementById("userList").addEventListener("change",e=>{
