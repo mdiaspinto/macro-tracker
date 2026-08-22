@@ -219,6 +219,37 @@
   .sg-actions{display:flex;gap:10px;flex-wrap:wrap}
   .sg-actions .btn{flex:1;justify-content:center;min-width:130px}
 
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:6px;background:var(--panel-2);border-radius:999px;padding:4px;margin-bottom:16px}
+  .tab{flex:1;background:transparent;color:var(--muted);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:700}
+  .tab.active{background:var(--accent);color:var(--accent-ink)}
+
+  /* ---------- Metrics ---------- */
+  .chart-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .stat{background:var(--panel-2);border-radius:12px;padding:10px 14px;flex:1;min-width:92px}
+  .stat .stat-lab{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .stat .stat-val{font-size:20px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .chart-wrap{position:relative;width:100%;margin-top:2px}
+  .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+  .chart-tip{position:absolute;pointer-events:none;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:9px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
+    transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
+  .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
+  .weight-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+  .weight-form .field{gap:6px}
+  .weight-form input{color-scheme:dark}
+  .weight-form .btn{height:44px;white-space:nowrap}
+  @media(max-width:560px){.weight-form{grid-template-columns:1fr 1fr}.weight-form .btn{grid-column:1 / -1;justify-content:center}}
+  .recent-weights{margin-top:16px}
+  .rw-title{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .rw-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line)}
+  .rw-row:last-child{border-bottom:none}
+  .rw-date{flex:1;font-size:14px}
+  .rw-val{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .rw-del{background:transparent;color:var(--faint);font-size:18px;width:28px;height:28px;border-radius:8px;flex:none}
+  .rw-del:hover{color:var(--over);background:var(--panel-2)}
+
   /* ---------- Auth gate ---------- */
   #authOverlay{z-index:70;background:rgba(0,0,0,.85)}
   .auth-modal{max-width:400px}
@@ -250,6 +281,14 @@
     <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
     <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers">⚙</button>
   </div>
+
+  <!-- Tabs (only shown when logged into an account) -->
+  <div class="tabs" id="tabs" style="display:none">
+    <button class="tab active" data-tab="tracker" data-i18n="tabTracker">Tracker</button>
+    <button class="tab" data-tab="metrics" data-i18n="tabMetrics">Metrics</button>
+  </div>
+
+  <div id="trackerView">
 
   <!-- Goal + date -->
   <div class="daterow">
@@ -340,6 +379,48 @@
     <div class="head"><h2 data-i18n="myFoods">My foods</h2><span class="hint" data-i18n="myFoodsHint">Frequent ingredients · tap to add quickly</span></div>
     <div class="body"><div class="lib-list" id="libList"></div></div>
   </div>
+
+  </div><!-- /trackerView -->
+
+  <!-- Metrics -->
+  <div id="metricsView" style="display:none">
+
+    <div class="section">
+      <div class="head"><h2 data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
+      <div class="body">
+        <div class="chart-stats" id="calStats"></div>
+        <div class="chart-wrap" id="calChart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="head"><h2 data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
+      <div class="body">
+        <div class="weight-form">
+          <div class="field">
+            <label data-i18n="weightDate">Date</label>
+            <input type="date" id="wDate">
+          </div>
+          <div class="field">
+            <label data-i18n="weightLabel">Weight</label>
+            <input type="number" id="wVal" inputmode="decimal" min="0" step="any" placeholder="0">
+          </div>
+          <div class="field">
+            <label data-i18n="units">Units</label>
+            <select id="wUnit" class="unit-select">
+              <option value="kg" data-i18n="unitKg">kg</option>
+              <option value="lb" data-i18n="unitLb">lb</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="wLogBtn" data-i18n="logWeightBtn">Log weight</button>
+        </div>
+        <div class="chart-stats" id="wStats"></div>
+        <div class="chart-wrap" id="wChart"></div>
+        <div class="recent-weights" id="wRecent"></div>
+      </div>
+    </div>
+
+  </div><!-- /metricsView -->
 
 </div>
 
@@ -529,11 +610,12 @@ function defaultUser(name, lang){
     goal: "lean",
     targets: { lean:{p:215,c:240,f:65}, bulk:{p:220,c:260,f:75} },
     foods: seedFoods(),
-    days: {}
+    days: {},
+    weights: {}, weightUnit: "kg"
   };
 }
 function makeUser(name, lang, lean, bulk){
-  return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{} };
+  return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{}, weights:{}, weightUnit:"kg" };
 }
 function initialUsers(){
   return [
@@ -598,7 +680,17 @@ const T = {
     authNet:"Network error. Check your connection and try again.",
     authCreated:"Account created — syncing ✓", authWelcome:"Welcome back, {name} ✓",
     authOffline:"Continuing offline — changes won't sync",
-    signedInAs:"Signed in as {name}", logout:"Log out", checking:"Checking…"
+    signedInAs:"Signed in as {name}", logout:"Log out", checking:"Checking…",
+    tabTracker:"Tracker", tabMetrics:"Metrics",
+    metricsCalTitle:"Calorie intake", metricsCalHint:"Calories eaten per day",
+    metricsWeightTitle:"Weight", metricsWeightHint:"Log your weight to track it over time",
+    weightDate:"Date", weightLabel:"Weight", logWeightBtn:"Log weight",
+    unitKg:"kg", unitLb:"lb",
+    noCalData:"No calories logged yet. Add eaten foods on the Tracker tab and they'll show up here.",
+    noWeightData:"No weight logged yet. Add your first entry above.",
+    weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
+    statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
+    targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries"
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -654,7 +746,17 @@ const T = {
     authNet:"Error de red. Revisa tu conexión e inténtalo de nuevo.",
     authCreated:"Cuenta creada — sincronizando ✓", authWelcome:"Bienvenido de nuevo, {name} ✓",
     authOffline:"Continuando sin conexión — los cambios no se sincronizan",
-    signedInAs:"Sesión de {name}", logout:"Cerrar sesión", checking:"Comprobando…"
+    signedInAs:"Sesión de {name}", logout:"Cerrar sesión", checking:"Comprobando…",
+    tabTracker:"Registro", tabMetrics:"Métricas",
+    metricsCalTitle:"Consumo de calorías", metricsCalHint:"Calorías consumidas por día",
+    metricsWeightTitle:"Peso", metricsWeightHint:"Registra tu peso para seguirlo con el tiempo",
+    weightDate:"Fecha", weightLabel:"Peso", logWeightBtn:"Registrar peso",
+    unitKg:"kg", unitLb:"lb",
+    noCalData:"Aún no hay calorías registradas. Agrega alimentos comidos en la pestaña Registro y aparecerán aquí.",
+    noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
+    weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
+    statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
+    targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes"
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -738,6 +840,8 @@ function renderAll(){
   renderDatalist();
   renderUnitSelectors();
   document.getElementById("brandSub").textContent = user().name + " · " + t(user().goal);
+  renderTabs();
+  if(curTab==="metrics") renderMetrics();
 }
 
 /* ---------- Units UI ---------- */
@@ -1347,7 +1451,255 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),1800);
 }
 
+/* ========================================================================
+   Metrics tab — calorie-intake & weight charts (logged-in accounts only).
+   ======================================================================== */
+let curTab = "tracker";
+const KG_PER_LB = 0.45359237;
+
+function userWeights(){ const u=user(); if(!u.weights) u.weights={}; return u.weights; }
+function weightUnit(){ return user().weightUnit==="lb" ? "lb" : "kg"; }
+function toDisplayWeight(kg){ return weightUnit()==="lb" ? kg/KG_PER_LB : kg; }
+function fmtWeight(n){ return (Math.round(n*10)/10).toString(); }
+function dateToNum(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d).getTime(); }
+function fmtAxisDate(s){
+  const [y,m,d]=s.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString(lang()==="es"?"es-ES":"en-US",{month:"short",day:"numeric"});
+}
+function statTile(lab,val){
+  return `<div class="stat"><div class="stat-lab">${escapeHtml(lab)}</div><div class="stat-val">${val}</div></div>`;
+}
+function unitSpan(u){ return `<span style="font-size:12px;color:var(--muted);font-weight:600"> ${escapeHtml(u)}</span>`; }
+
+/* ---- tab switching ---- */
+function renderTabs(){
+  const show = cloudEnabled() && !!session;
+  document.getElementById("tabs").style.display = show ? "flex" : "none";
+  if(!show) curTab = "tracker";
+  document.querySelectorAll("#tabs .tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===curTab));
+  document.getElementById("trackerView").style.display = curTab==="tracker" ? "" : "none";
+  document.getElementById("metricsView").style.display = curTab==="metrics" ? "" : "none";
+}
+function switchTab(tab){
+  curTab = tab;
+  renderTabs();
+  if(tab==="metrics") renderMetrics();
+}
+
+/* ---- series builders ---- */
+function dayEatenCalories(meals){
+  let c=0; (meals||[]).forEach(m=>{ if(m.eaten) c+=CAL(m.ap,m.ac,m.af); }); return c;
+}
+function calorieSeries(){
+  const days=user().days||{};
+  const pts=[];
+  Object.keys(days).forEach(d=>{ const cal=dayEatenCalories(days[d]); if(cal>0) pts.push({date:d, value:cal}); });
+  pts.sort((a,b)=> a.date<b.date ? -1 : 1);
+  return pts;
+}
+function weightSeries(){
+  const w=userWeights();
+  const pts=Object.keys(w).map(d=>({date:d, value:toDisplayWeight(w[d])}));
+  pts.sort((a,b)=> a.date<b.date ? -1 : 1);
+  return pts;
+}
+
+/* ---- render metrics ---- */
+function renderMetrics(){
+  document.getElementById("wUnit").value = weightUnit();
+  if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
+  renderCalChart();
+  renderWeightChart();
+  renderRecentWeights();
+}
+function renderCalChart(){
+  const pts=calorieSeries();
+  const stats=document.getElementById("calStats");
+  const el=document.getElementById("calChart");
+  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noCalData")}); return; }
+  const latest=pts[pts.length-1].value;
+  const avg=pts.reduce((s,p)=>s+p.value,0)/pts.length;
+  stats.innerHTML =
+    statTile(t("statLatest"), `${round(latest)}${unitSpan(t("kcalUnit"))}`) +
+    statTile(t("statAvg"),    `${round(avg)}${unitSpan(t("kcalUnit"))}`) +
+    statTile(t("statDays"),   pts.length);
+  const tg=targets();
+  drawLineChart(el, pts, {
+    color:"#f472b6", refLine:CAL(tg.p,tg.c,tg.f), refLabel:t("targetRef"),
+    ytick:v=>round(v), tip:v=>`${round(v)} ${t("kcalUnit")}`
+  });
+}
+function renderWeightChart(){
+  const pts=weightSeries();
+  const stats=document.getElementById("wStats");
+  const el=document.getElementById("wChart");
+  const u=weightUnit();
+  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noWeightData")}); return; }
+  const latest=pts[pts.length-1].value, first=pts[0].value, change=latest-first;
+  const sign=change>0?"+":"";
+  stats.innerHTML =
+    statTile(t("statLatest"), `${fmtWeight(latest)}${unitSpan(u)}`) +
+    statTile(t("statChange"), `${sign}${fmtWeight(change)}${unitSpan(u)}`) +
+    statTile(t("statEntries"), pts.length);
+  drawLineChart(el, pts, {
+    color:"#f5c451",
+    ytick:v=>fmtWeight(v), tip:v=>`${fmtWeight(v)} ${u}`
+  });
+}
+function renderRecentWeights(){
+  const w=userWeights();
+  const dates=Object.keys(w).sort((a,b)=> a<b ? 1 : -1).slice(0,8);
+  const el=document.getElementById("wRecent");
+  if(!dates.length){ el.innerHTML=""; return; }
+  const u=weightUnit();
+  el.innerHTML = `<div class="rw-title">${t("recentEntries")}</div>` + dates.map(d=>
+    `<div class="rw-row">
+       <span class="rw-date">${prettyDate(d)}</span>
+       <span class="rw-val">${fmtWeight(toDisplayWeight(w[d]))} ${u}</span>
+       <button class="rw-del" data-wdel="${d}" title="${t("del")}">×</button>
+     </div>`).join("");
+}
+
+/* ---- weight logging ---- */
+function logWeight(){
+  const val=parseFloat(document.getElementById("wVal").value);
+  const date=document.getElementById("wDate").value||todayStr();
+  const unit=document.getElementById("wUnit").value==="lb" ? "lb" : "kg";
+  user().weightUnit=unit;
+  if(!(val>0)){ toast(t("weightNeedVal")); return; }
+  userWeights()[date] = unit==="lb" ? val*KG_PER_LB : val;
+  save();
+  document.getElementById("wVal").value="";
+  renderMetrics();
+  toast(t("weightLogged"));
+}
+
+/* ---- the chart renderer ---- */
+function drawLineChart(container, points, opts){
+  opts=opts||{};
+  if(!points.length){
+    container.innerHTML=`<div class="chart-empty">${escapeHtml(opts.empty||"")}</div>`;
+    return;
+  }
+  const W=Math.max(260, Math.round(container.clientWidth || container.getBoundingClientRect().width || 320));
+  const H=240;
+  const padL=46, padR=16, padT=16, padB=26;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const color=opts.color||"var(--accent)";
+
+  // y-domain (include ref line, pad a little; handle a flat series)
+  const vals=points.map(p=>p.value);
+  let minV=Math.min(...vals), maxV=Math.max(...vals);
+  if(opts.refLine!=null){ minV=Math.min(minV,opts.refLine); maxV=Math.max(maxV,opts.refLine); }
+  if(minV===maxV){ const d=Math.abs(minV)*0.05||1; minV-=d; maxV+=d; }
+  else { const pad=(maxV-minV)*0.14; minV-=pad; maxV+=pad; }
+
+  const times=points.map(p=>dateToNum(p.date));
+  const minT=Math.min(...times), maxT=Math.max(...times);
+  const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
+  const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
+
+  // y ticks — pick a round step
+  const ticks=(function(min,max,n){
+    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
+    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
+  })(minV,maxV,4);
+
+  const gid=(container.id||"c")+"-grad";
+  let g="";
+  g+=`<defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="${color}" stop-opacity=".22"/>
+        <stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`;
+  // grid + y labels
+  ticks.forEach(v=>{
+    const y=yOf(v);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
+  });
+  // x labels (first, last, and up to 2 in between)
+  const xIdx=(function(n){
+    if(n<=1) return [0];
+    if(n<=4) return points.map((_,i)=>i);
+    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
+  })(points.length);
+  xIdx.forEach(i=>{
+    const x=xOf(times[i]);
+    const anchor = i===0 ? "start" : i===points.length-1 ? "end" : "middle";
+    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(points[i].date))}</text>`;
+  });
+  // reference line
+  if(opts.refLine!=null){
+    const y=yOf(opts.refLine);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
+    if(opts.refLabel) g+=`<text x="${W-padR}" y="${(y-6).toFixed(1)}" text-anchor="end" style="fill:var(--muted);font-size:10px">${escapeHtml(opts.refLabel)}</text>`;
+  }
+  // area + line
+  const coords=points.map((p,i)=>[xOf(times[i]), yOf(p.value)]);
+  if(coords.length>1){
+    const areaD = `M ${coords[0][0].toFixed(1)},${coords[0][1].toFixed(1)} `
+      + coords.map(c=>`L ${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(" ")
+      + ` L ${coords[coords.length-1][0].toFixed(1)},${(padT+plotH).toFixed(1)}`
+      + ` L ${coords[0][0].toFixed(1)},${(padT+plotH).toFixed(1)} Z`;
+    g+=`<path d="${areaD}" fill="url(#${gid})"/>`;
+    g+=`<polyline points="${coords.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  if(coords.length<=45) coords.forEach(c=> g+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.5" fill="${color}"/>`);
+  // crosshair + hover overlay (drawn last so they sit on top)
+  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" stroke="rgba(255,255,255,.28)" stroke-width="1" opacity="0"/>`;
+  g+=`<circle class="cx-dot" r="5" fill="${color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`;
+  g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="chart">${g}</svg><div class="chart-tip"></div>`;
+
+  // hover
+  const svg=container.querySelector("svg");
+  const tip=container.querySelector(".chart-tip");
+  const cxLine=svg.querySelector(".cx-line");
+  const cxDot=svg.querySelector(".cx-dot");
+  const hit=svg.querySelector(".cx-hit");
+  const xs=coords.map(c=>c[0]);
+  function onMove(ev){
+    const rect=svg.getBoundingClientRect();
+    const sx=(ev.clientX-rect.left)*(W/rect.width);
+    let bi=0, bd=Infinity;
+    xs.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
+    const px=coords[bi][0], py=coords[bi][1];
+    cxLine.setAttribute("x1",px); cxLine.setAttribute("x2",px); cxLine.setAttribute("opacity","1");
+    cxDot.setAttribute("cx",px); cxDot.setAttribute("cy",py); cxDot.setAttribute("opacity","1");
+    tip.style.left = (px*(rect.width/W)) + "px";
+    tip.style.top  = (py*(rect.height/H)) + "px";
+    tip.style.opacity="1";
+    const val = opts.tip ? opts.tip(points[bi].value) : round(points[bi].value);
+    tip.innerHTML = `<div style="color:var(--muted);font-size:11px">${escapeHtml(fmtAxisDate(points[bi].date))}</div><b>${val}</b>`;
+  }
+  hit.addEventListener("pointermove",onMove);
+  hit.addEventListener("pointerdown",onMove);
+  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); cxDot.setAttribute("opacity","0"); });
+}
+
 /* ---------- Events ---------- */
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("[data-tab]"); if(b) switchTab(b.dataset.tab);
+});
+document.getElementById("wLogBtn").addEventListener("click",logWeight);
+document.getElementById("wVal").addEventListener("keydown",e=>{ if(e.key==="Enter") logWeight(); });
+document.getElementById("wUnit").addEventListener("change",e=>{
+  user().weightUnit = e.target.value==="lb" ? "lb" : "kg";
+  save(); renderMetrics();
+});
+document.getElementById("wRecent").addEventListener("click",e=>{
+  const b=e.target.closest("[data-wdel]"); if(!b) return;
+  delete userWeights()[b.dataset.wdel];
+  save(); renderMetrics(); toast(t("weightRemoved"));
+});
+let metricsResizeTimer;
+window.addEventListener("resize",()=>{
+  if(curTab!=="metrics") return;
+  clearTimeout(metricsResizeTimer);
+  metricsResizeTimer=setTimeout(()=>{ renderCalChart(); renderWeightChart(); },150);
+});
+
 ["fName","fP","fC","fF","fRef","fQty"].forEach(id=>
   document.getElementById(id).addEventListener("input",updatePreview));
 document.getElementById("fName").addEventListener("change",autofillFromLib);
@@ -1487,10 +1839,13 @@ function unionDays(a,b){
   });
   return out;
 }
+// Weight logs: union by date; `primary` (a) wins on a same-date conflict.
+function unionWeights(a,b){ return Object.assign({}, b||{}, a||{}); }
 function mergeUser(primary,secondary){
   return Object.assign({}, secondary, primary, {
-    foods: unionFoods(primary.foods, secondary.foods),
-    days:  unionDays(primary.days,  secondary.days)
+    foods:   unionFoods(primary.foods, secondary.foods),
+    days:    unionDays(primary.days,  secondary.days),
+    weights: unionWeights(primary.weights, secondary.weights)
   });
 }
 // `primary` wins on scalar conflicts (targets/goal/lang); collections are unioned.
