@@ -254,6 +254,51 @@
   .rw-del{background:transparent;color:var(--faint);font-size:18px;width:28px;height:28px;border-radius:8px;flex:none}
   .rw-del:hover{color:var(--over);background:var(--panel-2)}
 
+  /* ---------- My Fridge ---------- */
+  .fr-explain{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px}
+  .fr-steps{margin:10px 0 0}
+  .fr-bm-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .fr-bookmarklet{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#3b82f6,#2563eb);
+    color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:11px;text-decoration:none;
+    cursor:grab;box-shadow:0 2px 10px rgba(37,99,235,.35);white-space:nowrap}
+  .fr-bookmarklet:active{cursor:grabbing}
+  .fr-paste{margin-top:16px}
+  .fr-paste summary{font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+  .fr-paste textarea{width:100%;margin:10px 0;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical}
+  .fr-synced{font-size:12px;color:var(--faint);margin-top:12px}
+  .fr-add{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:end}
+  .fr-add-qty .suffix input{width:90px}
+  .fr-remain{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted)}
+  .fr-remain .chip{background:var(--panel-2);border-radius:999px;padding:6px 12px;font-weight:600}
+  .fr-list{display:flex;flex-direction:column;gap:10px}
+  .fr-empty{font-size:13px;color:var(--faint);padding:6px 2px}
+  .fr-item{background:var(--panel-2);border-radius:12px;padding:13px 14px}
+  .fr-item-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .fr-item .fr-nm{font-weight:600;font-size:15px;flex:1;min-width:140px}
+  .fr-item .fr-amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .fr-bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin:10px 0 4px}
+  .fr-bar > i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+  .fr-item.low .fr-bar > i{background:linear-gradient(90deg,#f5c451,#e0a92f)}
+  .fr-item.empty .fr-bar > i{background:var(--over)}
+  .fr-meta{font-size:11px;color:var(--faint);margin-top:4px}
+  .fr-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .fr-eat{display:flex;align-items:center;gap:6px}
+  .fr-eat input{width:76px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    color:var(--text);padding:7px 9px;font-size:13px}
+  .fr-eat .u{font-size:12px;color:var(--muted);font-weight:600}
+  .fr-eat-log{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+  .fr-btn{border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;background:var(--panel);border:1px solid var(--line);color:var(--text)}
+  .fr-btn:hover{background:var(--line)}
+  .fr-del{background:transparent;color:var(--faint);font-size:18px;width:30px;height:30px;border-radius:8px;flex:none;margin-left:auto}
+  .fr-del:hover{color:var(--over);background:var(--panel)}
+  .fr-ideas{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .fr-idea{background:var(--panel-2);border-radius:11px;padding:12px 13px}
+  .fr-idea .fr-idea-nm{font-weight:600;font-size:14px;margin-bottom:6px}
+  .fr-idea .fr-idea-line{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+  .fr-idea .fr-idea-mac{font-size:12px;color:var(--faint);margin-top:8px;font-variant-numeric:tabular-nums}
+  @media(max-width:520px){ .fr-add{grid-template-columns:1fr auto} .fr-add-name{grid-column:1/-1} }
+
   /* ---------- Auth gate ---------- */
   #authOverlay{z-index:70;background:rgba(0,0,0,.85)}
   .auth-modal{max-width:400px}
@@ -292,6 +337,7 @@
   <!-- Tabs (only shown when logged into an account) -->
   <div class="tabs" id="tabs" style="display:none">
     <button class="tab active" data-tab="tracker" data-i18n="tabTracker">Tracker</button>
+    <button class="tab" data-tab="fridge" data-i18n="tabFridge">Fridge</button>
     <button class="tab" data-tab="metrics" data-i18n="tabMetrics">Metrics</button>
   </div>
 
@@ -436,6 +482,68 @@
     </div>
 
   </div><!-- /metricsView -->
+
+  <!-- My Fridge -->
+  <div id="fridgeView" style="display:none">
+
+    <!-- Import from Picard -->
+    <div class="section">
+      <div class="head"><h2 data-i18n="fridgePicardTitle">Sync from Picard</h2><span class="hint" data-i18n="fridgePicardHint">Add your purchases automatically</span></div>
+      <div class="body">
+        <p class="fr-explain" data-i18n="fridgePicardIntro">Because this app is a plain web page, it can't log into Picard by itself. Use the one-click button below: while you're signed in on picard.fr, click it — it reads your latest online orders and drops them straight into your fridge here.</p>
+        <div class="fr-bm-row">
+          <a class="fr-bookmarklet" id="frBookmarklet" href="#" draggable="true" data-i18n="fridgeBookmarkletLabel">🧊 Sync Picard → Fridge</a>
+          <button class="btn btn-ghost" id="frCopyBm" data-i18n="fridgeCopyBookmarklet">Copy button</button>
+        </div>
+        <p class="fr-explain fr-steps"><span data-i18n="fridgeBmSteps">Drag the blue button up to your bookmarks bar once. Then, whenever you're on picard.fr, click it to sync.</span></p>
+        <details class="fr-paste">
+          <summary data-i18n="fridgePasteFallback">Or paste Picard data manually</summary>
+          <textarea id="frPaste" rows="3" data-i18n-ph="fridgePastePh" placeholder="Paste the copied Picard data here…"></textarea>
+          <button class="btn btn-ghost" id="frPasteBtn" data-i18n="fridgeImportPaste">Import pasted data</button>
+        </details>
+        <div class="fr-synced" id="frSynced"></div>
+      </div>
+    </div>
+
+    <!-- Add item manually (also for in-store buys) -->
+    <div class="section">
+      <div class="head"><h2 data-i18n="fridgeAddTitle">Add to fridge</h2><span class="hint" data-i18n="fridgeAddHint">Bought something in store? Add it here</span></div>
+      <div class="body">
+        <div class="fr-add">
+          <div class="field fr-add-name">
+            <label data-i18n="fridgeItemName">Item</label>
+            <input id="frName" list="picardList" data-i18n-ph="fridgeItemNamePh" placeholder="Start typing… e.g. 4 biftecks hachés" autocomplete="off">
+            <datalist id="picardList"></datalist>
+          </div>
+          <div class="field fr-add-qty">
+            <label data-i18n="fridgeItemQty">Quantity</label>
+            <div class="suffix"><input id="frQty" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
+          </div>
+          <button class="btn btn-primary" id="frAddBtn" data-i18n="fridgeAddBtn">Add</button>
+        </div>
+        <p class="fr-explain" id="frAddMacroNote" style="display:none"></p>
+      </div>
+    </div>
+
+    <!-- Fridge contents -->
+    <div class="section">
+      <div class="head"><h2 data-i18n="fridgeContentsTitle">In my fridge</h2><span class="hint" id="fridgeCount"></span></div>
+      <div class="body">
+        <div class="fr-remain" id="fridgeRemain"></div>
+        <div class="fr-list" id="fridgeList"></div>
+      </div>
+    </div>
+
+    <!-- Meal ideas from fridge -->
+    <div class="section">
+      <div class="head"><h2 data-i18n="fridgeIdeasTitle">Meal ideas</h2><span class="hint" data-i18n="fridgeIdeasHint">Combinations from what you have</span></div>
+      <div class="body">
+        <button class="btn btn-ghost suggest-cta" id="fridgeIdeaBtn" data-i18n="fridgeIdeaCta">✨ Suggest a meal from my fridge</button>
+        <div class="fr-ideas" id="fridgeIdeas"></div>
+      </div>
+    </div>
+
+  </div><!-- /fridgeView -->
 
 </div>
 
@@ -630,7 +738,7 @@ function defaultUser(name, lang){
   };
 }
 function makeUser(name, lang, lean, bulk){
-  return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{}, weights:{}, weightUnit:"kg" };
+  return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{}, weights:{}, weightUnit:"kg", fridge:[], fridgeSeen:{} };
 }
 function initialUsers(){
   return [
@@ -696,7 +804,34 @@ const T = {
     authCreated:"Account created — syncing ✓", authWelcome:"Welcome back, {name} ✓",
     authOffline:"Continuing offline — changes won't sync",
     signedInAs:"Signed in as {name}", logout:"Log out", checking:"Checking…",
-    tabTracker:"Tracker", tabMetrics:"Metrics",
+    tabTracker:"Tracker", tabMetrics:"Metrics", tabFridge:"Fridge",
+    fridgePicardTitle:"Sync from Picard", fridgePicardHint:"Add your purchases automatically",
+    fridgePicardIntro:"Because this app is a plain web page, it can't log into Picard by itself. Use the one-click button below: while you're signed in on picard.fr, click it — it reads your latest online orders and drops them straight into your fridge here.",
+    fridgeBookmarkletLabel:"🧊 Sync Picard → Fridge",
+    fridgeCopyBookmarklet:"Copy button",
+    fridgeBmSteps:"Drag the blue button up to your bookmarks bar once. Then, whenever you're on picard.fr, click it to sync.",
+    fridgePasteFallback:"Or paste Picard data manually",
+    fridgePastePh:"Paste the copied Picard data here…",
+    fridgeImportPaste:"Import pasted data",
+    fridgeAddTitle:"Add to fridge", fridgeAddHint:"Bought something in store? Add it here",
+    fridgeItemName:"Item", fridgeItemNamePh:"Start typing… e.g. 4 biftecks hachés",
+    fridgeItemQty:"Quantity", fridgeAddBtn:"Add",
+    fridgeContentsTitle:"In my fridge",
+    fridgeIdeasTitle:"Meal ideas", fridgeIdeasHint:"Combinations from what you have",
+    fridgeIdeaCta:"✨ Suggest a meal from my fridge",
+    fridgeEmpty:"Your fridge is empty. Sync from Picard above, or add an item.",
+    fridgeLeftTotal:"Left in fridge:", fridgePer100:"per 100g", fridgeNoMacros:"macros unknown — you can still track the amount",
+    fridgeItemsN:"{n} items", fridgeAtePh:"ate…", fridgeLogMeal:"log as eaten", fridgeEatBtn:"Deduct",
+    fridgeAte:"Deducted from {name}", fridgeAteLogged:"Logged & deducted {name} ✓",
+    fridgeAddedItem:"Added {name} to fridge ✓", fridgeRemoved:"Removed {name}",
+    fridgeKnownItem:"Known Picard item · default pack {g}g (leave quantity blank to use it)",
+    fridgeSyncedN:"Synced {n} items from Picard ✓", fridgeSyncedNone:"Fridge already up to date",
+    fridgeLastSync:"Last Picard sync: {when}",
+    fridgeBmCopied:"Bookmarklet copied — make a new bookmark and paste it as the URL",
+    fridgeBmCopyFail:"Couldn't copy — drag the blue button to your bookmarks bar instead",
+    fridgeBmClickHint:"Drag this to your bookmarks bar, then click it while on picard.fr",
+    fridgePasteBad:"That doesn't look like Picard data",
+    fridgeNoIdeas:"Add a few items with known macros to get ideas.", fridgeIdeaN:"Idea {n}", fridgeRemoveTitle:"Remove from fridge",
     metricsCalTitle:"Calorie intake", metricsCalHint:"Calories eaten per day",
     metricsMacroTitle:"Macros", metricsMacroHint:"Protein, carbs & fat eaten per day",
     metricsWeightTitle:"Weight", metricsWeightHint:"Log your weight to track it over time",
@@ -764,7 +899,34 @@ const T = {
     authCreated:"Cuenta creada — sincronizando ✓", authWelcome:"Bienvenido de nuevo, {name} ✓",
     authOffline:"Continuando sin conexión — los cambios no se sincronizan",
     signedInAs:"Sesión de {name}", logout:"Cerrar sesión", checking:"Comprobando…",
-    tabTracker:"Registro", tabMetrics:"Métricas",
+    tabTracker:"Registro", tabMetrics:"Métricas", tabFridge:"Nevera",
+    fridgePicardTitle:"Sincronizar con Picard", fridgePicardHint:"Agrega tus compras automáticamente",
+    fridgePicardIntro:"Como esta app es una página web normal, no puede entrar a Picard por sí sola. Usa el botón de abajo: cuando estés con sesión iniciada en picard.fr, haz clic — lee tus últimos pedidos online y los agrega directamente a tu nevera aquí.",
+    fridgeBookmarkletLabel:"🧊 Sincronizar Picard → Nevera",
+    fridgeCopyBookmarklet:"Copiar botón",
+    fridgeBmSteps:"Arrastra el botón azul a tu barra de marcadores una vez. Luego, cuando estés en picard.fr, haz clic para sincronizar.",
+    fridgePasteFallback:"O pega los datos de Picard manualmente",
+    fridgePastePh:"Pega aquí los datos copiados de Picard…",
+    fridgeImportPaste:"Importar datos pegados",
+    fridgeAddTitle:"Agregar a la nevera", fridgeAddHint:"¿Compraste algo en tienda? Agrégalo aquí",
+    fridgeItemName:"Producto", fridgeItemNamePh:"Empieza a escribir… ej. 4 biftecks hachés",
+    fridgeItemQty:"Cantidad", fridgeAddBtn:"Agregar",
+    fridgeContentsTitle:"En mi nevera",
+    fridgeIdeasTitle:"Ideas de comida", fridgeIdeasHint:"Combinaciones con lo que tienes",
+    fridgeIdeaCta:"✨ Sugerir una comida con mi nevera",
+    fridgeEmpty:"Tu nevera está vacía. Sincroniza con Picard arriba, o agrega un producto.",
+    fridgeLeftTotal:"Queda en la nevera:", fridgePer100:"por 100g", fridgeNoMacros:"macros desconocidos — igual puedes seguir la cantidad",
+    fridgeItemsN:"{n} productos", fridgeAtePh:"comí…", fridgeLogMeal:"registrar como comido", fridgeEatBtn:"Descontar",
+    fridgeAte:"Descontado de {name}", fridgeAteLogged:"Registrado y descontado {name} ✓",
+    fridgeAddedItem:"{name} agregado a la nevera ✓", fridgeRemoved:"{name} eliminado",
+    fridgeKnownItem:"Producto Picard conocido · paquete por defecto {g}g (deja la cantidad vacía para usarlo)",
+    fridgeSyncedN:"Sincronizados {n} productos de Picard ✓", fridgeSyncedNone:"La nevera ya está al día",
+    fridgeLastSync:"Última sincronización Picard: {when}",
+    fridgeBmCopied:"Bookmarklet copiado — crea un marcador nuevo y pégalo como URL",
+    fridgeBmCopyFail:"No se pudo copiar — arrastra el botón azul a tus marcadores",
+    fridgeBmClickHint:"Arrastra esto a tu barra de marcadores, luego haz clic en picard.fr",
+    fridgePasteBad:"Eso no parece datos de Picard",
+    fridgeNoIdeas:"Agrega productos con macros conocidos para obtener ideas.", fridgeIdeaN:"Idea {n}", fridgeRemoveTitle:"Quitar de la nevera",
     metricsCalTitle:"Consumo de calorías", metricsCalHint:"Calorías consumidas por día",
     metricsMacroTitle:"Macros", metricsMacroHint:"Proteína, carbohidratos y grasa por día",
     metricsWeightTitle:"Peso", metricsWeightHint:"Registra tu peso para seguirlo con el tiempo",
@@ -834,6 +996,8 @@ function load(){
           if(L) L.targets = { lean:{p:110,c:130,f:40}, bulk:{p:120,c:140,f:45} };
           s.migrations.fixProfileTargets = true;
         }
+        // Lazy: existing accounts gain the fridge fields (no migration flag needed).
+        s.users.forEach(u=>{ if(!Array.isArray(u.fridge)) u.fridge=[]; if(!u.fridgeSeen) u.fridgeSeen={}; });
         localStorage.setItem(KEY, JSON.stringify(s));
         return s;
       }
@@ -861,6 +1025,7 @@ function renderAll(){
   document.getElementById("brandSub").textContent = user().name + " · " + t(user().goal);
   renderTabs();
   if(curTab==="metrics") renderMetrics();
+  if(curTab==="fridge") renderFridge();
 }
 
 /* ---------- Units UI ---------- */
@@ -1526,12 +1691,14 @@ function renderTabs(){
   if(!show) curTab = "tracker";
   document.querySelectorAll("#tabs .tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===curTab));
   document.getElementById("trackerView").style.display = curTab==="tracker" ? "" : "none";
+  document.getElementById("fridgeView").style.display  = curTab==="fridge"  ? "" : "none";
   document.getElementById("metricsView").style.display = curTab==="metrics" ? "" : "none";
 }
 function switchTab(tab){
   curTab = tab;
   renderTabs();
   if(tab==="metrics") renderMetrics();
+  if(tab==="fridge"){ renderFridge(); document.getElementById("fridgeIdeas").innerHTML=""; }
 }
 
 /* ---- series builders ---- */
@@ -1839,6 +2006,293 @@ function drawMultiLineChart(container, series, opts){
   svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); dots.forEach(d=>d.setAttribute("opacity","0")); });
 }
 
+/* ========================================================================
+   My Fridge — tracks what you've bought (from Picard or by hand), deducts
+   what you eat, and suggests combinations from what's left.
+
+   PICARD_DB: a starter database built from Martin's real Picard purchase
+   history. Keyed by Picard product id. Macros are per 100 g (scraped from
+   the product pages); `g` is the pack's net weight — the ones marked with a
+   trailing comment were estimated from typical Picard pack sizes, so tweak
+   them by re-adding the item with the exact weight if a pack differs.
+   ======================================================================== */
+const PICARD_DB = {
+  "60933":{n:"4 biftecks hachés bio, pur bœuf",              g:400,  p:22,  c:0.5, f:4.6, k:130},
+  "15706":{n:"4 côtes de porc désossées marinées",          g:420,  p:23,  c:0.5, f:4,   k:128},
+  "68711":{n:"Velouté lentilles corail",                    g:1000, p:4.9, c:6.2, f:3.2, k:84},
+  "87149":{n:"Fèves de soja edamame",                       g:300,  p:11,  c:6.1, f:5,   k:125},
+  "87330":{n:"Chou-fleur à l'asiatique",                    g:250,  p:2,   c:7.1, f:5,   k:86},
+  "60389":{n:"4 effeuillés de Charolais",                   g:380,  p:22,  c:0.7, f:4.2, k:128},
+  "87210":{n:"Épinards cuisinés tomate, mozzarella",        g:400,  p:3.1, c:2,   f:3.6, k:57},
+  "87321":{n:"Tajine de légumes",                           g:400,  p:2,   c:5.4, f:5.7, k:88},
+  "87461":{n:"12 bouchées de légumes",                      g:240,  p:6.1, c:19,  f:10,  k:194},
+  "6245": {n:"Pommes noisettes",                            g:750,  p:2.6, c:26,  f:12,  k:230},
+  "60173":{n:"4 biftecks de bavette d'aloyau",              g:450,  p:21,  c:0.5, f:6.5, k:127},
+  "68450":{n:"Velouté potimarron, patate douce, truffe",    g:1000, p:0.8, c:4.9, f:2.1, k:45},
+  "74193":{n:"2 pavés de saumon atlantique bio",            g:260,  p:21,  c:0.5, f:10,  k:175},
+  "75770":{n:"Poêlée de légumes grillés",                   g:600,  p:1.6, c:5.3, f:2.1, k:51},
+  "86194":{n:"Japchae au poulet",                           g:300,  p:5.5, c:12,  f:4.3, k:113},
+  "5437": {n:"Escalopes de dinde",                          g:800,  p:24,  c:0,   f:1,   k:105},
+  "20270":{n:"Aiguillettes de poulet marinées au citron",   g:350,  p:21,  c:2.9, f:1.3, k:108},
+  "20519":{n:"Aiguillettes de canard à la forestière",      g:350,  p:21,  c:1,   f:2.6, k:114},
+  "60827":{n:"1 faux-filet Label Rouge",                    g:190,  p:23,  c:0.8, f:3.5, k:126},
+  "74208":{n:"Filets de truite arc-en-ciel",               g:250,  p:19.1,c:0.5, f:6.9, k:139},
+  "86517":{n:"6 brochettes de poulet tandoori",            g:330,  p:24,  c:1.7, f:4.5, k:141},
+  "87230":{n:"Choux de Bruxelles à la crème et moutarde",   g:450,  p:2.8, c:6.9, f:2.8, k:71},
+  "87355":{n:"4 röstis de légumes et cheddar",             g:400,  p:3.9, c:10,  f:6.2, k:118},
+  "87649":{n:"Bol patate douce, pois chiche, tomate",       g:300,  p:3.2, c:11,  f:3.3, k:96},
+  "6500": {n:"Champignons de Paris émincés",                g:500,  p:1.8, c:0.8, f:0,   k:18},
+  "7037": {n:"Sauté de dinde, sans os",                     g:700,  p:20,  c:0.5, f:3.3, k:112},
+  "10123":{n:"Fleurettes de brocolis",                      g:1000, p:2.4, c:3.3, f:0,   k:28},
+  "11304":{n:"Gratin d'aubergines",                         g:400,  p:4.2, c:8.6, f:9.2, k:136},
+  "19330":{n:"4 filets de cabillaud MSC panés",             g:400,  p:12,  c:17,  f:8.1, k:193},
+  "20361":{n:"Aiguillettes de poulet tandoori",            g:350,  p:23,  c:2.2, f:2.5, k:121}
+};
+const PICARD_BY_NAME = (()=>{ const m={}; for(const id in PICARD_DB){ m[PICARD_DB[id].n.toLowerCase()]={id,...PICARD_DB[id]}; } return m; })();
+
+function userFridge(){ const u=user(); if(!Array.isArray(u.fridge)) u.fridge=[]; return u.fridge; }
+function fridgeSeen(){ const u=user(); if(!u.fridgeSeen) u.fridgeSeen={}; return u.fridgeSeen; }
+function findFridge(key){ return userFridge().find(it=>it.key===key); }
+
+// Add `packG` grams of a product to the fridge (create the item or top it up).
+function stockFridge(key, name, packG, per, source){
+  let it=findFridge(key);
+  if(!it){
+    it={ key, name, unit:"g", packG:packG||null, per:per||null,
+         totalG:0, remG:0, source:source||"manual", addedAt:Date.now(), updatedAt:Date.now() };
+    userFridge().push(it);
+  }
+  // keep the best data we have if the item pre-existed with unknowns
+  if(!it.per && per) it.per=per;
+  if(!it.packG && packG) it.packG=packG;
+  const add = packG || it.packG || 0;
+  it.totalG = round((it.totalG||0)+add,1);
+  it.remG   = round((it.remG||0)+add,1);
+  it.updatedAt=Date.now();
+  return it;
+}
+
+// Import a Picard payload {orders:[{orderId,date,items:[{pid,name}]}]}. Idempotent
+// via fridgeSeen keyed by order+product, so re-syncing never double-counts.
+function importPicardPayload(payload){
+  if(!payload || !Array.isArray(payload.orders)) return {added:0, items:0};
+  const seen=fridgeSeen();
+  let added=0, lines=0;
+  // oldest first so quantities accumulate in purchase order
+  const orders=[...payload.orders].sort((a,b)=> String(a.date||"")<String(b.date||"")?-1:1);
+  orders.forEach(o=>{
+    (o.items||[]).forEach(li=>{
+      if(!li || !li.pid) return;
+      const sk=(o.orderId||"?")+":"+li.pid;
+      if(seen[sk]) return;                 // already imported this line
+      lines++;
+      const db=PICARD_DB[String(li.pid)] || PICARD_DB[String(li.pid).replace(/^0+/,"")];
+      const name = db ? db.n : (li.name||("Produit "+li.pid));
+      const packG = db ? db.g : 400;       // unknown product → a sensible default pack
+      const per = db ? {p:db.p,c:db.c,f:db.f,k:db.k} : null;
+      stockFridge("pid:"+li.pid, name, packG, per, "picard");
+      seen[sk]=o.date||todayStr();
+      added++;
+    });
+  });
+  user().lastPicardSync={at:Date.now(), added, orders:orders.length};
+  return {added, lines};
+}
+
+function handlePicardPayload(payload){
+  if(!payload) return;
+  const res=importPicardPayload(payload);
+  save();
+  if(session) switchTab("fridge"); else renderAll();
+  renderFridge();
+  if(res.added>0) toast(t("fridgeSyncedN",{n:res.added}));
+  else toast(t("fridgeSyncedNone"));
+}
+
+// Eat `grams` of a fridge item: deduct from what's left, and (optionally) log
+// the macros as an eaten meal for today so the tracker updates too.
+function consumeFridge(key, grams, alsoLog){
+  const it=findFridge(key); if(!it || !(grams>0)) return;
+  it.remG=round(Math.max(0,(it.remG||0)-grams),1); it.updatedAt=Date.now();
+  if(alsoLog && it.per){
+    const g=grams, per=it.per, m=g/100;
+    user().days[curDate]=user().days[curDate]||[];
+    user().days[curDate].push({ id:uid(), name:it.name, p:per.p, c:per.c, f:per.f,
+      ref:100, qty:g, unit:"g", ap:round(per.p*m,2), ac:round(per.c*m,2), af:round(per.f*m,2), eaten:true });
+  }
+  save(); renderAll(); renderFridge();
+  toast(alsoLog && it.per ? t("fridgeAteLogged",{name:it.name}) : t("fridgeAte",{name:it.name}));
+}
+
+/* ---- fridge rendering ---- */
+function fridgeRemainMacros(){
+  let p=0,c=0,f=0;
+  userFridge().forEach(it=>{ if(it.per && it.remG>0){ const m=it.remG/100; p+=it.per.p*m; c+=it.per.c*m; f+=it.per.f*m; } });
+  return {p:round(p),c:round(c),f:round(f),cal:round(CAL(p,c,f))};
+}
+function fmtG(g){ g=round(g,0); return g>=1000 ? round(g/1000,2)+" kg" : g+" g"; }
+
+function renderFridge(){
+  // typeahead list of known Picard products for the manual add box
+  const dl=document.getElementById("picardList");
+  if(dl) dl.innerHTML = Object.keys(PICARD_BY_NAME).map(k=>`<option value="${escapeHtml(PICARD_BY_NAME[k].n)}">`).join("");
+  // personalized bookmarklet
+  const bm=document.getElementById("frBookmarklet");
+  if(bm) bm.setAttribute("href", buildBookmarklet());
+  // last-synced line
+  const sync=document.getElementById("frSynced");
+  if(sync){
+    const ls=user().lastPicardSync;
+    sync.textContent = ls ? t("fridgeLastSync",{when:new Date(ls.at).toLocaleString(lang()==="es"?"es-ES":"en-US")}) : "";
+  }
+  // remaining-macro chips
+  const items=userFridge();
+  const rm=fridgeRemainMacros();
+  const remEl=document.getElementById("fridgeRemain");
+  const hasMac=items.some(it=>it.per);
+  remEl.innerHTML = (items.length && hasMac) ? [
+    `<span class="chip">${t("fridgeLeftTotal")}</span>`,
+    `<span class="chip m-p">${rm.p}g P</span>`,
+    `<span class="chip m-c">${rm.c}g C</span>`,
+    `<span class="chip m-f">${rm.f}g ${lang()==="es"?"G":"F"}</span>`,
+    `<span class="chip">${rm.cal} kcal</span>`
+  ].join("") : "";
+  // count
+  document.getElementById("fridgeCount").textContent = items.length ? t("fridgeItemsN",{n:items.length}) : "";
+  // list
+  const list=document.getElementById("fridgeList");
+  if(!items.length){ list.innerHTML=`<div class="fr-empty">${escapeHtml(t("fridgeEmpty"))}</div>`; return; }
+  // most-recently updated first
+  const sorted=[...items].sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
+  list.innerHTML = sorted.map(it=>{
+    const pct = it.totalG>0 ? Math.max(0,Math.min(100, Math.round(it.remG/it.totalG*100))) : 0;
+    const cls = it.remG<=0 ? "empty" : (pct<=25 ? "low" : "");
+    const macNote = it.per
+      ? `${it.per.p}g P · ${it.per.c}g C · ${it.per.f}g ${lang()==="es"?"G":"F"} · ${it.per.k||round(CAL(it.per.p,it.per.c,it.per.f))} kcal ${t("fridgePer100")}`
+      : t("fridgeNoMacros");
+    return `<div class="fr-item ${cls}" data-fk="${escapeHtml(it.key)}">
+      <div class="fr-item-top">
+        <span class="fr-nm">${escapeHtml(it.name)}</span>
+        <span class="fr-amt">${fmtG(it.remG)} / ${fmtG(it.totalG)}</span>
+        <button class="fr-del" data-frdel="${escapeHtml(it.key)}" title="${escapeHtml(t("fridgeRemoveTitle"))}">🗑</button>
+      </div>
+      <div class="fr-bar"><i style="width:${pct}%"></i></div>
+      <div class="fr-meta">${escapeHtml(macNote)}</div>
+      <div class="fr-actions">
+        <span class="fr-eat">
+          <input type="number" inputmode="decimal" min="0" step="any" class="fr-eat-in" data-frq="${escapeHtml(it.key)}" placeholder="${escapeHtml(t("fridgeAtePh"))}">
+          <span class="u">g</span>
+        </span>
+        ${it.per?`<label class="fr-eat-log"><input type="checkbox" class="fr-eat-log-cb" data-frlog="${escapeHtml(it.key)}" checked> ${escapeHtml(t("fridgeLogMeal"))}</label>`:""}
+        <button class="fr-btn" data-freat="${escapeHtml(it.key)}">${escapeHtml(t("fridgeEatBtn"))}</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ---- meal ideas from the fridge (deterministic, no network) ----
+   Pair a protein-rich item with one or two lighter sides, at ~a serving each,
+   and show the combined macros so you can pick what to cook. */
+function fridgeIdeas(){
+  const av=userFridge().filter(it=>it.per && it.remG>0);
+  if(av.length<1) return [];
+  const proteins=av.filter(it=>it.per.p>=10).sort((a,b)=>b.per.p-a.per.p);
+  const sides   =av.filter(it=>it.per.p<10).sort((a,b)=>b.per.c-a.per.c);
+  const serve=(it)=> Math.min(it.remG, it.per.p>=10?150:180); // grams for one portion
+  const macrosOf=(parts)=>{ let p=0,c=0,f=0; parts.forEach(x=>{const m=x.g/100;p+=x.it.per.p*m;c+=x.it.per.c*m;f+=x.it.per.f*m;}); return {p:round(p),c:round(c),f:round(f),cal:round(CAL(p,c,f))}; };
+  const ideas=[]; const used=new Set();
+  const proteinPool = proteins.length?proteins:av;
+  for(let i=0;i<proteinPool.length && ideas.length<3;i++){
+    const prot=proteinPool[i];
+    const side=sides.find(s=>s.key!==prot.key && !used.has(s.key));
+    const parts=[{it:prot,g:serve(prot)}];
+    if(side) parts.push({it:side,g:serve(side)});
+    used.add(prot.key); if(side) used.add(side.key);
+    ideas.push({parts, macros:macrosOf(parts)});
+  }
+  return ideas;
+}
+function renderFridgeIdeas(){
+  const box=document.getElementById("fridgeIdeas");
+  const ideas=fridgeIdeas();
+  if(!ideas.length){ box.innerHTML=`<div class="fr-empty">${escapeHtml(t("fridgeNoIdeas"))}</div>`; return; }
+  box.innerHTML=ideas.map((idea,n)=>{
+    const lines=idea.parts.map(x=>`<div class="fr-idea-line"><span>${escapeHtml(x.it.name)}</span><span>${fmtG(x.g)}</span></div>`).join("");
+    const m=idea.macros;
+    return `<div class="fr-idea">
+      <div class="fr-idea-nm">${escapeHtml(t("fridgeIdeaN",{n:n+1}))}</div>
+      ${lines}
+      <div class="fr-idea-mac">${m.p}g P · ${m.c}g C · ${m.f}g ${lang()==="es"?"G":"F"} · ${m.cal} kcal</div>
+    </div>`;
+  }).join("");
+}
+
+function addManualFridge(){
+  const name=document.getElementById("frName").value.trim();
+  let grams=parseFloat(document.getElementById("frQty").value);
+  if(!name){ document.getElementById("frName").focus(); return; }
+  const db=PICARD_BY_NAME[name.toLowerCase()];
+  if(!(grams>0)) grams = db ? db.g : 0;
+  if(!(grams>0)){ document.getElementById("frQty").focus(); return; }
+  const key = db ? "pid:"+db.id : "m:"+name.toLowerCase();
+  const per = db ? {p:db.p,c:db.c,f:db.f,k:db.k} : null;
+  stockFridge(key, db?db.n:name, grams, per, "manual");
+  save(); renderAll(); renderFridge();
+  toast(t("fridgeAddedItem",{name:db?db.n:name}));
+  document.getElementById("frName").value=""; document.getElementById("frQty").value="";
+  document.getElementById("frAddMacroNote").style.display="none";
+  document.getElementById("frName").focus();
+}
+
+/* ---- the Picard → Fridge bookmarklet (built per app URL + user) ----
+   Runs ON picard.fr (same-origin, so it can read your orders). It cannot talk
+   to our cloud (Picard's CSP blocks it), so it hands the data to the app window
+   directly via postMessage, and also copies it to the clipboard as a fallback. */
+function buildBookmarklet(){
+  const APP = location.origin + location.pathname;
+  const USER = (session && session.username) || "";
+  // The bookmarklet source. Kept compact; APP/USER are injected as JSON literals.
+  const src = `(function(){
+    var APP=${JSON.stringify(APP)},USER=${JSON.stringify(USER)};
+    function banner(msg){var b=document.getElementById('__mtb__');if(!b){b=document.createElement('div');b.id='__mtb__';b.style.cssText='position:fixed;z-index:2147483647;left:50%;top:18px;transform:translateX(-50%);background:#111;color:#fff;font:600 14px system-ui;padding:12px 18px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.4)';document.body.appendChild(b);}b.textContent=msg;}
+    if(!/(^|\\.)picard\\.fr$/.test(location.hostname)){banner('Ouvrez picard.fr puis cliquez à nouveau');return;}
+    banner('Synchronisation de vos achats Picard…');
+    function txt(a){return (a.textContent||'').trim();}
+    (async function(){
+      try{
+        var r=await fetch('/mon-compte-picard/mes-commandes',{credentials:'include'});
+        var html=await r.text();
+        var ids=[];(html.match(/orderID=([A-Z0-9]+)/g)||[]).forEach(function(m){var id=m.split('=')[1];if(ids.indexOf(id)<0)ids.push(id);});
+        var orders=[];
+        for(var i=0;i<ids.length;i++){
+          var id=ids[i];
+          var d=new DOMParser().parseFromString(await (await fetch('/mon-compte-picard/mon-numero-de-commande?orderID='+id,{credentials:'include'})).text(),'text/html');
+          var dm=(d.body.innerText.match(/Command[eé].*?(\\d{2}\\/\\d{2}\\/\\d{4})/)||[])[1]||null;
+          var date=dm?dm.split('/').reverse().join('-'):null;
+          var seen={},items=[];
+          d.querySelectorAll('a.pi-AccountOrderDetails-link').forEach(function(a){
+            var href=a.getAttribute('href')||'';var pm=href.match(/0*(\\d{4,})\\.html/);if(!pm)return;var pid=pm[1];
+            if(seen[pid])return;seen[pid]=1;
+            var nm=txt(a);if(/Écrire un avis/i.test(nm)||nm.length<3){var sm=href.match(/produits\\/(.+?)-0*\\d+\\.html/);nm=sm?sm[1].replace(/-/g,' '):('Produit '+pid);}
+            items.push({pid:pid,name:nm});
+          });
+          orders.push({orderId:id,date:date,items:items});
+        }
+        var payload={v:1,type:'picard-fridge-sync',source:'picard',user:USER,generatedAt:Date.now(),orders:orders};
+        var n=0;orders.forEach(function(o){n+=o.items.length;});
+        try{await navigator.clipboard.writeText(JSON.stringify(payload));}catch(e){}
+        var w=window.open(APP,'macrotracker');
+        var done=false;
+        function send(){if(w&&!done){try{w.postMessage(payload,'*');}catch(e){}}}
+        window.addEventListener('message',function(e){var t=e&&e.data&&e.data.type;if(t==='picard-fridge-ready')send();if(t==='picard-fridge-ack'){done=true;banner('✓ '+n+' articles envoyés au frigo');}});
+        var tries=0,iv=setInterval(function(){send();if(++tries>16||done)clearInterval(iv);},700);
+        banner(n+' articles trouvés — ouverture du tracker…');
+      }catch(err){banner('Erreur: '+err);}
+    })();
+  })();`;
+  return "javascript:" + encodeURIComponent(src);
+}
+
 /* ---------- Events ---------- */
 document.getElementById("tabs").addEventListener("click",e=>{
   const b=e.target.closest("[data-tab]"); if(b) switchTab(b.dataset.tab);
@@ -1860,6 +2314,64 @@ window.addEventListener("resize",()=>{
   clearTimeout(metricsResizeTimer);
   metricsResizeTimer=setTimeout(()=>{ renderCalChart(); renderMacroChart(); renderWeightChart(); },150);
 });
+
+/* ---- My Fridge events ---- */
+document.getElementById("frAddBtn").addEventListener("click",addManualFridge);
+document.getElementById("frQty").addEventListener("keydown",e=>{ if(e.key==="Enter") addManualFridge(); });
+document.getElementById("frName").addEventListener("input",()=>{
+  const db=PICARD_BY_NAME[document.getElementById("frName").value.trim().toLowerCase()];
+  const note=document.getElementById("frAddMacroNote");
+  const q=document.getElementById("frQty");
+  if(db){
+    note.style.display=""; note.textContent=t("fridgeKnownItem",{g:db.g});
+    if(!q.value) q.placeholder=String(db.g);
+  } else { note.style.display="none"; q.placeholder="0"; }
+});
+document.getElementById("fridgeIdeaBtn").addEventListener("click",renderFridgeIdeas);
+document.getElementById("frCopyBm").addEventListener("click",()=>{
+  const url=buildBookmarklet();
+  navigator.clipboard.writeText(url).then(()=>toast(t("fridgeBmCopied")),()=>toast(t("fridgeBmCopyFail")));
+});
+document.getElementById("frBookmarklet").addEventListener("click",e=>{ e.preventDefault(); toast(t("fridgeBmClickHint")); });
+document.getElementById("frPasteBtn").addEventListener("click",()=>{
+  const raw=document.getElementById("frPaste").value.trim();
+  if(!raw){ return; }
+  let payload; try{ payload=JSON.parse(raw); }catch(e){ toast(t("fridgePasteBad")); return; }
+  if(!payload || !Array.isArray(payload.orders)){ toast(t("fridgePasteBad")); return; }
+  document.getElementById("frPaste").value="";
+  handlePicardPayload(payload);
+});
+document.getElementById("fridgeList").addEventListener("click",e=>{
+  const del=e.target.closest("[data-frdel]");
+  if(del){ const key=del.dataset.frdel; const it=findFridge(key);
+    deleteWithUndo(()=>{ const f=userFridge(); const i=f.findIndex(x=>x.key===key); if(i>=0) f.splice(i,1); },
+                   t("fridgeRemoved",{name:it?it.name:""})); renderFridge(); return; }
+  const eat=e.target.closest("[data-freat]");
+  if(eat){ const key=eat.dataset.freat;
+    const inp=document.querySelector('.fr-eat-in[data-frq="'+CSS.escape(key)+'"]');
+    const cb=document.querySelector('.fr-eat-log-cb[data-frlog="'+CSS.escape(key)+'"]');
+    const g=parseFloat(inp&&inp.value); if(!(g>0)){ if(inp) inp.focus(); return; }
+    consumeFridge(key, g, !!(cb&&cb.checked)); return; }
+});
+document.getElementById("fridgeList").addEventListener("keydown",e=>{
+  const inp=e.target.closest(".fr-eat-in"); if(inp && e.key==="Enter"){
+    const key=inp.dataset.frq; const cb=document.querySelector('.fr-eat-log-cb[data-frlog="'+CSS.escape(key)+'"]');
+    const g=parseFloat(inp.value); if(g>0) consumeFridge(key, g, !!(cb&&cb.checked));
+  }
+});
+// Bridge: receive a Picard payload handed over by the bookmarklet on picard.fr.
+// Only accept it from a picard.fr origin — the sole place the bookmarklet runs —
+// so a stray page can't inject items. (Manual imports use the paste box, not this.)
+function fromPicard(origin){ try{ return /(^|\.)picard\.fr$/.test(new URL(origin).hostname); }catch(_){ return false; } }
+window.addEventListener("message",e=>{
+  const d=e.data;
+  if(!d || d.type!=="picard-fridge-sync" || !Array.isArray(d.orders)) return;
+  if(!fromPicard(e.origin)) return;
+  handlePicardPayload(d);
+  try{ (e.source||window.opener) && (e.source||window.opener).postMessage({type:"picard-fridge-ack"}, e.origin); }catch(_){}
+});
+// Tell an opener (the bookmarklet) we're ready to receive, so it can send at once.
+if(window.opener){ try{ window.opener.postMessage({type:"picard-fridge-ready"}, "*"); }catch(_){} }
 
 ["fName","fP","fC","fF","fRef","fQty"].forEach(id=>
   document.getElementById(id).addEventListener("input",updatePreview));
@@ -2006,11 +2518,24 @@ function unionDays(a,b){
 }
 // Weight logs: union by date; `primary` (a) wins on a same-date conflict.
 function unionWeights(a,b){ return Object.assign({}, b||{}, a||{}); }
+// Fridge: union by stable key; primary wins on a same-key conflict (its remaining count is newer).
+function unionFridge(a,b){
+  const out=[], byKey={};
+  [...(b||[]),...(a||[])].forEach(it=>{ if(it && it.key) byKey[it.key]=it; });
+  // preserve primary order first, then any secondary-only items
+  const order=[]; const seen=new Set();
+  (a||[]).forEach(it=>{ if(it&&it.key&&!seen.has(it.key)){ seen.add(it.key); order.push(it.key); } });
+  (b||[]).forEach(it=>{ if(it&&it.key&&!seen.has(it.key)){ seen.add(it.key); order.push(it.key); } });
+  order.forEach(k=> out.push(byKey[k]));
+  return out;
+}
 function mergeUser(primary,secondary){
   return Object.assign({}, secondary, primary, {
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
-    weights: unionWeights(primary.weights, secondary.weights)
+    weights: unionWeights(primary.weights, secondary.weights),
+    fridge:  unionFridge(primary.fridge, secondary.fridge),
+    fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen)
   });
 }
 // `primary` wins on scalar conflicts (targets/goal/lang); collections are unioned.
