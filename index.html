@@ -299,6 +299,25 @@
   .fr-idea .fr-idea-mac{font-size:12px;color:var(--faint);margin-top:8px;font-variant-numeric:tabular-nums}
   @media(max-width:520px){ .fr-add{grid-template-columns:1fr auto} .fr-add-name{grid-column:1/-1} }
 
+  /* ---------- New-user macro quiz ---------- */
+  .quiz{margin:12px 0 4px;background:var(--panel-2);border-radius:12px;padding:12px 14px}
+  .quiz > summary{font-size:13px;font-weight:600;color:var(--text);cursor:pointer;user-select:none;list-style:none}
+  .quiz > summary::-webkit-details-marker{display:none}
+  .quiz-intro{font-size:12px;color:var(--muted);line-height:1.55;margin:10px 0 12px}
+  .quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .quiz-activity{grid-column:1/-1}
+  .quiz .field label{font-size:12px;color:var(--muted);font-weight:600}
+  .quiz select,.quiz input{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    color:var(--text);padding:9px 10px;font-size:13px;font-family:inherit;width:100%}
+  .quiz-hgt,.quiz-wt{display:flex;gap:6px}
+  .quiz-hgt input,.quiz-wt input{min-width:0}
+  .quiz-hgt select,.quiz-wt select{flex:none;width:auto}
+  .quiz-preview{margin-top:12px;font-size:12.5px;line-height:1.6}
+  .quiz-preview.on{padding:11px 13px;background:var(--panel);border-radius:10px}
+  .quiz-preview .qp-cal{color:var(--muted);margin-bottom:6px}
+  .quiz-preview .qp-row{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+  .quiz-preview .qp-row b{font-weight:700}
+
   /* ---------- Auth gate ---------- */
   #authOverlay{z-index:70;background:rgba(0,0,0,.85)}
   .auth-modal{max-width:400px}
@@ -565,6 +584,51 @@
         </select>
         <button class="btn btn-primary" id="addUserBtn" data-i18n="add">Add</button>
       </div>
+      <details class="quiz" id="quizBox">
+        <summary data-i18n="quizToggle">📊 Estimate my macro targets (optional quiz)</summary>
+        <p class="quiz-intro" data-i18n="quizIntro">Answer a few questions and we'll set science-based starting targets (Mifflin-St Jeor equation). They're a solid estimate — fine-tune them below and adjust after a couple of weeks based on how your weight responds.</p>
+        <div class="quiz-grid">
+          <div class="field">
+            <label data-i18n="quizSex">Sex</label>
+            <select id="qSex">
+              <option value="" data-i18n="quizChoose">—</option>
+              <option value="male" data-i18n="sexMale">Male</option>
+              <option value="female" data-i18n="sexFemale">Female</option>
+            </select>
+          </div>
+          <div class="field">
+            <label data-i18n="quizAge">Age</label>
+            <input id="qAge" type="number" inputmode="numeric" min="10" max="100" step="1" placeholder="30">
+          </div>
+          <div class="field">
+            <label data-i18n="quizHeight">Height</label>
+            <div class="quiz-hgt">
+              <input id="qHeightCm" type="number" inputmode="decimal" min="100" max="230" step="any" placeholder="175">
+              <input id="qHeightFt" type="number" inputmode="numeric" min="3" max="8" step="1" placeholder="5" style="display:none">
+              <input id="qHeightIn" type="number" inputmode="decimal" min="0" max="11" step="any" placeholder="9" style="display:none">
+              <select id="qHeightU"><option value="cm">cm</option><option value="ftin">ft/in</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="quizWeight">Weight</label>
+            <div class="quiz-wt">
+              <input id="qWeight" type="number" inputmode="decimal" min="25" step="any" placeholder="75">
+              <select id="qWeightU"><option value="kg">kg</option><option value="lb">lb</option></select>
+            </div>
+          </div>
+          <div class="field quiz-activity">
+            <label data-i18n="quizActivity">Activity level</label>
+            <select id="qActivity">
+              <option value="sedentary" data-i18n="actSedentary">Sedentary — little exercise</option>
+              <option value="light" data-i18n="actLight">Light — 1–3 days/week</option>
+              <option value="moderate" selected data-i18n="actModerate">Moderate — 3–5 days/week</option>
+              <option value="active" data-i18n="actActive">Active — 6–7 days/week</option>
+              <option value="very" data-i18n="actVery">Very active — physical job / 2×/day</option>
+            </select>
+          </div>
+        </div>
+        <div class="quiz-preview" id="qPreview"></div>
+      </details>
       <div class="divider"></div>
       <h3 style="font-size:14px;margin-bottom:4px" id="tgtHeading">Targets</h3>
       <p style="font-size:12px;color:var(--muted);margin:0 0 4px" data-i18n="dailyGoals">Daily gram goals for each mode.</p>
@@ -734,8 +798,67 @@ function defaultUser(name, lang){
     targets: { lean:{p:215,c:240,f:65}, bulk:{p:220,c:260,f:75} },
     foods: seedFoods(),
     days: {},
-    weights: {}, weightUnit: "kg"
+    weights: {}, weightUnit: "kg",
+    fridge: [], fridgeSeen: {}
   };
+}
+
+/* ---------- Macro target quiz ----------
+   Deterministic, evidence-based estimate (what a dietitian would use as a
+   starting point): Mifflin-St Jeor BMR → activity factor → TDEE, then a cut
+   (lean) and a gain (bulk) target. Protein anchored to body weight, fat at a
+   fixed % of calories, carbs as the remainder. */
+const ACTIVITY_FACTORS = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725, very:1.9 };
+function macrosFromCalories(cal, kg, proteinPerKg, fatPct){
+  const p = Math.round(proteinPerKg * kg);
+  const f = Math.round((fatPct * cal) / 9);
+  const c = Math.round(Math.max(0, cal - p*4 - f*9) / 4);
+  return { p, c, f };
+}
+// {sex:'male'|'female', age, cm, kg, activity} -> {tdee, lean, bulk} (null if incomplete)
+function estimateTargets(q){
+  if(!q || !q.sex || !(q.age>0) || !(q.cm>0) || !(q.kg>0)) return null;
+  const bmr = 10*q.kg + 6.25*q.cm - 5*q.age + (q.sex==="female" ? -161 : 5);
+  const af = ACTIVITY_FACTORS[q.activity] || ACTIVITY_FACTORS.moderate;
+  const tdee = bmr * af;
+  return {
+    tdee: Math.round(tdee),
+    lean: macrosFromCalories(tdee*0.80, q.kg, 2.0, 0.25),  // ~20% deficit, higher protein to spare muscle
+    bulk: macrosFromCalories(tdee*1.10, q.kg, 1.8, 0.25)   // ~10% surplus
+  };
+}
+// Read the quiz inputs, normalising height/weight to cm/kg.
+function readQuiz(){
+  const sex=document.getElementById("qSex").value;
+  const age=parseFloat(document.getElementById("qAge").value);
+  const activity=document.getElementById("qActivity").value;
+  let cm;
+  if(document.getElementById("qHeightU").value==="ftin"){
+    const ft=parseFloat(document.getElementById("qHeightFt").value)||0;
+    const inch=parseFloat(document.getElementById("qHeightIn").value)||0;
+    cm=(ft*12+inch)*2.54;
+  } else { cm=parseFloat(document.getElementById("qHeightCm").value); }
+  let kg=parseFloat(document.getElementById("qWeight").value);
+  if(document.getElementById("qWeightU").value==="lb") kg=kg*KG_PER_LB;
+  return { sex, age, cm: cm>0?cm:0, kg: kg>0?kg:0, activity };
+}
+function renderQuizPreview(){
+  const box=document.getElementById("qPreview");
+  const est=estimateTargets(readQuiz());
+  if(!est){ box.className="quiz-preview"; box.innerHTML=""; return; }
+  const line=(lab,m)=> `<div class="qp-row"><span>${escapeHtml(lab)}</span><b>${m.p}g P · ${m.c}g C · ${m.f}g ${lang()==="es"?"G":"F"}</b></div>`;
+  box.className="quiz-preview on";
+  box.innerHTML =
+    `<div class="qp-cal">${t("quizMaintenance",{cal:est.tdee})}</div>`
+    + line(t("lean"), est.lean)
+    + line(t("bulk"), est.bulk);
+}
+// Show cm vs ft/in inputs based on the unit dropdown.
+function syncHeightUnit(){
+  const ftin = document.getElementById("qHeightU").value==="ftin";
+  document.getElementById("qHeightCm").style.display = ftin ? "none" : "";
+  document.getElementById("qHeightFt").style.display = ftin ? "" : "none";
+  document.getElementById("qHeightIn").style.display = ftin ? "" : "none";
 }
 function makeUser(name, lang, lean, bulk){
   return { id: uid(), name, lang, goal:"lean", targets:{lean, bulk}, foods:[], days:{}, weights:{}, weightUnit:"kg", fridge:[], fridgeSeen:{} };
@@ -771,7 +894,14 @@ const T = {
     active:"active", switchBtn:"Switch", del:"Delete",
     confirmDelUser:"Delete this user and all their data?",
     added:"Added {name} ✓", plannedToast:"Planned {name} ◇",
-    targetsSaved:"Targets saved", addedUser:"Added {name}",
+    targetsSaved:"Targets saved", addedUser:"Added {name}", addedUserEst:"Added {name} with estimated targets ✓",
+    quizToggle:"📊 Estimate my macro targets (optional quiz)",
+    quizIntro:"Answer a few questions and we'll set science-based starting targets (Mifflin-St Jeor equation). They're a solid estimate — fine-tune them below and adjust after a couple of weeks based on how your weight responds.",
+    quizSex:"Sex", quizAge:"Age", quizHeight:"Height", quizWeight:"Weight", quizActivity:"Activity level", quizChoose:"—",
+    sexMale:"Male", sexFemale:"Female",
+    actSedentary:"Sedentary — little exercise", actLight:"Light — 1–3 days/week", actModerate:"Moderate — 3–5 days/week",
+    actActive:"Active — 6–7 days/week", actVery:"Very active — physical job / 2×/day",
+    quizMaintenance:"Maintenance ≈ {cal} kcal/day. Estimated daily targets:",
     suggestCta:"✨ Suggest foods to hit target",
     suggestTitle:"Suggested to hit your targets",
     suggestIntro:"Built from your foods plus common foods, to fill what's left today. Pick what to add.",
@@ -866,7 +996,14 @@ const T = {
     active:"activo", switchBtn:"Cambiar", del:"Eliminar",
     confirmDelUser:"¿Eliminar este usuario y todos sus datos?",
     added:"Agregado {name} ✓", plannedToast:"Planeado {name} ◇",
-    targetsSaved:"Objetivos guardados", addedUser:"Agregado {name}",
+    targetsSaved:"Objetivos guardados", addedUser:"Agregado {name}", addedUserEst:"Agregado {name} con objetivos estimados ✓",
+    quizToggle:"📊 Estimar mis objetivos de macros (cuestionario opcional)",
+    quizIntro:"Responde unas preguntas y calcularemos objetivos iniciales con base científica (ecuación de Mifflin-St Jeor). Son una buena estimación — ajústalos abajo y modifícalos tras un par de semanas según cómo responda tu peso.",
+    quizSex:"Sexo", quizAge:"Edad", quizHeight:"Altura", quizWeight:"Peso", quizActivity:"Nivel de actividad", quizChoose:"—",
+    sexMale:"Hombre", sexFemale:"Mujer",
+    actSedentary:"Sedentario — poco ejercicio", actLight:"Ligero — 1–3 días/semana", actModerate:"Moderado — 3–5 días/semana",
+    actActive:"Activo — 6–7 días/semana", actVery:"Muy activo — trabajo físico / 2×/día",
+    quizMaintenance:"Mantenimiento ≈ {cal} kcal/día. Objetivos diarios estimados:",
     suggestCta:"✨ Sugerir alimentos para el objetivo",
     suggestTitle:"Sugerencias para alcanzar tus objetivos",
     suggestIntro:"Con tus alimentos y alimentos comunes, para completar lo que falta hoy. Elige qué agregar.",
@@ -2443,15 +2580,29 @@ document.getElementById("userList").addEventListener("change",e=>{
     if(u){ u.lang=ls.value; save(); renderAll(); renderUserList(); renderTargets(); }
   }
 });
+function resetQuiz(){
+  ["qSex","qAge","qHeightCm","qHeightFt","qHeightIn","qWeight"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("qActivity").value="moderate";
+  document.getElementById("qHeightU").value="cm"; document.getElementById("qWeightU").value="kg";
+  syncHeightUnit(); renderQuizPreview();
+  document.getElementById("quizBox").open=false;
+}
 document.getElementById("addUserBtn").addEventListener("click",()=>{
   const inp=document.getElementById("newUserName"); const name=inp.value.trim();
   if(!name) return;
   const lg=document.getElementById("newUserLang").value;
-  const u=defaultUser(name, lg); state.users.push(u); state.activeId=u.id;
-  inp.value=""; save(); renderAll(); renderUserList(); renderTargets();
-  toast(t("addedUser",{name}));
+  const u=defaultUser(name, lg);
+  const est=estimateTargets(readQuiz());   // personalised targets if the quiz was filled in
+  if(est){ u.targets={ lean:est.lean, bulk:est.bulk }; }
+  state.users.push(u); state.activeId=u.id;
+  inp.value=""; resetQuiz(); save(); renderAll(); renderUserList(); renderTargets();
+  toast(est ? t("addedUserEst",{name}) : t("addedUser",{name}));
 });
 document.getElementById("newUserName").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addUserBtn").click();});
+["qSex","qAge","qHeightCm","qHeightFt","qHeightIn","qWeight","qActivity","qWeightU"].forEach(id=>{
+  const el=document.getElementById(id); el.addEventListener("input",renderQuizPreview); el.addEventListener("change",renderQuizPreview);
+});
+document.getElementById("qHeightU").addEventListener("change",()=>{ syncHeightUnit(); renderQuizPreview(); });
 document.getElementById("saveTargets").addEventListener("click",saveTargets);
 
 document.getElementById("suggestBtn").addEventListener("click",openSuggest);
