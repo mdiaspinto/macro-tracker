@@ -3,236 +3,312 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#EEF0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16181B" media="(prefers-color-scheme: dark)">
 <title>Macro Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
 <style>
+  /* ======================================================================
+     Tokens — light is the base, dark follows the system setting.
+     ====================================================================== */
   :root{
-    --bg:#000000; --panel:#0c0c0c; --panel-2:#171717; --line:rgba(255,255,255,.10);
-    --text:#ffffff; --muted:#a3a3a3; --faint:#6b6b6b;
-    --accent:#f5c451; --accent-ink:#000000;
-    --protein:#7db8ff; --carbs:#4ade80; --fat:#fbbf24; --cal:#f472b6;
-    --good:#4ade80; --warn:#fbbf24; --over:#f87171;
-    --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.6);
+    color-scheme:light dark;
+    --bg:#EEF0EC; --panel:#FFFFFF; --panel-2:#F4F5F2; --line:#DCDFD8; --line-strong:#C6CAC2;
+    --text:#14161A; --muted:#596068; --faint:#7D848B; --ink:#14161A;
+    --accent:#F2B632; --accent-ink:#1C1500; --accent-text:#8A5A00; --accent-soft:rgba(242,182,50,.16);
+    --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
+    --good:#1C8A4E; --warn:#B87503; --over:#C93838;
+    --grid:rgba(20,22,26,.08); --cross:rgba(20,22,26,.3);
+    --focus:#2F6FD6;
+    --radius:16px; --radius-sm:10px;
+    --shadow:0 1px 2px rgba(20,22,26,.06),0 8px 24px rgba(20,22,26,.08);
+    --shadow-lg:0 24px 60px rgba(20,22,26,.22);
+    --scrim:rgba(20,22,26,.45);
+    --wdth-display:75%;
   }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#16181B; --panel:#1E2125; --panel-2:#272B30; --line:#31363C; --line-strong:#464C53;
+      --text:#F1F2EF; --muted:#A3A9AF; --faint:#737A82; --ink:#F1F2EF;
+      --accent:#F5C451; --accent-ink:#1C1500; --accent-text:#F5C451; --accent-soft:rgba(245,196,81,.14);
+      --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
+      --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
+      --grid:rgba(255,255,255,.07); --cross:rgba(255,255,255,.3);
+      --focus:#7DB8FF;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+      --shadow-lg:0 24px 60px rgba(0,0,0,.6);
+      --scrim:rgba(0,0,0,.65);
+    }
+  }
+
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;line-height:1.45;
     background:var(--bg); color:var(--text);
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  .wrap{max-width:920px;margin:0 auto;padding:16px 16px 80px}
-  h1,h2,h3{margin:0}
-  button{font-family:inherit;cursor:pointer;border:none}
-  input,select{font-family:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:16px 16px 96px}
+  h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.005em}
+  button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+  input,select,textarea{font-family:inherit;color:var(--text)}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
+  .num,.big,.stat-val,.rw-val{font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 
   /* ---------- Top bar ---------- */
-  .topbar{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    margin-bottom:14px;
+  .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 18px}
+  .brand{display:flex;align-items:center;gap:11px;margin-right:auto;min-width:0}
+  .brand .logo,.auth-brand .logo{
+    width:36px;height:36px;border-radius:9px;flex:none;
+    background:var(--accent);color:var(--accent-ink);
+    display:grid;place-items:center;font-weight:900;font-size:19px;
+    font-stretch:var(--wdth-display);
   }
-  .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
-  .brand .logo{
-    width:38px;height:38px;border-radius:11px;
-    background:linear-gradient(135deg,var(--accent),#e0a92f);
-    display:grid;place-items:center;color:var(--accent-ink);font-weight:800;font-size:19px;
-  }
-  .brand h1{font-size:20px;letter-spacing:.2px}
-  .brand small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+  .brand h1{font-size:21px;font-weight:800;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.1}
+  .brand small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:1px}
 
   .pill{
-    background:var(--panel-2);color:var(--text);
-    border-radius:999px;padding:9px 14px;font-size:14px;display:flex;align-items:center;gap:8px;
+    background:var(--panel);color:var(--text);border:1px solid var(--line);
+    border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;
   }
-  select.pill{appearance:none;-webkit-appearance:none;padding-right:30px;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+  select.pill{appearance:none;-webkit-appearance:none;padding-right:32px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 12px center;}
   .icon-btn{
-    background:var(--panel-2);color:var(--text);
-    border-radius:999px;width:40px;height:40px;font-size:18px;display:grid;place-items:center;
+    background:var(--panel);color:var(--muted);border:1px solid var(--line);
+    border-radius:999px;width:40px;height:40px;display:grid;place-items:center;
   }
-  .icon-btn:hover{background:var(--line)}
+  .icon-btn:hover{color:var(--text);border-color:var(--line-strong)}
+  .icon-btn svg{width:18px;height:18px}
 
-  /* ---------- Goal toggle ---------- */
-  .seg{display:inline-flex;background:var(--panel-2);border-radius:999px;padding:3px}
-  .seg button{
-    background:transparent;color:var(--muted);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;
-  }
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px;
+    position:sticky;top:max(8px,env(safe-area-inset-top));z-index:20;box-shadow:var(--shadow)}
+  .tab{flex:1;background:transparent;color:var(--muted);border-radius:9px;padding:9px 12px;font-size:14px;font-weight:600}
+  .tab:hover{color:var(--text)}
+  .tab.active{background:var(--ink);color:var(--bg)}
+  @media(min-width:960px){ .tabs{max-width:420px} }
+
+  /* ---------- Goal toggle + date row ---------- */
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+  .seg button{background:transparent;color:var(--muted);border-radius:7px;padding:6px 14px;font-size:13px;font-weight:600}
   .seg button.active{background:var(--accent);color:var(--accent-ink)}
-
-  /* ---------- Date row ---------- */
-  .daterow{display:flex;align-items:center;gap:8px;margin:4px 0 16px}
+  .daterow{display:grid;grid-template-columns:36px 1fr 36px;grid-template-areas:"seg seg today" "prev date next";gap:8px 6px;align-items:center;margin:0 0 14px}
+  .daterow .seg{grid-area:seg;justify-self:start}
+  #prevDay{grid-area:prev} #dateInput{grid-area:date;width:100%;text-align:center} #nextDay{grid-area:next}
+  .daterow .today{grid-area:today;justify-self:end;white-space:nowrap}
   .daterow input[type=date]{
-    background:var(--panel-2);color:var(--text);
-    border:none;border-radius:10px;padding:8px 12px;font-size:14px;color-scheme:dark;
+    background:var(--panel);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;padding:7px 10px;font-size:14px;font-weight:600;min-width:0;
   }
-  .daterow .nav{background:var(--panel-2);color:var(--text);
-    border-radius:10px;width:36px;height:36px;font-size:16px}
-  .daterow .today{margin-left:auto;font-size:13px;color:var(--muted);
-    background:var(--panel-2);border-radius:10px;padding:8px 12px}
+  .daterow .nav{background:var(--panel);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;width:36px;height:36px;font-size:18px;line-height:1}
+  .daterow .nav:hover,.daterow .today:hover{border-color:var(--line-strong)}
+  .daterow .today{font-size:13px;font-weight:600;color:var(--text);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 
-  /* ---------- Progress cards ---------- */
-  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
-  @media(max-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
-  .card{background:var(--panel);border-radius:var(--radius);padding:14px}
-  .card .lab{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
-  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .card .big{font-size:24px;font-weight:800;margin:8px 0 2px;font-variant-numeric:tabular-nums}
-  .card .sub{font-size:12px;color:var(--muted)}
-  .card .sub b{color:var(--text)}
-  .bar{height:7px;background:var(--panel-2);border-radius:999px;margin-top:10px;overflow:hidden}
-  .bar > span{display:block;height:100%;border-radius:999px;transition:width .3s ease}
-  .remain-good{color:var(--good)} .remain-over{color:var(--over)}
+  /* ---------- Tracker layout: label column + logging column on wide screens ---------- */
+  .tracker-grid{display:block}
+  @media(min-width:960px){
+    .tracker-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;align-items:start}
+    .tracker-side{position:sticky;top:84px}
+  }
 
-  /* ---------- Ratio strip ---------- */
-  .ratios{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 14px;font-size:12px;color:var(--muted)}
-  .suggest-cta{width:100%;justify-content:center;margin:0 0 20px;background:var(--panel-2)}
-  .suggest-cta:hover{background:var(--line)}
-  .ratios .chip{background:var(--panel-2);border-radius:999px;padding:6px 12px}
-  .ratios .chip b{color:var(--text)}
+  /* ---------- Daily totals: a nutrition-facts label ---------- */
+  .label{background:var(--panel);border:2px solid var(--ink);border-radius:6px;padding:12px 16px 14px;margin-bottom:12px}
+  .nl-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .nl-title{font-size:26px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.015em;line-height:1.05}
+  .nl-goal{font-size:13px;font-weight:600;color:var(--muted)}
+  .nl-rule{background:var(--ink);height:1px;margin:8px 0}
+  .nl-rule.thick{height:10px;margin:8px 0 6px}
+  .nl-rule.mid{height:4px;margin:10px 0 4px}
+  .nl-cal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .nl-cal-lab{font-size:20px;font-weight:800;font-stretch:var(--wdth-display)}
+  .nl-cal-num{font-size:46px;font-weight:900;font-stretch:var(--wdth-display);line-height:.95;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-align:right}
+  .nl-cal-num small{display:block;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
+  .nl-dv{display:flex;justify-content:flex-end;font-size:12px;font-weight:700;padding:2px 0 0}
+  .nl-row{display:grid;grid-template-columns:1fr auto 44px;column-gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line-strong)}
+  .nl-row:first-of-type{border-top:none}
+  .nl-name{font-weight:700;display:flex;align-items:center;gap:7px}
+  .nl-val{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .nl-val b{color:var(--text);font-size:16px}
+  .nl-pct{font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+  .nl-row .bar,.nl-calbar{grid-column:1 / -1}
+  .nl-row .sub{grid-column:1 / -1;font-size:12px;color:var(--muted);margin-top:4px}
+  .nl-calbar{margin:10px 0 2px}
+  .nl-calsub{font-size:12px;color:var(--muted);margin-top:4px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+  .bar{position:relative;height:6px;background:var(--panel-2);border-radius:999px;margin-top:6px;overflow:hidden}
+  .bar > span{position:absolute;left:0;top:0;bottom:0;border-radius:999px;transition:width .3s ease}
+  .bar > span.proj{opacity:.35}
+  .remain-good{color:var(--good);font-weight:600} .remain-over{color:var(--over);font-weight:600}
+  .planned{color:var(--accent-text);font-weight:600}
+
+  /* ---------- Calorie split (inside the label) ---------- */
+  .ratios{display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:6px;padding-top:10px;border-top:4px solid var(--ink);font-size:12px;color:var(--muted)}
+  .ratios .chip b{color:var(--text);font-variant-numeric:tabular-nums}
+  .ratios .chip .tg{opacity:.75}
+  .ratios .chip.lab{color:var(--text);font-weight:700;width:100%}
+  .suggest-cta{width:100%;justify-content:center;margin:0 0 18px}
 
   /* ---------- Section ---------- */
-  .section{background:var(--panel);border-radius:var(--radius);margin-bottom:18px;overflow:hidden}
-  .section > .head{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
-  .section > .head h2{font-size:15px}
-  .section > .head .hint{font-size:12px;color:var(--muted);margin-left:auto}
-  .section > .body{padding:16px}
+  .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+  .section > .head{padding:14px 18px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .section > .head h2{font-size:17px;font-weight:800;font-stretch:87.5%}
+  .section > .head .hint{font-size:12.5px;color:var(--muted);margin-left:auto}
+  .section > .body{padding:18px}
 
-  /* ---------- Add form ---------- */
-  .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
-  .field{display:flex;flex-direction:column;gap:6px}
-  .field label{font-size:12px;color:var(--muted);font-weight:600}
-  .field input{background:var(--panel-2);border:1px solid transparent;color:var(--text);
-    border-radius:10px;padding:11px 12px;font-size:15px;width:100%}
-  .field input:focus{outline:none;border-color:var(--accent)}
-  .macro-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  /* ---------- Fields ---------- */
+  .form-grid{display:grid;grid-template-columns:1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .field label,.group-label{font-size:12.5px;color:var(--muted);font-weight:600}
+  .field input,.field select,.field textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;transition:border-color .15s,box-shadow .15s}
+  .field input:hover{border-color:var(--line-strong)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+  .macro-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+  .macro-inputs .field:nth-child(1) label{color:var(--protein)}
+  .macro-inputs .field:nth-child(2) label{color:var(--carbs)}
+  .macro-inputs .field:nth-child(3) label{color:var(--fat)}
   .qty-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .suffix{position:relative}
-  .suffix input{padding-right:30px}
+  .suffix input{padding-right:34px}
   .suffix .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:13px;pointer-events:none}
 
   .preview{
-    background:var(--panel-2);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;
-    display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
+    background:var(--panel-2);border-radius:12px;padding:12px 14px;
+    display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px}
   .preview .pv{display:flex;flex-direction:column}
-  .preview .pv b{font-size:16px;font-variant-numeric:tabular-nums}
-  .preview .pv span{color:var(--muted);font-size:11px}
+  .preview .pv b{font-size:18px;font-weight:800;font-stretch:87.5%;font-variant-numeric:tabular-nums}
+  .preview .pv span{color:var(--muted);font-size:11.5px}
 
+  /* ---------- Buttons ---------- */
   .actions{display:flex;gap:10px;flex-wrap:wrap}
-  .btn{border-radius:11px;padding:12px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+  .btn{border-radius:var(--radius-sm);padding:11px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;
+    border:1px solid transparent;transition:background .15s,border-color .15s,filter .15s}
   .btn-primary{background:var(--accent);color:var(--accent-ink)}
-  .btn-primary:hover{filter:brightness(1.05)}
-  .btn-ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
-  .btn-ghost:hover{background:var(--line)}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .save-lib{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+  .btn-primary:hover{filter:brightness(1.04)}
+  .btn-ghost{background:var(--panel);color:var(--text);border-color:var(--line-strong)}
+  .btn-ghost:hover{background:var(--panel-2)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  .save-lib{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
   .save-lib input{width:16px;height:16px;accent-color:var(--accent)}
-  .unit-select{background:var(--panel-2);border:1px solid transparent;color:var(--text);
-    border-radius:10px;padding:11px 12px;font-size:15px;width:100%;appearance:none;-webkit-appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
-    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;color-scheme:dark}
-  .unit-select:focus{outline:none;border-color:var(--accent)}
+  .unit-select{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+  .unit-select:focus{outline:none;border-color:var(--focus)}
   .qty-row.triple{grid-template-columns:1fr 1fr 1fr}
   @media(max-width:480px){.qty-row.triple{grid-template-columns:1fr 1fr}.qty-row.triple .unit-field{grid-column:1 / -1}}
 
-  /* ---------- Meals table ---------- */
+  /* ---------- Meals ---------- */
   .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
-    padding:12px 14px;border-bottom:1px solid var(--line)}
-  .meal:last-child{border-bottom:none}
-  .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(245,196,81,.05) 8px,rgba(245,196,81,.05) 16px)}
-  .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--faint);background:transparent;display:grid;place-items:center;color:transparent;font-size:14px;font-weight:800;flex:none}
-  .meal .chk.on{background:var(--good);border-color:var(--good);color:#052e1a}
-  .meal .info{cursor:pointer;border-radius:8px;transition:background .15s;padding:2px 6px;margin:-2px -6px}
+    padding:12px 18px;border-bottom:1px solid var(--line)}
+  .meal:last-of-type{border-bottom:none}
+  .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,var(--accent-soft) 8px,var(--accent-soft) 9px)}
+  .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-strong);background:transparent;display:grid;place-items:center;color:transparent;font-size:13px;font-weight:900;flex:none}
+  .meal .chk:hover{border-color:var(--good)}
+  .meal .chk.on{background:var(--good);border-color:var(--good);color:var(--panel)}
+  .meal .info{cursor:pointer;border-radius:8px;transition:background .15s;padding:3px 8px;margin:-3px -8px;min-width:0}
   .meal .info:hover{background:var(--panel-2)}
   .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .meal .info .macros{font-size:12px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
-  .meal .info .macros .m{margin-right:10px}
-  .badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:6px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
-  .badge.whatif{background:rgba(245,196,81,.15);color:var(--accent);border-color:transparent}
+  .meal .info .macros{font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .meal .info .macros .m{margin-right:10px;font-weight:600}
+  .badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+  .badge.whatif{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
   .meal .right{display:flex;align-items:center;gap:6px}
-  .meal .del{background:transparent;color:var(--faint);font-size:16px;width:30px;height:30px;border-radius:8px}
+  .meal .del{background:transparent;color:var(--faint);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
+  .meal .del svg{width:16px;height:16px}
   .meal .del:hover{color:var(--over);background:var(--panel-2)}
   .m-p{color:var(--protein)} .m-c{color:var(--carbs)} .m-f{color:var(--fat)} .m-cal{color:var(--cal)}
-  .sumrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:14px;background:var(--panel-2);font-weight:700;align-items:center}
+  .sumrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:14px 18px;background:var(--panel-2);font-weight:700;align-items:baseline;border-top:1px solid var(--line)}
   .sumrow .macros{font-size:13px;font-variant-numeric:tabular-nums}
-  .empty{padding:30px 16px;text-align:center;color:var(--faint);font-size:14px}
+  .empty{padding:32px 18px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
 
-  /* ---------- Library manager ---------- */
-  .lib-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
-  .lib-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel-2);border-radius:9px;font-size:13px}
-  .lib-item .lname{font-weight:600;cursor:pointer}
-  .lib-item .lname:hover{color:var(--accent)}
-  .lib-edit{background:transparent;color:var(--faint);font-size:14px;width:26px;height:26px;border-radius:6px}
-  .lib-edit:hover{color:var(--accent)}
-  .lib-item .lmac{color:var(--muted);font-size:12px;margin-left:auto;font-variant-numeric:tabular-nums}
-  .lib-item button{background:transparent;color:var(--faint);font-size:15px;width:26px;height:26px;border-radius:6px}
-  .lib-item button:hover{color:var(--over)}
-  .lib-item .quick{background:var(--accent);color:var(--accent-ink);border-radius:7px;font-size:12px;font-weight:700;padding:5px 10px;width:auto;height:auto}
+  /* ---------- My foods ---------- */
+  .lib-list{display:flex;flex-direction:column;max-height:320px;overflow:auto;margin:-6px 0}
+  .lib-item{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .lib-item:last-child{border-bottom:none}
+  .lib-item .lname{font-weight:600;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lib-item .lname:hover{color:var(--accent-text)}
+  .lib-item .lmac{color:var(--muted);font-size:12.5px;margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .lib-item button{background:transparent;color:var(--faint);font-size:15px;width:28px;height:28px;border-radius:7px;flex:none}
+  .lib-item button:hover{color:var(--over);background:var(--panel-2)}
+  .lib-edit{background:transparent;color:var(--faint);font-size:14px;width:28px;height:28px;border-radius:7px}
+  .lib-item .lib-edit:hover{color:var(--text)}
+  .lib-item .quick{background:var(--panel-2);color:var(--text);border:1px solid var(--line-strong);border-radius:7px;font-size:12.5px;font-weight:700;padding:5px 11px;width:auto;height:auto}
+  .lib-item .quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  @media(max-width:480px){ .lib-item{flex-wrap:wrap} .lib-item .lmac{order:5;width:100%;margin-left:0} }
 
   /* ---------- Modal ---------- */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .overlay{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
-  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:460px;max-height:90vh;overflow:auto}
-  .modal .head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center}
-  .modal .head h3{font-size:16px}
-  .modal .head .x{margin-left:auto;background:transparent;color:var(--muted);font-size:20px;width:30px;height:30px}
-  .modal .body{padding:18px}
-  .targets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px 12px;align-items:center;margin-top:6px}
-  .targets-grid .h{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;max-height:90vh;overflow:auto}
+  .modal .head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;position:sticky;top:0;background:var(--panel);z-index:1}
+  .modal .head h3{font-size:18px;font-weight:800;font-stretch:87.5%}
+  .modal .head .x{margin-left:auto;background:transparent;color:var(--muted);font-size:22px;width:34px;height:34px;border-radius:8px}
+  .modal .head .x:hover{background:var(--panel-2);color:var(--text)}
+  .modal .body{padding:20px}
+  .targets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px 12px;align-items:center;margin-top:8px}
+  .targets-grid .h{font-size:12px;color:var(--muted);font-weight:600}
   .targets-grid label{font-weight:600;font-size:14px}
-  .targets-grid input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font-size:15px;width:100%;color-scheme:dark}
+  .targets-grid input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font-size:15px;width:100%}
+  .targets-grid input:focus{outline:none;border-color:var(--focus)}
   .user-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-  .user-row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel-2);border-radius:11px}
-  .user-row.active{outline:2px solid var(--accent)}
+  .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
+  .user-row.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
   .user-row .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#0b1220;flex:none}
-  .user-row .un{font-weight:600;flex:1}
-  .user-row .sw{font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text)}
-  .user-row .tgt{font-size:11px;color:var(--muted)}
-  .rowlang{background:var(--panel);color:var(--text);border:none;border-radius:8px;padding:6px 8px;font-size:12px;flex:none}
-  .addnew #newUserLang{flex:none}
-  .divider{height:1px;background:var(--line);margin:16px 0}
+  .user-row .un{font-weight:600;flex:1;min-width:80px}
+  .user-row .sw,.account-bar .sw{font-size:12.5px;font-weight:600;background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;color:var(--text)}
+  .user-row .sw:hover,.account-bar .sw:hover{background:var(--panel-2)}
+  .user-row .tgt{font-size:12px;color:var(--muted);white-space:nowrap}
+  @media(max-width:480px){ .user-row > div:nth-child(2){flex-basis:calc(100% - 50px)!important} .user-row .rowlang{margin-left:44px} }
+  .rowlang{background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;flex:none}
+  .addnew #newUserLang{flex:none;border-radius:var(--radius-sm)}
+  .divider{height:1px;background:var(--line);margin:18px 0}
   .full{width:100%;justify-content:center}
   .addnew{display:flex;gap:8px}
-  .addnew input{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font-size:14px}
+  .addnew input{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px}
+  .addnew input:focus{outline:none;border-color:var(--focus)}
+
   /* ---------- Suggestion modal ---------- */
-  .sg-intro{font-size:12px;color:var(--muted);margin:0 0 14px}
-  .sg-empty{text-align:center;padding:14px 6px 6px;color:var(--muted);font-size:14px;line-height:1.5}
-  .sg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-  .sg-item{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:11px 13px;background:var(--panel-2);border-radius:11px}
+  .sg-intro{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+  .sg-empty{text-align:center;padding:14px 6px 6px;color:var(--muted);font-size:14px;line-height:1.55}
+  .sg-list{display:flex;flex-direction:column;margin-bottom:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .sg-item{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .sg-item:last-child{border-bottom:none}
   .sg-item .sg-main{flex:1 1 150px;min-width:0}
   .sg-item .sg-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .sg-item .sg-qty{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px}
+  .sg-item .sg-qty{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px}
   .sg-checks{display:flex;flex-direction:column;gap:7px;flex:none;margin-left:auto}
-  .sg-checks label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);cursor:pointer;user-select:none;white-space:nowrap}
+  .sg-checks label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);cursor:pointer;user-select:none;white-space:nowrap}
   .sg-checks label.sg-off{color:var(--muted);cursor:default}
   .sg-checks input{width:15px;height:15px;accent-color:var(--accent);flex:none}
   .sg-checks input:disabled{cursor:default}
-  .badge.common{background:rgba(125,184,255,.15);color:var(--protein);border-color:transparent}
-  .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:16px;font-size:13px}
+  .badge.common{background:color-mix(in srgb,var(--protein) 14%,transparent);color:var(--protein);border-color:transparent}
+  .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--panel-2);border-radius:12px;margin-bottom:16px;font-size:13px}
   .sg-totals .row{display:flex;justify-content:space-between;gap:12px}
   .sg-totals .row span:first-child{color:var(--muted)}
   .sg-totals .row .v{font-variant-numeric:tabular-nums}
   .sg-actions{display:flex;gap:10px;flex-wrap:wrap}
   .sg-actions .btn{flex:1;justify-content:center;min-width:130px}
 
-  /* ---------- Tabs ---------- */
-  .tabs{display:flex;gap:6px;background:var(--panel-2);border-radius:999px;padding:4px;margin-bottom:16px}
-  .tab{flex:1;background:transparent;color:var(--muted);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:700}
-  .tab.active{background:var(--accent);color:var(--accent-ink)}
-
   /* ---------- Metrics ---------- */
-  .chart-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .stat{background:var(--panel-2);border-radius:12px;padding:10px 14px;flex:1;min-width:92px}
-  .stat .stat-lab{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-  .stat .stat-val{font-size:20px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .chart-stats{display:flex;gap:0;flex-wrap:wrap;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .stat{padding:10px 14px;flex:1;min-width:92px;border-left:1px solid var(--line)}
+  .stat:first-child{border-left:none}
+  .stat .stat-lab{font-size:12px;color:var(--muted);font-weight:600}
+  .stat .stat-val{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);margin-top:2px;font-variant-numeric:tabular-nums}
   .chart-wrap{position:relative;width:100%;margin-top:2px}
   .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
-  .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
-  .chart-tip{position:absolute;pointer-events:none;background:var(--panel-2);border:1px solid var(--line);
+  .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.55}
+  .chart-tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);
     border-radius:9px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
     transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
   .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
@@ -242,98 +318,122 @@
   .chart-legend .lg b{color:var(--text);font-weight:600}
   .weight-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
   .weight-form .field{gap:6px}
-  .weight-form input{color-scheme:dark}
-  .weight-form .btn{height:44px;white-space:nowrap}
+  .weight-form .btn{height:45px;white-space:nowrap}
   @media(max-width:560px){.weight-form{grid-template-columns:1fr 1fr}.weight-form .btn{grid-column:1 / -1;justify-content:center}}
+  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide{grid-column:1 / -1} }
   .recent-weights{margin-top:16px}
-  .rw-title{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
-  .rw-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line)}
+  .rw-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .rw-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
   .rw-row:last-child{border-bottom:none}
   .rw-date{flex:1;font-size:14px}
   .rw-val{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
   .rw-del{background:transparent;color:var(--faint);font-size:18px;width:28px;height:28px;border-radius:8px;flex:none}
   .rw-del:hover{color:var(--over);background:var(--panel-2)}
 
+  /* ---------- Weight-change breakdown ---------- */
+  .insight:empty{display:none}
+  .insight{margin-top:18px;padding-top:16px;border-top:4px solid var(--ink)}
+  .ins-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .ins-head h3{font-size:16px;font-weight:800}
+  .ins-range{font-size:12.5px;color:var(--muted)}
+  .ins-headline{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.15;margin:6px 0 14px;max-width:32ch}
+  .ins-summary{font-size:14.5px;line-height:1.6;margin:14px 0 8px;max-width:70ch}
+  .ins-points{margin:12px 0 0;padding-left:18px;font-size:14px;line-height:1.6;max-width:70ch}
+  .ins-points li+li{margin-top:6px}
+  .ins-foot,.ins-empty{font-size:12.5px;color:var(--muted);margin:12px 0 0}
+  .setting-row{display:flex;align-items:center;gap:14px;cursor:pointer}
+  .setting-row > span{flex:1}
+  .setting-row b{font-size:14px}
+  .setting-row small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:2px}
+  .setting-row input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+
   /* ---------- My Fridge ---------- */
-  .fr-explain{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px}
-  .fr-steps{margin:10px 0 0}
+  .fr-explain{font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 14px;max-width:68ch}
+  .fr-steps{margin:12px 0 0}
   .fr-bm-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .fr-bookmarklet{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#3b82f6,#2563eb);
-    color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:11px;text-decoration:none;
-    cursor:grab;box-shadow:0 2px 10px rgba(37,99,235,.35);white-space:nowrap}
+  .fr-bookmarklet{display:inline-flex;align-items:center;gap:8px;background:var(--protein);
+    color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:var(--radius-sm);text-decoration:none;
+    cursor:grab;white-space:nowrap}
   .fr-bookmarklet:active{cursor:grabbing}
+  @media (prefers-color-scheme: dark){ .fr-bookmarklet{color:#0b1220} }
   .fr-paste{margin-top:16px}
   .fr-paste summary{font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
   .fr-paste textarea{width:100%;margin:10px 0;background:var(--panel-2);border:1px solid var(--line);
-    border-radius:10px;color:var(--text);padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical}
-  .fr-synced{font-size:12px;color:var(--faint);margin-top:12px}
+    border-radius:var(--radius-sm);color:var(--text);padding:10px 12px;font-size:13px;resize:vertical}
+  .fr-synced{font-size:12.5px;color:var(--faint);margin-top:12px}
   .fr-add{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:end}
-  .fr-add-qty .suffix input{width:90px}
-  .fr-remain{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted)}
-  .fr-remain .chip{background:var(--panel-2);border-radius:999px;padding:6px 12px;font-weight:600}
+  .fr-add-qty .suffix input{width:100px}
+  .fr-add .btn{height:45px}
+  .fr-remain{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12.5px;color:var(--muted)}
+  .fr-remain .chip{background:var(--panel-2);border-radius:999px;padding:5px 11px;font-weight:600}
   .fr-list{display:flex;flex-direction:column;gap:10px}
-  .fr-empty{font-size:13px;color:var(--faint);padding:6px 2px}
-  .fr-item{background:var(--panel-2);border-radius:12px;padding:13px 14px}
+  .fr-empty{font-size:13.5px;color:var(--muted);padding:6px 2px}
+  .fr-item{border:1px solid var(--line);border-radius:12px;padding:13px 14px}
   .fr-item-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .fr-item .fr-nm{font-weight:600;font-size:15px;flex:1;min-width:140px}
   .fr-item .fr-amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .fr-bar{height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin:10px 0 4px}
-  .fr-bar > i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3b82f6,#60a5fa)}
-  .fr-item.low .fr-bar > i{background:linear-gradient(90deg,#f5c451,#e0a92f)}
+  .fr-bar{height:6px;border-radius:999px;background:var(--panel-2);overflow:hidden;margin:10px 0 4px}
+  .fr-bar > i{display:block;height:100%;border-radius:999px;background:var(--protein)}
+  .fr-item.low .fr-bar > i{background:var(--warn)}
   .fr-item.empty .fr-bar > i{background:var(--over)}
-  .fr-meta{font-size:11px;color:var(--faint);margin-top:4px}
+  .fr-meta{font-size:12px;color:var(--faint);margin-top:4px}
   .fr-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
   .fr-eat{display:flex;align-items:center;gap:6px}
-  .fr-eat input{width:76px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  .fr-eat input{width:78px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
     color:var(--text);padding:7px 9px;font-size:13px}
-  .fr-eat .u{font-size:12px;color:var(--muted);font-weight:600}
-  .fr-eat-log{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
-  .fr-btn{border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;background:var(--panel);border:1px solid var(--line);color:var(--text)}
-  .fr-btn:hover{background:var(--line)}
-  .fr-del{background:transparent;color:var(--faint);font-size:18px;width:30px;height:30px;border-radius:8px;flex:none;margin-left:auto}
-  .fr-del:hover{color:var(--over);background:var(--panel)}
+  .fr-eat .u{font-size:12.5px;color:var(--muted);font-weight:600}
+  .fr-eat-log{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .fr-btn{border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;background:var(--panel);border:1px solid var(--line-strong);color:var(--text)}
+  .fr-btn:hover{background:var(--panel-2)}
+  .fr-del{background:transparent;color:var(--faint);width:30px;height:30px;border-radius:8px;flex:none;margin-left:auto;display:grid;place-items:center}
+  .fr-del:hover{color:var(--over);background:var(--panel-2)}
   .fr-ideas{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-  .fr-idea{background:var(--panel-2);border-radius:11px;padding:12px 13px}
+  .fr-idea{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
   .fr-idea .fr-idea-nm{font-weight:600;font-size:14px;margin-bottom:6px}
   .fr-idea .fr-idea-line{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;padding:2px 0}
-  .fr-idea .fr-idea-mac{font-size:12px;color:var(--faint);margin-top:8px;font-variant-numeric:tabular-nums}
+  .fr-idea .fr-idea-mac{font-size:12.5px;color:var(--faint);margin-top:8px;font-variant-numeric:tabular-nums}
   @media(max-width:520px){ .fr-add{grid-template-columns:1fr auto} .fr-add-name{grid-column:1/-1} }
 
   /* ---------- New-user macro quiz ---------- */
-  .quiz{margin:12px 0 4px;background:var(--panel-2);border-radius:12px;padding:12px 14px}
-  .quiz > summary{font-size:13px;font-weight:600;color:var(--text);cursor:pointer;user-select:none;list-style:none}
+  .quiz{margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .quiz > summary{font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;user-select:none;list-style:none}
   .quiz > summary::-webkit-details-marker{display:none}
-  .quiz-intro{font-size:12px;color:var(--muted);line-height:1.55;margin:10px 0 12px}
+  .quiz > summary::before{content:"+";display:inline-block;width:16px;color:var(--muted);font-weight:700}
+  .quiz[open] > summary::before{content:"−"}
+  .quiz-intro{font-size:12.5px;color:var(--muted);line-height:1.55;margin:10px 0 12px}
   .quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .quiz-activity{grid-column:1/-1}
-  .quiz .field label{font-size:12px;color:var(--muted);font-weight:600}
-  .quiz select,.quiz input{background:var(--panel);border:1px solid var(--line);border-radius:9px;
-    color:var(--text);padding:9px 10px;font-size:13px;font-family:inherit;width:100%}
+  .quiz .field label{font-size:12.5px;color:var(--muted);font-weight:600}
+  .quiz select,.quiz input{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+    color:var(--text);padding:9px 10px;font-size:13.5px;width:100%}
   .quiz-hgt,.quiz-wt{display:flex;gap:6px}
   .quiz-hgt input,.quiz-wt input{min-width:0}
   .quiz-hgt select,.quiz-wt select{flex:none;width:auto}
-  .quiz-preview{margin-top:12px;font-size:12.5px;line-height:1.6}
-  .quiz-preview.on{padding:11px 13px;background:var(--panel);border-radius:10px}
+  .quiz-preview{margin-top:12px;font-size:13px;line-height:1.6}
+  .quiz-preview.on{padding:11px 13px;background:var(--panel-2);border-radius:10px}
   .quiz-preview .qp-cal{color:var(--muted);margin-bottom:6px}
   .quiz-preview .qp-row{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
   .quiz-preview .qp-row b{font-weight:700}
 
   /* ---------- Auth gate ---------- */
-  #authOverlay{z-index:70;background:rgba(0,0,0,.85)}
-  .auth-modal{max-width:400px}
-  .auth-modal .body{padding:24px}
-  .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-  .auth-brand .logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#e0a92f);display:grid;place-items:center;color:var(--accent-ink);font-weight:800;font-size:20px}
-  .auth-brand h3{font-size:18px}
-  .auth-intro{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+  #authOverlay{z-index:70;background:var(--bg)}
+  .auth-modal{max-width:400px;box-shadow:var(--shadow)}
+  .auth-modal .body{padding:28px 24px 22px}
+  .auth-modal .field{margin-bottom:12px}
+  .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .auth-brand h3{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em}
+  .auth-intro{font-size:13.5px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+  #authUpgrade{background:var(--accent-soft);color:var(--text);border-radius:10px;padding:10px 12px;margin:4px 0 0}
   .auth-modal .actions .btn{flex:1;justify-content:center}
   .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
-  .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--faint);font-size:12px;text-decoration:underline}
-  .auth-offline:hover{color:var(--muted)}
-  .account-bar{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel-2);border-radius:11px;margin-bottom:14px}
-  .account-bar .acc-who{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .account-bar .acc-who b{color:var(--accent)}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60;
+  .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+  .auth-offline:hover{color:var(--text)}
+  .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+  .account-bar .acc-who{font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .account-bar .acc-who b{color:var(--accent-text)}
+
+  /* ---------- Toast ---------- */
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:80;
     display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
   .toast .undo-btn{background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;flex:none}
@@ -350,7 +450,7 @@
       <div><h1>Macro Tracker</h1><small id="brandSub">Loading…</small></div>
     </div>
     <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
-    <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers">⚙</button>
+    <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
   </div>
 
   <!-- Tabs (only shown when logged into an account) -->
@@ -360,7 +460,8 @@
     <button class="tab" data-tab="metrics" data-i18n="tabMetrics">Metrics</button>
   </div>
 
-  <div id="trackerView">
+  <div id="trackerView" class="tracker-grid">
+  <div class="tracker-side">
 
   <!-- Goal + date -->
   <div class="daterow">
@@ -374,10 +475,15 @@
     <button class="today" id="todayBtn" data-i18n="today">Today</button>
   </div>
 
-  <!-- Progress cards -->
-  <div class="cards" id="cards"></div>
-  <div class="ratios" id="ratios"></div>
-  <button class="btn btn-ghost suggest-cta" id="suggestBtn" data-i18n="suggestCta">✨ Suggest foods to hit target</button>
+  <!-- Daily totals, styled as a nutrition-facts label -->
+  <section class="label" aria-live="polite">
+    <div id="cards"></div>
+    <div class="ratios" id="ratios"></div>
+  </section>
+  <button class="btn btn-ghost suggest-cta" id="suggestBtn" data-i18n="suggestCta">Suggest foods to hit target</button>
+
+  </div><!-- /tracker-side -->
+  <div class="tracker-main">
 
   <!-- Add food -->
   <div class="section">
@@ -390,8 +496,8 @@
           <datalist id="foodList"></datalist>
         </div>
         <div>
-          <label style="font-size:12px;color:var(--muted);font-weight:600" data-i18n="macrosPer">Macros per reference amount</label>
-          <div class="macro-inputs" style="margin-top:8px">
+          <label class="group-label" data-i18n="macrosPer">Macros per reference amount</label>
+          <div class="macro-inputs">
             <div class="field">
               <label data-i18n="protein">Protein</label>
               <div class="suffix"><input id="fP" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
@@ -432,9 +538,9 @@
         </div>
 
         <div class="actions">
-          <button class="btn btn-primary" id="addEaten" data-i18n="addEaten">✓ Add as eaten</button>
-          <button class="btn btn-ghost" id="addWhatif" data-i18n="addWhatif">◇ Add as what-if</button>
-          <button class="btn btn-ghost" id="estimateBtn" data-i18n="estimate" data-i18n-title="estimateHint">🔎 Estimate macros</button>
+          <button class="btn btn-primary" id="addEaten" data-i18n="addEaten">Add as eaten</button>
+          <button class="btn btn-ghost" id="addWhatif" data-i18n="addWhatif">Add as what-if</button>
+          <button class="btn btn-ghost" id="estimateBtn" data-i18n="estimate" data-i18n-title="estimateHint">Estimate macros</button>
         </div>
       </div>
     </div>
@@ -452,6 +558,7 @@
     <div class="body"><div class="lib-list" id="libList"></div></div>
   </div>
 
+  </div><!-- /tracker-main -->
   </div><!-- /trackerView -->
 
   <!-- Metrics -->
@@ -473,7 +580,7 @@
       </div>
     </div>
 
-    <div class="section">
+    <div class="section wide">
       <div class="head"><h2 data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
       <div class="body">
         <div class="weight-form">
@@ -496,6 +603,7 @@
         </div>
         <div class="chart-stats" id="wStats"></div>
         <div class="chart-wrap" id="wChart"></div>
+        <div class="insight" id="wInsight"></div>
         <div class="recent-weights" id="wRecent"></div>
       </div>
     </div>
@@ -511,7 +619,7 @@
       <div class="body">
         <p class="fr-explain" data-i18n="fridgePicardIntro">Because this app is a plain web page, it can't log into Picard by itself. Use the one-click button below: while you're signed in on picard.fr, click it — it reads your latest online orders and drops them straight into your fridge here.</p>
         <div class="fr-bm-row">
-          <a class="fr-bookmarklet" id="frBookmarklet" href="#" draggable="true" data-i18n="fridgeBookmarkletLabel">🧊 Sync Picard → Fridge</a>
+          <a class="fr-bookmarklet" id="frBookmarklet" href="#" draggable="true" data-i18n="fridgeBookmarkletLabel">Sync Picard → Fridge</a>
           <button class="btn btn-ghost" id="frCopyBm" data-i18n="fridgeCopyBookmarklet">Copy button</button>
         </div>
         <p class="fr-explain fr-steps"><span data-i18n="fridgeBmSteps">Drag the blue button up to your bookmarks bar once. Then, whenever you're on picard.fr, click it to sync.</span></p>
@@ -557,7 +665,7 @@
     <div class="section">
       <div class="head"><h2 data-i18n="fridgeIdeasTitle">Meal ideas</h2><span class="hint" data-i18n="fridgeIdeasHint">Combinations from what you have</span></div>
       <div class="body">
-        <button class="btn btn-ghost suggest-cta" id="fridgeIdeaBtn" data-i18n="fridgeIdeaCta">✨ Suggest a meal from my fridge</button>
+        <button class="btn btn-ghost suggest-cta" id="fridgeIdeaBtn" data-i18n="fridgeIdeaCta">Suggest a meal from my fridge</button>
         <div class="fr-ideas" id="fridgeIdeas"></div>
       </div>
     </div>
@@ -585,7 +693,7 @@
         <button class="btn btn-primary" id="addUserBtn" data-i18n="add">Add</button>
       </div>
       <details class="quiz" id="quizBox">
-        <summary data-i18n="quizToggle">📊 Estimate my macro targets (optional quiz)</summary>
+        <summary data-i18n="quizToggle">Estimate my macro targets (optional quiz)</summary>
         <p class="quiz-intro" data-i18n="quizIntro">Answer a few questions and we'll set science-based starting targets (Mifflin-St Jeor equation). They're a solid estimate — fine-tune them below and adjust after a couple of weeks based on how your weight responds.</p>
         <div class="quiz-grid">
           <div class="field">
@@ -634,6 +742,11 @@
       <p style="font-size:12px;color:var(--muted);margin:0 0 4px" data-i18n="dailyGoals">Daily gram goals for each mode.</p>
       <div class="targets-grid" id="targetsGrid"></div>
       <button class="btn btn-primary full" id="saveTargets" style="margin-top:16px" data-i18n="saveTargets">Save targets</button>
+      <div class="divider"></div>
+      <label class="setting-row">
+        <span><b data-i18n="insSetting">Weight-change breakdown</b><small data-i18n="insSettingHint">After each weigh-in, explain what you ate and why your weight moved.</small></span>
+        <input type="checkbox" id="insightsToggle">
+      </label>
     </div>
   </div>
 </div>
@@ -682,8 +795,8 @@
           <input id="eName" autocomplete="off">
         </div>
         <div>
-          <label style="font-size:12px;color:var(--muted);font-weight:600" data-i18n="macrosPer">Macros per reference amount</label>
-          <div class="macro-inputs" style="margin-top:8px">
+          <label class="group-label" data-i18n="macrosPer">Macros per reference amount</label>
+          <div class="macro-inputs">
             <div class="field">
               <label data-i18n="protein">Protein</label>
               <div class="suffix"><input id="eP" type="number" inputmode="decimal" placeholder="0" min="0" step="any"><span class="u">g</span></div>
@@ -885,7 +998,7 @@ const T = {
     macrosPer:"Macros per reference amount",
     protein:"Protein", carbs:"Carbs", fat:"Fat", calories:"Calories",
     refAmount:"Reference amount", amountAte:"Amount you ate", amountAtePh:"e.g. 150",
-    saveToFoods:"Save to my foods", addEaten:"✓ Add as eaten", addWhatif:"◇ Add as what-if",
+    saveToFoods:"Save to my foods", addEaten:"Add as eaten", addWhatif:"Add as what-if",
     meals:"Meals", myFoods:"My foods", myFoodsHint:"Frequent ingredients · tap to add quickly",
     usersTargets:"Users & targets", newUserName:"New user name", add:"Add",
     language:"Language", english:"English", spanish:"Spanish",
@@ -900,14 +1013,14 @@ const T = {
     confirmDelUser:"Delete this user and all their data?",
     added:"Added {name} ✓", plannedToast:"Planned {name} ◇",
     targetsSaved:"Targets saved", addedUser:"Added {name}", addedUserEst:"Added {name} with estimated targets ✓",
-    quizToggle:"📊 Estimate my macro targets (optional quiz)",
+    quizToggle:"Estimate my macro targets (optional quiz)",
     quizIntro:"Answer a few questions and we'll set science-based starting targets (Mifflin-St Jeor equation). They're a solid estimate — fine-tune them below and adjust after a couple of weeks based on how your weight responds.",
     quizSex:"Sex", quizAge:"Age", quizHeight:"Height", quizWeight:"Weight", quizActivity:"Activity level", quizChoose:"—",
     sexMale:"Male", sexFemale:"Female",
     actSedentary:"Sedentary — little exercise", actLight:"Light — 1–3 days/week", actModerate:"Moderate — 3–5 days/week",
     actActive:"Active — 6–7 days/week", actVery:"Very active — physical job / 2×/day",
     quizMaintenance:"Maintenance ≈ {cal} kcal/day. Estimated daily targets:",
-    suggestCta:"✨ Suggest foods to hit target",
+    suggestCta:"Suggest foods to hit target",
     suggestTitle:"Suggested to hit your targets",
     suggestIntro:"Built from your foods plus common foods, to fill what's left today. Pick what to add.",
     noFoodsToSuggest:"You don't have any saved foods yet. Log a few foods and they'll show up here as suggestions.",
@@ -917,7 +1030,7 @@ const T = {
     planAdds:"This plan adds", stillLeft:"Still left after", addAllWhatif:"Add all as what-if",
     addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added",
     units:"Units",
-    estimate:"🔎 Estimate macros", estimateHint:"Look up macros online by name",
+    estimate:"Estimate macros", estimateHint:"Look up macros online by name",
     estimating:"Searching…",
     estimateNoName:"Type a food name first",
     estimateOnline:"Macros found online ✓ — adjust if needed",
@@ -934,6 +1047,25 @@ const T = {
     authUsername:"Username", authUsernamePh:"e.g. martin",
     authLogin:"Log in", authCreate:"Create account", authContinueOffline:"Continue offline",
     authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
+    dailyTotals:"Daily totals", pctTarget:"% of target",
+    insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, Claude writes the explanation from your food totals.",
+    insTitle:"Why your weight changed", insEmpty:"Log at least two weigh-ins to see what drove the change.",
+    insGained:"You gained {kg} in {days} days", insLost:"You lost {kg} in {days} days", insSame:"Your weight held steady over {days} days",
+    insStatAte:"Ate / day", insStatMaint:"Maintenance", insStatExpected:"Expected from food", insStatActual:"Actual change",
+    insSurplus:"You averaged {eat} kcal a day, about {diff} kcal above your estimated maintenance of {maint}. That alone predicts {exp}.",
+    insDeficit:"You averaged {eat} kcal a day, about {diff} kcal below your estimated maintenance of {maint}. That alone predicts {exp}.",
+    insEven:"You ate close to your estimated maintenance ({maint} kcal a day), so food alone predicts almost no change.",
+    insWater:"The other {kg} is most likely water: salt, carbs, digestion and weigh-in timing move the scale without changing fat.",
+    insCarbsUp:"Carbs were {g} g a day higher than the period before. Stored carbs hold about 3 g of water per gram, which adds scale weight.",
+    insCarbsDown:"Carbs were {g} g a day lower than the period before, which releases stored water and lowers the scale.",
+    insTopFoods:"Biggest calorie sources: {list}.", insBigDay:"Your largest day was {day} at {kcal} kcal.",
+    insProteinLow:"Protein averaged {p} g a day against your {t} g target. More protein helps keep weight loss coming from fat.",
+    insCoverage:"You logged food on {n} of {days} days, so this assumes the missing days looked similar.",
+    insShort:"Over just {days} days most of the change is normal water fluctuation; trends over two or more weeks tell you more.",
+    insMaintData:"Maintenance is estimated from your own logs and weight trend.",
+    insMaintTargets:"Maintenance is estimated from your targets and gets more accurate after about two weeks of logging and weigh-ins.",
+    insNoFood:"No food was logged between these weigh-ins, so there is nothing to explain the change with yet.",
+    insByClaude:"Explanation written by Claude from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
     authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
     authTooMany:"Too many attempts — wait a few minutes and try again.",
@@ -945,7 +1077,7 @@ const T = {
     tabTracker:"Tracker", tabMetrics:"Metrics", tabFridge:"Fridge",
     fridgePicardTitle:"Sync from Picard", fridgePicardHint:"Add your purchases automatically",
     fridgePicardIntro:"Because this app is a plain web page, it can't log into Picard by itself. Use the one-click button below: while you're signed in on picard.fr, click it — it reads your latest online orders and drops them straight into your fridge here.",
-    fridgeBookmarkletLabel:"🧊 Sync Picard → Fridge",
+    fridgeBookmarkletLabel:"Sync Picard → Fridge",
     fridgeCopyBookmarklet:"Copy button",
     fridgeBmSteps:"Drag the blue button up to your bookmarks bar once. Then, whenever you're on picard.fr, click it to sync.",
     fridgePasteFallback:"Or paste Picard data manually",
@@ -956,7 +1088,7 @@ const T = {
     fridgeItemQty:"Quantity", fridgeAddBtn:"Add",
     fridgeContentsTitle:"In my fridge",
     fridgeIdeasTitle:"Meal ideas", fridgeIdeasHint:"Combinations from what you have",
-    fridgeIdeaCta:"✨ Suggest a meal from my fridge",
+    fridgeIdeaCta:"Suggest a meal from my fridge",
     fridgeEmpty:"Your fridge is empty. Sync from Picard above, or add an item.",
     fridgeLeftTotal:"Left in fridge:", fridgePer100:"per 100g", fridgeNoMacros:"macros unknown — you can still track the amount",
     fridgeItemsN:"{n} items", fridgeAtePh:"ate…", fridgeLogMeal:"log as eaten", fridgeEatBtn:"Deduct",
@@ -990,7 +1122,7 @@ const T = {
     macrosPer:"Macros por cantidad de referencia",
     protein:"Proteína", carbs:"Carbohidratos", fat:"Grasa", calories:"Calorías",
     refAmount:"Cantidad de referencia", amountAte:"Cantidad que comiste", amountAtePh:"p. ej. 150",
-    saveToFoods:"Guardar en mis alimentos", addEaten:"✓ Agregar como comido", addWhatif:"◇ Agregar como simulación",
+    saveToFoods:"Guardar en mis alimentos", addEaten:"Agregar como comido", addWhatif:"Agregar como simulación",
     meals:"Comidas", myFoods:"Mis alimentos", myFoodsHint:"Ingredientes frecuentes · toca para agregar rápido",
     usersTargets:"Usuarios y objetivos", newUserName:"Nombre del nuevo usuario", add:"Agregar",
     language:"Idioma", english:"Inglés", spanish:"Español",
@@ -1005,14 +1137,14 @@ const T = {
     confirmDelUser:"¿Eliminar este usuario y todos sus datos?",
     added:"Agregado {name} ✓", plannedToast:"Planeado {name} ◇",
     targetsSaved:"Objetivos guardados", addedUser:"Agregado {name}", addedUserEst:"Agregado {name} con objetivos estimados ✓",
-    quizToggle:"📊 Estimar mis objetivos de macros (cuestionario opcional)",
+    quizToggle:"Estimar mis objetivos de macros (cuestionario opcional)",
     quizIntro:"Responde unas preguntas y calcularemos objetivos iniciales con base científica (ecuación de Mifflin-St Jeor). Son una buena estimación — ajústalos abajo y modifícalos tras un par de semanas según cómo responda tu peso.",
     quizSex:"Sexo", quizAge:"Edad", quizHeight:"Altura", quizWeight:"Peso", quizActivity:"Nivel de actividad", quizChoose:"—",
     sexMale:"Hombre", sexFemale:"Mujer",
     actSedentary:"Sedentario — poco ejercicio", actLight:"Ligero — 1–3 días/semana", actModerate:"Moderado — 3–5 días/semana",
     actActive:"Activo — 6–7 días/semana", actVery:"Muy activo — trabajo físico / 2×/día",
     quizMaintenance:"Mantenimiento ≈ {cal} kcal/día. Objetivos diarios estimados:",
-    suggestCta:"✨ Sugerir alimentos para el objetivo",
+    suggestCta:"Sugerir alimentos para el objetivo",
     suggestTitle:"Sugerencias para alcanzar tus objetivos",
     suggestIntro:"Con tus alimentos y alimentos comunes, para completar lo que falta hoy. Elige qué agregar.",
     noFoodsToSuggest:"Todavía no tienes alimentos guardados. Registra algunos y aparecerán aquí como sugerencias.",
@@ -1022,7 +1154,7 @@ const T = {
     planAdds:"Este plan agrega", stillLeft:"Todavía falta", addAllWhatif:"Agregar todo como simulación",
     addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada",
     units:"Unidades",
-    estimate:"🔎 Estimar macros", estimateHint:"Buscar macros en línea por nombre",
+    estimate:"Estimar macros", estimateHint:"Buscar macros en línea por nombre",
     estimating:"Buscando…",
     estimateNoName:"Escribe primero un nombre de alimento",
     estimateOnline:"Macros encontrados en línea ✓ — ajusta si hace falta",
@@ -1039,6 +1171,25 @@ const T = {
     authUsername:"Usuario", authUsernamePh:"p. ej. martin",
     authLogin:"Iniciar sesión", authCreate:"Crear cuenta", authContinueOffline:"Continuar sin conexión",
     authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
+    dailyTotals:"Totales del día", pctTarget:"% del objetivo",
+    insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, Claude redacta la explicación a partir de tus totales.",
+    insTitle:"Por qué cambió tu peso", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
+    insGained:"Subiste {kg} en {days} días", insLost:"Bajaste {kg} en {days} días", insSame:"Tu peso se mantuvo estable en {days} días",
+    insStatAte:"Comido / día", insStatMaint:"Mantenimiento", insStatExpected:"Esperado por comida", insStatActual:"Cambio real",
+    insSurplus:"Comiste en promedio {eat} kcal al día, unas {diff} kcal por encima de tu mantenimiento estimado de {maint}. Eso solo predice {exp}.",
+    insDeficit:"Comiste en promedio {eat} kcal al día, unas {diff} kcal por debajo de tu mantenimiento estimado de {maint}. Eso solo predice {exp}.",
+    insEven:"Comiste cerca de tu mantenimiento estimado ({maint} kcal al día), así que la comida sola casi no predice cambio.",
+    insWater:"Los otros {kg} son muy probablemente agua: la sal, los carbohidratos, la digestión y la hora del pesaje mueven la báscula sin cambiar la grasa.",
+    insCarbsUp:"Comiste {g} g de carbohidratos más al día que el periodo anterior. Los carbohidratos almacenados retienen unos 3 g de agua por gramo, lo que sube la báscula.",
+    insCarbsDown:"Comiste {g} g de carbohidratos menos al día que el periodo anterior, lo que libera agua almacenada y baja la báscula.",
+    insTopFoods:"Mayores fuentes de calorías: {list}.", insBigDay:"Tu día más alto fue {day} con {kcal} kcal.",
+    insProteinLow:"La proteína promedió {p} g al día frente a tu objetivo de {t} g. Más proteína ayuda a que lo que bajes sea grasa.",
+    insCoverage:"Registraste comida {n} de {days} días, así que se asume que los días que faltan fueron parecidos.",
+    insShort:"En solo {days} días la mayor parte del cambio es fluctuación normal de agua; las tendencias de dos semanas o más dicen más.",
+    insMaintData:"El mantenimiento se estima a partir de tus registros y tu tendencia de peso.",
+    insMaintTargets:"El mantenimiento se estima a partir de tus objetivos y será más preciso tras unas dos semanas de registros y pesajes.",
+    insNoFood:"No se registró comida entre estos pesajes, así que aún no hay con qué explicar el cambio.",
+    insByClaude:"Explicación redactada por Claude a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
     authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
     authTooMany:"Demasiados intentos — espera unos minutos e inténtalo de nuevo.",
@@ -1050,7 +1201,7 @@ const T = {
     tabTracker:"Registro", tabMetrics:"Métricas", tabFridge:"Nevera",
     fridgePicardTitle:"Sincronizar con Picard", fridgePicardHint:"Agrega tus compras automáticamente",
     fridgePicardIntro:"Como esta app es una página web normal, no puede entrar a Picard por sí sola. Usa el botón de abajo: cuando estés con sesión iniciada en picard.fr, haz clic — lee tus últimos pedidos online y los agrega directamente a tu nevera aquí.",
-    fridgeBookmarkletLabel:"🧊 Sincronizar Picard → Nevera",
+    fridgeBookmarkletLabel:"Sincronizar Picard → Nevera",
     fridgeCopyBookmarklet:"Copiar botón",
     fridgeBmSteps:"Arrastra el botón azul a tu barra de marcadores una vez. Luego, cuando estés en picard.fr, haz clic para sincronizar.",
     fridgePasteFallback:"O pega los datos de Picard manualmente",
@@ -1061,7 +1212,7 @@ const T = {
     fridgeItemQty:"Cantidad", fridgeAddBtn:"Agregar",
     fridgeContentsTitle:"En mi nevera",
     fridgeIdeasTitle:"Ideas de comida", fridgeIdeasHint:"Combinaciones con lo que tienes",
-    fridgeIdeaCta:"✨ Sugerir una comida con mi nevera",
+    fridgeIdeaCta:"Sugerir una comida con mi nevera",
     fridgeEmpty:"Tu nevera está vacía. Sincroniza con Picard arriba, o agrega un producto.",
     fridgeLeftTotal:"Queda en la nevera:", fridgePer100:"por 100g", fridgeNoMacros:"macros desconocidos — igual puedes seguir la cantidad",
     fridgeItemsN:"{n} productos", fridgeAtePh:"comí…", fridgeLogMeal:"registrar como comido", fridgeEatBtn:"Descontar",
@@ -1225,33 +1376,43 @@ function renderCards(){
   const tg = targets();
   const eaten = consumed(false);
   const proj = consumed(true); // eaten + what-if
-  const rows = [
-    {k:"p", lab:t("protein"), color:"var(--protein)", got:eaten.p, tgt:tg.p, projGot:proj.p, u:"g"},
-    {k:"c", lab:t("carbs"),   color:"var(--carbs)",   got:eaten.c, tgt:tg.c, projGot:proj.c, u:"g"},
-    {k:"f", lab:t("fat"),     color:"var(--fat)",     got:eaten.f, tgt:tg.f, projGot:proj.f, u:"g"},
-    {k:"cal", lab:t("calories"), color:"var(--cal)",  got:eaten.cal, tgt:CAL(tg.p,tg.c,tg.f), projGot:proj.cal, u:"kcal"},
-  ];
-  document.getElementById("cards").innerHTML = rows.map(r=>{
-    const remain = r.tgt - r.got;
-    const pct = r.tgt>0 ? Math.min(100, (r.got/r.tgt)*100) : 0;
-    const projPct = r.tgt>0 ? Math.min(100, (r.projGot/r.tgt)*100) : 0;
-    const over = remain < 0;
-    const barColor = over ? "var(--over)" : r.color;
-    const remLabel = over
-      ? `<span class="remain-over">${round(Math.abs(remain))}${r.u} ${t("over")}</span>`
+  const pctOf=(v,tgt)=> tgt>0 ? Math.min(100,(v/tgt)*100) : 0;
+  // one progress bar: faint what-if segment under the solid eaten segment
+  const bar=(r)=>{
+    const color = r.tgt-r.got<0 ? "var(--over)" : r.color;
+    return `<div class="bar"><span class="proj" style="width:${pctOf(r.projGot,r.tgt)}%;background:${color}"></span><span style="width:${pctOf(r.got,r.tgt)}%;background:${color}"></span></div>`;
+  };
+  const sub=(r)=>{
+    const remain=r.tgt-r.got;
+    const rem = remain<0
+      ? `<span class="remain-over">${round(-remain)}${r.u} ${t("over")}</span>`
       : `<span class="remain-good">${round(remain)}${r.u} ${t("left")}</span>`;
-    // projected overlay (what-if) as lighter segment
-    const whatifExtra = Math.max(0, projPct - pct);
-    return `<div class="card">
-      <div class="lab"><span class="dot" style="background:${r.color}"></span>${r.lab}</div>
-      <div class="big">${round(r.got)}<span style="font-size:14px;color:var(--muted);font-weight:600"> / ${round(r.tgt)}${r.u==="kcal"?"":""}</span></div>
-      <div class="sub">${remLabel}${whatifExtra>0?` · <span style="color:var(--accent)">+${round(r.projGot-r.got)}${r.u} ${t("planned")}</span>`:""}</div>
-      <div class="bar">
-        <span style="width:${projPct}%;background:${barColor};opacity:.35;position:relative"></span>
-        <span style="width:${pct}%;background:${barColor};margin-top:-7px"></span>
-      </div>
-    </div>`;
-  }).join("");
+    const extra=r.projGot-r.got;
+    return rem + (extra>0.5 ? ` <span class="planned">+${round(extra)}${r.u} ${t("planned")}</span>` : "");
+  };
+  const cal={color:"var(--cal)", got:eaten.cal, tgt:CAL(tg.p,tg.c,tg.f), projGot:proj.cal, u:" kcal"};
+  const rows = [
+    {lab:t("protein"), color:"var(--protein)", got:eaten.p, tgt:tg.p, projGot:proj.p, u:"g"},
+    {lab:t("carbs"),   color:"var(--carbs)",   got:eaten.c, tgt:tg.c, projGot:proj.c, u:"g"},
+    {lab:t("fat"),     color:"var(--fat)",     got:eaten.f, tgt:tg.f, projGot:proj.f, u:"g"},
+  ];
+  document.getElementById("cards").innerHTML = `
+    <div class="nl-head"><h2 class="nl-title">${t("dailyTotals")}</h2><span class="nl-goal">${t(user().goal)}</span></div>
+    <div class="nl-rule thick"></div>
+    <div class="nl-cal">
+      <div class="nl-cal-lab">${t("calories")}</div>
+      <div class="nl-cal-num">${round(cal.got)}<small>/ ${round(cal.tgt)} kcal</small></div>
+    </div>
+    <div class="nl-calbar">${bar(cal)}<div class="nl-calsub">${sub(cal)}</div></div>
+    <div class="nl-rule mid"></div>
+    <div class="nl-dv">${t("pctTarget")}</div>
+    ${rows.map(r=>`<div class="nl-row">
+      <span class="nl-name"><span class="dot" style="background:${r.color}"></span>${r.lab}</span>
+      <span class="nl-val"><b>${round(r.got)}</b> / ${round(r.tgt)}${r.u}</span>
+      <span class="nl-pct">${r.tgt>0?Math.round(r.got/r.tgt*100):0}%</span>
+      ${bar(r)}
+      <div class="sub">${sub(r)}</div>
+    </div>`).join("")}`;
 }
 
 function renderRatios(){
@@ -1262,9 +1423,9 @@ function renderRatios(){
   const fmt=(g,mult,tot)=> Math.round((g*mult/tot)*100);
   const tgtR = {p:fmt(tg.p,4,tCal), c:fmt(tg.c,4,tCal), f:fmt(tg.f,9,tCal)};
   const curR = {p:fmt(eaten.p,4,eCal), c:fmt(eaten.c,4,eCal), f:fmt(eaten.f,9,eCal)};
-  const chip=(lab,cur,tgt)=>`<span class="chip">${lab}: <b>${eaten.cal?cur:0}%</b> <span style="opacity:.6">/ ${t("target")} ${tgt}%</span></span>`;
+  const chip=(lab,cur,tgt)=>`<span class="chip">${lab} <b>${eaten.cal?cur:0}%</b> <span class="tg">/ ${tgt}%</span></span>`;
   document.getElementById("ratios").innerHTML =
-    `<span class="chip" style="color:var(--muted)">${t("calorieSplit")}</span>`+
+    `<span class="chip lab">${t("calorieSplit")}</span>`+
     chip(t("protein"),curR.p,tgtR.p)+chip(t("carbs"),curR.c,tgtR.c)+chip(t("fat"),curR.f,tgtR.f);
 }
 
@@ -1297,7 +1458,7 @@ function renderMeals(){
           <span class="m m-cal">${round(cal)} kcal</span>
         </div>
       </div>
-      <div class="right"><button class="del" data-del="${m.id}" title="Remove">🗑</button></div>
+      <div class="right"><button class="del" data-del="${m.id}" title="Remove" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button></div>
     </div>`;
   }).join("") + `
     <div class="sumrow">
@@ -1443,6 +1604,7 @@ function renderTargets(){
     <label>${t("protein")}</label><input type="number" id="tLp" value="${u.targets.lean.p}"><input type="number" id="tBp" value="${u.targets.bulk.p}">
     <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
     <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
+  document.getElementById("insightsToggle").checked = u.insightsOn!==false;
 }
 function saveTargets(){
   const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
@@ -1850,6 +2012,8 @@ function switchTab(tab){
 }
 
 /* ---- series builders ---- */
+// Charts are SVG strings, so read the current theme's token values at draw time.
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function dayEatenCalories(meals){
   let c=0; (meals||[]).forEach(m=>{ if(m.eaten) c+=CAL(m.ap,m.ac,m.af); }); return c;
 }
@@ -1872,9 +2036,9 @@ function macroSeries(){
   const dates=Object.keys(days).filter(d=> dayEatenCalories(days[d])>0).sort((a,b)=> a<b ? -1 : 1);
   const build=key=> dates.map(d=>{ let s=0; days[d].forEach(m=>{ if(m.eaten) s+=m[key]; }); return {date:d, value:s}; });
   return [
-    {key:"p", label:t("protein"), short:"P", color:"#7db8ff", points:build("ap")},
-    {key:"c", label:t("carbs"),   short:"C", color:"#4ade80", points:build("ac")},
-    {key:"f", label:t("fat"),     short:(lang()==="es"?"G":"F"), color:"#fbbf24", points:build("af")},
+    {key:"p", label:t("protein"), short:"P", color:cssVar("--protein"), points:build("ap")},
+    {key:"c", label:t("carbs"),   short:"C", color:cssVar("--carbs"), points:build("ac")},
+    {key:"f", label:t("fat"),     short:(lang()==="es"?"G":"F"), color:cssVar("--fat"), points:build("af")},
   ];
 }
 
@@ -1885,6 +2049,7 @@ function renderMetrics(){
   renderCalChart();
   renderMacroChart();
   renderWeightChart();
+  renderInsight();
   renderRecentWeights();
 }
 function renderMacroChart(){
@@ -1909,7 +2074,7 @@ function renderCalChart(){
     statTile(t("statDays"),   pts.length);
   const tg=targets();
   drawLineChart(el, pts, {
-    color:"#f472b6", refLine:CAL(tg.p,tg.c,tg.f), refLabel:t("targetRef"),
+    color:cssVar("--cal"), refLine:CAL(tg.p,tg.c,tg.f), refLabel:t("targetRef"),
     ytick:v=>round(v), tip:v=>`${round(v)} ${t("kcalUnit")}`
   });
 }
@@ -1926,7 +2091,7 @@ function renderWeightChart(){
     statTile(t("statChange"), `${sign}${fmtWeight(change)}${unitSpan(u)}`) +
     statTile(t("statEntries"), pts.length);
   drawLineChart(el, pts, {
-    color:"#f5c451",
+    color:cssVar("--weight"),
     ytick:v=>fmtWeight(v), tip:v=>`${fmtWeight(v)} ${u}`
   });
 }
@@ -1956,6 +2121,136 @@ function logWeight(){
   document.getElementById("wVal").value="";
   renderMetrics();
   toast(t("weightLogged"));
+  requestAiInsight();
+}
+
+/* ========================================================================
+   Weight-change breakdown. The arithmetic is done here (deterministic and
+   offline); when signed in, Claude turns these numbers into a written
+   explanation via the insights Worker (see /insights-worker).
+   ======================================================================== */
+// Cloudflare Worker that holds the Anthropic key. Empty = rule-based text only.
+const INSIGHTS_URL = "";
+const KCAL_PER_KG = 7700;
+let insightPending = null;
+
+function isoShift(s,n){
+  const [y,m,d]=s.split("-").map(Number);
+  const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n);
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function daysBetween(a,b){ return Math.round((dateToNum(b)-dateToNum(a))/864e5); }
+// Eaten totals for each day in [from, to).
+function periodDays(from,to){
+  const days=user().days||{}, out=[];
+  for(let d=from; d<to; d=isoShift(d,1)){
+    const tot={date:d,kcal:0,p:0,c:0,f:0};
+    (days[d]||[]).forEach(m=>{ if(m.eaten){ tot.p+=m.ap; tot.c+=m.ac; tot.f+=m.af; tot.kcal+=CAL(m.ap,m.ac,m.af); } });
+    out.push(tot);
+  }
+  return out;
+}
+const avgOf=(arr,k)=> arr.length ? arr.reduce((s,x)=>s+x[k],0)/arr.length : 0;
+// Maintenance: from the last 4 weeks of logs + weight trend when there's enough data, else from targets.
+function estimateMaintenance(end){
+  const w=userWeights(), start=isoShift(end,-28);
+  const pts=Object.keys(w).filter(d=>d>=start && d<=end).sort();
+  const logged=periodDays(start,end).filter(x=>x.kcal>0);
+  if(pts.length>=3 && daysBetween(pts[0],end)>=14 && logged.length>=10){
+    const xs=pts.map(d=>daysBetween(start,d)), ys=pts.map(d=>w[d]);
+    const mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ys.reduce((a,b)=>a+b,0)/ys.length;
+    let num=0, den=0; xs.forEach((x,i)=>{ num+=(x-mx)*(ys[i]-my); den+=(x-mx)**2; });
+    const slope=den ? num/den : 0;   // kg per day
+    return { kcal: avgOf(logged,"kcal") - slope*KCAL_PER_KG, source:"data" };
+  }
+  const tg=targets(), cal=CAL(tg.p,tg.c,tg.f);
+  return { kcal: user().goal==="bulk" ? cal/1.10 : cal/0.80, source:"targets" };   // inverse of macrosFromCalories
+}
+// Facts about the latest weigh-in vs the one before it. Weights in kg.
+function breakdownFacts(){
+  const w=userWeights(), dates=Object.keys(w).sort();
+  if(dates.length<2) return null;
+  const to=dates[dates.length-1], from=dates[dates.length-2], n=daysBetween(from,to);
+  const period=periodDays(from,to), logged=period.filter(x=>x.kcal>0);
+  const before=periodDays(isoShift(from,-n),from).filter(x=>x.kcal>0);
+  const maint=estimateMaintenance(to), avgKcal=avgOf(logged,"kcal");
+  const expectedKg = logged.length ? (avgKcal-maint.kcal)*n/KCAL_PER_KG : null;
+  const foods={};
+  (function(){ const days=user().days||{}; period.forEach(p=> (days[p.date]||[]).forEach(m=>{
+    if(!m.eaten) return; const k=m.name.trim(); const f=foods[k]||(foods[k]={name:k,kcal:0,times:0});
+    f.kcal+=CAL(m.ap,m.ac,m.af); f.times++; })); })();
+  const big=logged.slice().sort((a,b)=>b.kcal-a.kcal)[0]||null;
+  return {
+    fromDate:from, toDate:to, days:n, loggedDays:logged.length, goal:user().goal, unit:weightUnit(),
+    startKg:w[from], endKg:w[to], changeKg:w[to]-w[from],
+    avgKcal, avgProtein:avgOf(logged,"p"), avgCarbs:avgOf(logged,"c"), avgFat:avgOf(logged,"f"),
+    prevAvgCarbs: before.length ? avgOf(before,"c") : null,
+    maintenanceKcal:maint.kcal, maintenanceSource:maint.source,
+    expectedKg, unexplainedKg: expectedKg==null ? null : (w[to]-w[from])-expectedKg,
+    proteinTarget:targets().p,
+    topFoods:Object.values(foods).sort((a,b)=>b.kcal-a.kcal).slice(0,5).map(f=>({name:f.name,kcal:Math.round(f.kcal),times:f.times})),
+    biggestDay: big ? {date:big.date,kcal:Math.round(big.kcal)} : null,
+    dailyKcal: logged.map(x=>({date:x.date,kcal:Math.round(x.kcal)}))
+  };
+}
+function fmtKgAbs(kg){ return `${fmtWeight(Math.abs(toDisplayWeight(kg)))} ${weightUnit()}`; }
+function fmtKgSigned(kg){ const v=toDisplayWeight(kg); return `${v>0?"+":v<0?"−":""}${fmtWeight(Math.abs(v))} ${weightUnit()}`; }
+function ruleHeadline(f){
+  if(Math.abs(toDisplayWeight(f.changeKg))<0.05) return t("insSame",{days:f.days});
+  return t(f.changeKg>0?"insGained":"insLost",{kg:fmtKgAbs(f.changeKg),days:f.days});
+}
+function rulePoints(f){
+  if(!f.loggedDays) return [t("insNoFood")];
+  const out=[], diff=f.avgKcal-f.maintenanceKcal;
+  const p={eat:round(f.avgKcal), diff:round(Math.abs(diff)), maint:round(f.maintenanceKcal), exp:fmtKgSigned(f.expectedKg)};
+  out.push(Math.abs(diff)<100 ? t("insEven",p) : t(diff>0?"insSurplus":"insDeficit",p));
+  if(Math.abs(f.unexplainedKg)>=0.2) out.push(t("insWater",{kg:fmtKgAbs(f.unexplainedKg)}));
+  if(f.prevAvgCarbs!=null && Math.abs(f.avgCarbs-f.prevAvgCarbs)>=40)
+    out.push(t(f.avgCarbs>f.prevAvgCarbs?"insCarbsUp":"insCarbsDown",{g:round(Math.abs(f.avgCarbs-f.prevAvgCarbs))}));
+  if(f.topFoods.length) out.push(t("insTopFoods",{list:f.topFoods.slice(0,3).map(x=>`${x.name} (${x.kcal} kcal)`).join(", ")}));
+  if(f.biggestDay && f.loggedDays>1) out.push(t("insBigDay",{day:prettyDate(f.biggestDay.date),kcal:f.biggestDay.kcal}));
+  if(f.goal==="lean" && f.avgProtein<f.proteinTarget*0.8) out.push(t("insProteinLow",{p:round(f.avgProtein),t:round(f.proteinTarget)}));
+  if(f.loggedDays<f.days) out.push(t("insCoverage",{n:f.loggedDays,days:f.days}));
+  if(f.days<5) out.push(t("insShort",{days:f.days}));
+  out.push(t(f.maintenanceSource==="data"?"insMaintData":"insMaintTargets"));
+  return out;
+}
+function renderInsight(){
+  const el=document.getElementById("wInsight"), u=user();
+  if(u.insightsOn===false){ el.innerHTML=""; return; }
+  const f=breakdownFacts();
+  if(!f){ el.innerHTML=`<p class="ins-empty">${t("insEmpty")}</p>`; return; }
+  const saved=u.insight && u.insight.fromDate===f.fromDate && u.insight.toDate===f.toDate ? u.insight.ai : null;
+  const stats = f.loggedDays ?
+    statTile(t("insStatAte"), `${round(f.avgKcal)}${unitSpan(t("kcalUnit"))}`) +
+    statTile(t("insStatMaint"), `${round(f.maintenanceKcal)}${unitSpan(t("kcalUnit"))}`) +
+    statTile(t("insStatExpected"), fmtKgSigned(f.expectedKg)) +
+    statTile(t("insStatActual"), fmtKgSigned(f.changeKg)) : "";
+  const foot = saved ? t("insByClaude") : insightPending===f.toDate ? t("insWriting") : "";
+  el.innerHTML = `
+    <div class="ins-head"><h3>${t("insTitle")}</h3><span class="ins-range">${escapeHtml(fmtAxisDate(f.fromDate))} – ${escapeHtml(fmtAxisDate(f.toDate))}</span></div>
+    <p class="ins-headline">${escapeHtml(saved ? saved.headline : ruleHeadline(f))}</p>
+    ${stats ? `<div class="chart-stats">${stats}</div>` : ""}
+    ${saved ? `<p class="ins-summary">${escapeHtml(saved.summary)}</p>` : ""}
+    <ul class="ins-points">${(saved ? saved.points : rulePoints(f)).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
+    ${foot ? `<p class="ins-foot">${foot}</p>` : ""}`;
+}
+// Ask the Worker for a written explanation of the latest period; the rule-based text stays as the fallback.
+async function requestAiInsight(){
+  const u=user();
+  if(!INSIGHTS_URL || !cloudEnabled() || !session || u.insightsOn===false) return;
+  const f=breakdownFacts(); if(!f || !f.loggedDays) return;
+  insightPending=f.toDate; renderInsight();
+  try{
+    const r=await fetch(INSIGHTS_URL,{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+await idToken()},
+      body:JSON.stringify({lang:u.lang==="es"?"es":"en", facts:f})});
+    if(!r.ok) throw new Error("insight "+r.status);
+    const ai=await r.json();
+    u.insight={fromDate:f.fromDate, toDate:f.toDate, ai, at:Date.now()};
+    save();
+  }catch(e){ console.warn(e); }
+  finally{ insightPending=null; if(curTab==="metrics") renderInsight(); }
 }
 
 /* ---- the chart renderer ---- */
@@ -1998,7 +2293,7 @@ function drawLineChart(container, points, opts){
   // grid + y labels
   ticks.forEach(v=>{
     const y=yOf(v);
-    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
   // x labels (first, last, and up to 2 in between)
@@ -2030,7 +2325,7 @@ function drawLineChart(container, points, opts){
   }
   if(coords.length<=45) coords.forEach(c=> g+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.5" fill="${color}"/>`);
   // crosshair + hover overlay (drawn last so they sit on top)
-  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" stroke="rgba(255,255,255,.28)" stroke-width="1" opacity="0"/>`;
+  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" style="stroke:var(--cross)" stroke-width="1" opacity="0"/>`;
   g+=`<circle class="cx-dot" r="5" fill="${color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`;
   g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
 
@@ -2092,7 +2387,7 @@ function drawMultiLineChart(container, series, opts){
   let g="";
   ticks.forEach(v=>{
     const y=yOf(v);
-    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
   const xIdx=(function(n){
@@ -2116,7 +2411,7 @@ function drawMultiLineChart(container, series, opts){
     const map={}; s.points.forEach((p,i)=> map[p.date]=coords[i]);
     return {s, map};
   });
-  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" stroke="rgba(255,255,255,.28)" stroke-width="1" opacity="0"/>`;
+  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" style="stroke:var(--cross)" stroke-width="1" opacity="0"/>`;
   active.forEach((s,i)=> g+=`<circle class="cx-dot cx-dot-${i}" r="4.5" fill="${s.color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`);
   g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
 
@@ -2322,7 +2617,7 @@ function renderFridge(){
       <div class="fr-item-top">
         <span class="fr-nm">${escapeHtml(it.name)}</span>
         <span class="fr-amt">${fmtG(it.remG)} / ${fmtG(it.totalG)}</span>
-        <button class="fr-del" data-frdel="${escapeHtml(it.key)}" title="${escapeHtml(t("fridgeRemoveTitle"))}">🗑</button>
+        <button class="fr-del" data-frdel="${escapeHtml(it.key)}" title="${escapeHtml(t("fridgeRemoveTitle"))}" aria-label="${escapeHtml(t("fridgeRemoveTitle"))}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
       </div>
       <div class="fr-bar"><i style="width:${pct}%"></i></div>
       <div class="fr-meta">${escapeHtml(macNote)}</div>
@@ -2615,6 +2910,10 @@ document.getElementById("newUserName").addEventListener("keydown",e=>{if(e.key==
 });
 document.getElementById("qHeightU").addEventListener("change",()=>{ syncHeightUnit(); renderQuizPreview(); });
 document.getElementById("saveTargets").addEventListener("click",saveTargets);
+document.getElementById("insightsToggle").addEventListener("change",e=>{
+  user().insightsOn=e.target.checked; save();
+  if(curTab==="metrics") renderInsight();
+});
 
 document.getElementById("suggestBtn").addEventListener("click",openSuggest);
 document.getElementById("suggestOverlay").addEventListener("click",e=>{
@@ -2863,6 +3162,7 @@ authEl("authPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") doLo
 authEl("logoutBtn").addEventListener("click", doLogout);
 
 /* ---------- Go ---------- */
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{ if(curTab==="metrics") renderMetrics(); });
 boot();
 </script>
 </body>
