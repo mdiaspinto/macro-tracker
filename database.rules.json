@@ -1,0 +1,17 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "accounts": {
+      "$username": {
+        ".read": "auth != null && auth.token.email === $username + '@macro-tracker-d8908.firebaseapp.com'"
+      }
+    }
+  }
+}

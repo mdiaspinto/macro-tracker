@@ -643,11 +643,16 @@
   <div class="modal auth-modal">
     <div class="body">
       <div class="auth-brand"><div class="logo">M</div><h3 data-i18n="authTitle">Log in to sync</h3></div>
-      <p class="auth-intro" data-i18n="authIntro">Enter a username to sync your logs across your devices.</p>
+      <p class="auth-intro" data-i18n="authIntro">Sign in to sync your logs across your devices.</p>
       <div class="field">
         <label data-i18n="authUsername">Username</label>
-        <input id="authInput" autocomplete="off" autocapitalize="none" spellcheck="false" data-i18n-ph="authUsernamePh" placeholder="e.g. martin">
+        <input id="authInput" autocomplete="username" autocapitalize="none" spellcheck="false" data-i18n-ph="authUsernamePh" placeholder="e.g. martin">
       </div>
+      <div class="field">
+        <label data-i18n="authPassword">Password</label>
+        <input id="authPassword" type="password" autocomplete="current-password" data-i18n-ph="authPasswordPh" placeholder="At least 6 characters">
+      </div>
+      <p class="auth-intro" id="authUpgrade" style="display:none" data-i18n="authUpgrade">Security upgrade: accounts now need a password. Tap Create account with your username to set one — your logs come with you.</p>
       <div class="auth-error" id="authError"></div>
       <div class="actions" style="margin-top:14px">
         <button class="btn btn-primary" id="authLoginBtn" data-i18n="authLogin">Log in</button>
@@ -925,11 +930,14 @@ const T = {
     commonFood:"common", inMyFoods:"In My Foods", addToToday:"Add to today",
     addSelected:"Add selected", nothingSelected:"Nothing selected",
     offTarget:"Off target (− = over)",
-    authTitle:"Log in to sync", authIntro:"Enter a username to sync your logs across your devices.",
+    authTitle:"Log in to sync", authIntro:"Sign in to sync your logs across your devices.",
     authUsername:"Username", authUsernamePh:"e.g. martin",
     authLogin:"Log in", authCreate:"Create account", authContinueOffline:"Continue offline",
     authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
-    authNoAccount:"No account with that username — create one.",
+    authPassword:"Password", authPasswordPh:"At least 6 characters",
+    authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
+    authTooMany:"Too many attempts — wait a few minutes and try again.",
+    authUpgrade:"Security upgrade: accounts now need a password. Tap Create account with your username to set one — your logs come with you.",
     authNet:"Network error. Check your connection and try again.",
     authCreated:"Account created — syncing ✓", authWelcome:"Welcome back, {name} ✓",
     authOffline:"Continuing offline — changes won't sync",
@@ -1027,11 +1035,14 @@ const T = {
     commonFood:"común", inMyFoods:"En Mis alimentos", addToToday:"Agregar a hoy",
     addSelected:"Agregar seleccionados", nothingSelected:"Nada seleccionado",
     offTarget:"Fuera de objetivo (− = de más)",
-    authTitle:"Inicia sesión para sincronizar", authIntro:"Ingresa un usuario para sincronizar tus registros entre tus dispositivos.",
+    authTitle:"Inicia sesión para sincronizar", authIntro:"Inicia sesión para sincronizar tus registros entre tus dispositivos.",
     authUsername:"Usuario", authUsernamePh:"p. ej. martin",
     authLogin:"Iniciar sesión", authCreate:"Crear cuenta", authContinueOffline:"Continuar sin conexión",
     authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
-    authNoAccount:"No existe ese usuario — crea una cuenta.",
+    authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
+    authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
+    authTooMany:"Demasiados intentos — espera unos minutos e inténtalo de nuevo.",
+    authUpgrade:"Mejora de seguridad: las cuentas ahora necesitan contraseña. Toca Crear cuenta con tu usuario para crear una — tus registros se conservan.",
     authNet:"Error de red. Revisa tu conexión e inténtalo de nuevo.",
     authCreated:"Cuenta creada — sincronizando ✓", authWelcome:"Bienvenido de nuevo, {name} ✓",
     authOffline:"Continuando sin conexión — los cambios no se sincronizan",
@@ -2634,22 +2645,71 @@ document.getElementById("editOverlay").addEventListener("click",e=>{
 const FIREBASE = {
   // Paste your Realtime Database URL here to turn on cross-device sync, e.g.
   // "https://macro-tracker-xxxx-default-rtdb.firebaseio.com"
-  databaseURL: "https://macro-tracker-d8908-default-rtdb.firebaseio.com"
+  databaseURL: "https://macro-tracker-d8908-default-rtdb.firebaseio.com",
+  // Web API key (Firebase console → Project settings → General). Public by design:
+  // access is enforced by the database rules (database.rules.json), not by this key.
+  apiKey: "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ",
+  // Usernames become synthetic emails so Firebase Auth can enforce passwords + uniqueness.
+  emailDomain: "macro-tracker-d8908.firebaseapp.com"
 };
 const SESSION_KEY = "macroTracker.session";
-let session = (()=>{ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||"null"); }catch(e){ return null; } })();
+const storedSession = (()=>{ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||"null"); }catch(e){ return null; } })();
+let session = storedSession && storedSession.refreshToken ? storedSession : null;
+// Sessions from before passwords were just {username}; prompt that user to set a password once.
+const legacyUser = storedSession && !session ? storedSession.username : "";
 let cloudTimer = null;
 let focusHooked = false;
 
-function cloudEnabled(){ return !!(FIREBASE.databaseURL && FIREBASE.databaseURL.trim()); }
+function cloudEnabled(){ return !!(FIREBASE.databaseURL && FIREBASE.apiKey); }
 function normUser(u){ return String(u||"").trim().toLowerCase(); }
 function validUser(u){ return /^[a-z0-9_]{2,20}$/i.test(String(u||"").trim()); }
-function accountsUrl(u){ return FIREBASE.databaseURL.replace(/\/+$/,"") + "/accounts/" + encodeURIComponent(normUser(u)) + ".json"; }
-async function cloudGet(u){ const r=await fetch(accountsUrl(u),{cache:"no-store"}); if(!r.ok) throw new Error("net"); return await r.json(); }
-async function cloudPut(u,payload){
-  const r=await fetch(accountsUrl(u),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  if(!r.ok) throw new Error("net");
+
+/* ---- Firebase Auth (REST) ---- */
+function userEmail(u){ return normUser(u) + "@" + FIREBASE.emailDomain; }
+function saveSession(s){ session=s; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+async function authCall(op,u,pw){   // op: "signUp" | "signInWithPassword"
+  const r=await fetch("https://identitytoolkit.googleapis.com/v1/accounts:"+op+"?key="+FIREBASE.apiKey,{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({email:userEmail(u), password:pw, returnSecureToken:true})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error((j.error && j.error.message) || "net");
+  return { username:u, uid:j.localId, idToken:j.idToken, refreshToken:j.refreshToken, expiresAt:Date.now()+j.expiresIn*1000 };
 }
+let refreshing=null;
+async function idToken(){
+  if(session.expiresAt-60000 > Date.now()) return session.idToken;
+  if(!refreshing) refreshing=(async()=>{
+    const r=await fetch("https://securetoken.googleapis.com/v1/token?key="+FIREBASE.apiKey,{
+      method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:"grant_type=refresh_token&refresh_token="+encodeURIComponent(session.refreshToken)});
+    if(r.status===400){ doLogout(); throw new Error("signed-out"); }   // revoked / user deleted
+    if(!r.ok || !session) throw new Error("net");
+    const j=await r.json();
+    saveSession(Object.assign({}, session, {idToken:j.id_token, refreshToken:j.refresh_token, expiresAt:Date.now()+j.expires_in*1000}));
+    return session.idToken;
+  })().finally(()=>{ refreshing=null; });
+  return refreshing;
+}
+function authMsg(e){
+  const m=String(e && e.message || "");
+  if(m.startsWith("EMAIL_EXISTS")) return t("authTaken");
+  if(/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)) return t("authBadLogin");
+  if(m.startsWith("WEAK_PASSWORD")) return t("authShortPw");
+  if(m.startsWith("TOO_MANY_ATTEMPTS")) return t("authTooMany");
+  return t("authNet");
+}
+
+/* ---- Realtime Database (REST, authenticated) ---- */
+async function dbFetch(path,opts){
+  const url=FIREBASE.databaseURL.replace(/\/+$/,"") + path + ".json?auth=" + encodeURIComponent(await idToken());
+  const r=await fetch(url, Object.assign({cache:"no-store"}, opts));
+  if(!r.ok) throw new Error("net");
+  return await r.json();
+}
+function cloudGet(){ return dbFetch("/users/"+session.uid); }
+function cloudPut(payload){ return dbFetch("/users/"+session.uid,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); }
+// Pre-password accounts lived at /accounts/<username>; the rules let only that username's owner read it.
+function legacyGet(u){ return dbFetch("/accounts/"+encodeURIComponent(normUser(u))).catch(()=>null); }
 function payloadOf(){ return { username: session && session.username, state, updatedAt: Date.now() }; }
 
 /* ---- merge two app states (union of foods & day-logs so nothing is lost) ---- */
@@ -2708,12 +2768,12 @@ function mergeState(primary,secondary){
 function scheduleCloudSync(){
   if(!cloudEnabled() || !session) return;
   clearTimeout(cloudTimer);
-  cloudTimer=setTimeout(()=>{ cloudPut(session.username, payloadOf()).catch(()=>{}); }, 1500);
+  cloudTimer=setTimeout(()=>{ cloudPut(payloadOf()).catch(()=>{}); }, 1500);
 }
 async function pullRemote(){
   if(!cloudEnabled() || !session) return;
   try{
-    const remote=await cloudGet(session.username);
+    const remote=await cloudGet();
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -2724,38 +2784,48 @@ async function pullRemote(){
 
 /* ---- auth UI ---- */
 function authEl(id){ return document.getElementById(id); }
-function openAuth(){ authEl("authError").textContent=""; authEl("authOverlay").classList.add("on"); setTimeout(()=>authEl("authInput").focus(),50); }
+function openAuth(){
+  authEl("authError").textContent=""; authEl("authPassword").value="";
+  authEl("authUpgrade").style.display = legacyUser ? "block" : "none";
+  if(legacyUser && !authEl("authInput").value) authEl("authInput").value=legacyUser;
+  authEl("authOverlay").classList.add("on");
+  setTimeout(()=>authEl(authEl("authInput").value ? "authPassword" : "authInput").focus(),50);
+}
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
 function authBusy(on){
-  ["authLoginBtn","authCreateBtn","authInput"].forEach(id=>authEl(id).disabled=on);
+  ["authLoginBtn","authCreateBtn","authInput","authPassword"].forEach(id=>authEl(id).disabled=on);
   authEl("authLoginBtn").textContent = on ? t("checking") : t("authLogin");
 }
+function authForm(){
+  const u=authEl("authInput").value.trim(), pw=authEl("authPassword").value;
+  if(!validUser(u)){ authError(t("authBadName")); return null; }
+  if(pw.length<6){ authError(t("authShortPw")); return null; }
+  return {u,pw};
+}
 async function doCreate(){
-  const u=authEl("authInput").value.trim();
-  if(!validUser(u)){ authError(t("authBadName")); return; }
+  const f=authForm(); if(!f) return;
   authBusy(true);
   try{
-    const existing=await cloudGet(u);
-    if(existing){ authError(t("authTaken")); authBusy(false); return; }
-    session={username:u}; localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    await cloudPut(u, payloadOf());   // current device data seeds the new account
-    authBusy(false); startApp(); toast(t("authCreated",{name:u}));
-  }catch(e){ authError(t("authNet")); authBusy(false); }
+    saveSession(await authCall("signUp", f.u, f.pw));
+    const legacy=await legacyGet(f.u);
+    if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
+    localStorage.setItem(KEY, JSON.stringify(state));
+    await cloudPut(payloadOf());   // current device data seeds the new account
+    authBusy(false); startApp(); toast(t("authCreated",{name:f.u}));
+  }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
 async function doLogin(){
-  const u=authEl("authInput").value.trim();
-  if(!validUser(u)){ authError(t("authBadName")); return; }
+  const f=authForm(); if(!f) return;
   authBusy(true);
   try{
-    const remote=await cloudGet(u);
-    if(!remote || !remote.state){ authError(t("authNoAccount")); authBusy(false); return; }
-    state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
-    session={username:u}; localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    saveSession(await authCall("signInWithPassword", f.u, f.pw));
+    const remote=await cloudGet();
+    if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
     localStorage.setItem(KEY, JSON.stringify(state));
-    await cloudPut(u, payloadOf());        // push merged back so the account gains local logs
-    authBusy(false); startApp(); toast(t("authWelcome",{name:u}));
-  }catch(e){ authError(t("authNet")); authBusy(false); }
+    await cloudPut(payloadOf());        // push merged back so the account gains local logs
+    authBusy(false); startApp(); toast(t("authWelcome",{name:f.u}));
+  }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
 function doLogout(){
   session=null; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
@@ -2788,7 +2858,8 @@ function boot(){
 authEl("authLoginBtn").addEventListener("click", doLogin);
 authEl("authCreateBtn").addEventListener("click", doCreate);
 authEl("authOfflineBtn").addEventListener("click", authOffline);
-authEl("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+authEl("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") authEl("authPassword").focus(); });
+authEl("authPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
 authEl("logoutBtn").addEventListener("click", doLogout);
 
 /* ---------- Go ---------- */
