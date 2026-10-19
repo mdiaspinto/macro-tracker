@@ -171,7 +171,7 @@
   .field input,.field select,.field textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
     border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;transition:border-color .15s,box-shadow .15s}
   .field input:hover{border-color:var(--line-strong)}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
   .macro-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
   .macro-inputs .field:nth-child(1) label{color:var(--protein)}
   .macro-inputs .field:nth-child(2) label{color:var(--carbs)}
@@ -346,6 +346,9 @@
   .setting-row b{font-size:14px}
   .setting-row small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:2px}
   .setting-row input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+  .bio-field{margin-top:16px}
+  .bio-field textarea{resize:vertical;line-height:1.5;min-height:76px}
+  .bio-field small{color:var(--muted);font-size:12.5px;line-height:1.45}
 
   /* ---------- My Fridge ---------- */
   .fr-explain{font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 14px;max-width:68ch}
@@ -747,6 +750,11 @@
         <span><b data-i18n="insSetting">Weight-change breakdown</b><small data-i18n="insSettingHint">After each weigh-in, explain what you ate and why your weight moved.</small></span>
         <input type="checkbox" id="insightsToggle">
       </label>
+      <div class="field bio-field">
+        <label for="bioInput" data-i18n="bioLabel">About you</label>
+        <textarea id="bioInput" rows="3" maxlength="300" data-i18n-ph="bioPh" placeholder="e.g. 52, woman, menopausal, walks daily"></textarea>
+        <small data-i18n="bioHint">Shared with Claude so the breakdown fits you: age, sex, menopause, medication, training. Saved when you leave the box.</small>
+      </div>
     </div>
   </div>
 </div>
@@ -1065,6 +1073,8 @@ const T = {
     insMaintData:"Maintenance is estimated from your own logs and weight trend.",
     insMaintTargets:"Maintenance is estimated from your targets and gets more accurate after about two weeks of logging and weigh-ins.",
     insNoFood:"No food was logged between these weigh-ins, so there is nothing to explain the change with yet.",
+    bioLabel:"About you", bioPh:"e.g. 52, woman, menopausal, walks daily", bioSaved:"Bio saved",
+    bioHint:"Shared with Claude so the breakdown fits you: age, sex, menopause, medication, training. Saved when you leave the box.",
     insByClaude:"Explanation written by Claude from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
     authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
@@ -1189,6 +1199,8 @@ const T = {
     insMaintData:"El mantenimiento se estima a partir de tus registros y tu tendencia de peso.",
     insMaintTargets:"El mantenimiento se estima a partir de tus objetivos y será más preciso tras unas dos semanas de registros y pesajes.",
     insNoFood:"No se registró comida entre estos pesajes, así que aún no hay con qué explicar el cambio.",
+    bioLabel:"Sobre ti", bioPh:"p. ej. 52 años, mujer, menopausia, camina a diario", bioSaved:"Bio guardada",
+    bioHint:"Se comparte con Claude para que la explicación se ajuste a ti: edad, sexo, menopausia, medicación, entrenamiento. Se guarda al salir del cuadro.",
     insByClaude:"Explicación redactada por Claude a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
     authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
@@ -1605,6 +1617,7 @@ function renderTargets(){
     <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
     <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
   document.getElementById("insightsToggle").checked = u.insightsOn!==false;
+  document.getElementById("bioInput").value = u.bio||"";
 }
 function saveTargets(){
   const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
@@ -2244,7 +2257,7 @@ async function requestAiInsight(){
   try{
     const r=await fetch(INSIGHTS_URL,{method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+await idToken()},
-      body:JSON.stringify({lang:u.lang==="es"?"es":"en", facts:f})});
+      body:JSON.stringify({lang:u.lang==="es"?"es":"en", bio:u.bio||"", facts:f})});
     if(!r.ok) throw new Error("insight "+r.status);
     const ai=await r.json();
     u.insight={fromDate:f.fromDate, toDate:f.toDate, ai, at:Date.now()};
@@ -2913,6 +2926,11 @@ document.getElementById("saveTargets").addEventListener("click",saveTargets);
 document.getElementById("insightsToggle").addEventListener("change",e=>{
   user().insightsOn=e.target.checked; save();
   if(curTab==="metrics") renderInsight();
+});
+document.getElementById("bioInput").addEventListener("change",e=>{
+  const u=user(); u.bio=e.target.value.trim(); delete u.insight; save();
+  toast(t("bioSaved"));
+  requestAiInsight();
 });
 
 document.getElementById("suggestBtn").addEventListener("click",openSuggest);
