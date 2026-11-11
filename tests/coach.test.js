@@ -23,7 +23,7 @@ function fixture() {
 
 test("summary: shape and values for a fixture user", () => {
   const u = fixture(), s = Coach.summary(u, TODAY, u.profile);
-  assert.deepEqual(Object.keys(s).sort(), ["lang", "level", "macros", "profile", "streak", "toNext", "week", "yesterday"]);
+  assert.deepEqual(Object.keys(s).sort(), ["lang", "level", "macros", "profile", "streak", "toNext", "today", "week", "yesterday"]);
   assert.equal(s.lang, "es");
   assert.equal(s.week.bar, Math.round(Brain.weekScore(u, TODAY).bar * 100) / 100);
   assert.equal(s.week.missing.length, 12);
@@ -38,6 +38,26 @@ test("summary: shape and values for a fixture user", () => {
   // Mon 665 kcal / 50 g, Tue 330 kcal / 20 g (what-if cake and last week's steak excluded)
   assert.deepEqual(s.macros, { avgKcal: 498, kcalTarget: 1650, avgProtein: 35, proteinTarget: 100 });
   assert.deepEqual(s.yesterday, ["Lentil soup"]);
+  assert.deepEqual(s.today, { kcal: 0, protein: 0 });
+});
+
+test("summary: weekly averages cover Monday..yesterday; today's partial day is separate", () => {
+  const u = fixture();
+  u.days[TODAY] = [meal("Toast", { ap: 10, ac: 30, af: 5 }), meal("What if", { eaten: false, ap: 99 })];
+  const s = Coach.summary(u, TODAY, u.profile);
+  // still Mon 665/50 and Tue 330/20 only; today's 205 kcal / 10 g reported on its own
+  assert.deepEqual(s.macros, { avgKcal: 498, kcalTarget: 1650, avgProtein: 35, proteinTarget: 100 });
+  assert.deepEqual(s.today, { kcal: 205, protein: 10 });
+});
+
+test("summary: on Monday there are no completed days, so averages are null (not 0)", () => {
+  const u = fixture();
+  u.days["2026-11-09"].push(meal("Lunch", { ap: 30, ac: 10, af: 0 }));
+  const s = Coach.summary(u, "2026-11-09", u.profile);
+  assert.equal(s.macros.avgKcal, null);
+  assert.equal(s.macros.avgProtein, null);
+  assert.equal(s.macros.kcalTarget, 1650);
+  assert.deepEqual(s.today, { kcal: 825, protein: 80 });
 });
 
 test("summary: yesterday capped at 8 and excludes what-if meals", () => {
@@ -75,6 +95,7 @@ test("summary: empty user doesn't throw", () => {
     assert.equal(s.level, "sprout");
     assert.deepEqual(s.yesterday, []);
     assert.deepEqual(s.macros, { avgKcal: null, kcalTarget: null, avgProtein: null, proteinTarget: null });
+    assert.deepEqual(s.today, { kcal: 0, protein: 0 });
     assert.equal(s.week.missing.length, 13);
   }
 });
@@ -93,4 +114,48 @@ test("mergeCoach: notes by date with primary winning; chat from the later date, 
   assert.deepEqual(Coach.mergeCoach(undefined, undefined), { notes: {} });
   // Firebase drops empty arrays: a chat without messages is still a chat
   assert.equal(Coach.mergeCoach({ chat: { date: "2026-11-12" } }, b).chat.date, "2026-11-12");
+});
+
+test("classify: maps Worker responses to ok / unavailable / capped / error", () => {
+  const c = Coach.classify;
+  assert.equal(c("note", 200, { note: "Nice week", tip: "" }), "ok");
+  assert.equal(c("note", 200, { note: "  " }), "error");
+  assert.equal(c("chat", 200, { reply: "Sure", remaining: 3 }), "ok");
+  assert.equal(c("chat", 200, {}), "error");
+  assert.equal(c("note", 400, { error: "no_facts" }), "unavailable");
+  assert.equal(c("chat", 401, { error: "unauthorized" }), "error");
+  assert.equal(c("chat", 429, { error: "daily_limit" }), "capped");
+  assert.equal(c("chat", 429, { error: "rate_limited" }), "error");
+  assert.equal(c("note", 502, { error: "upstream" }), "error");
+  assert.equal(c("note", 500, null), "error");
+});
+
+// Network glue with a stubbed fetch. Order matters: "unavailable" sticks for the module's lifetime.
+const stubFetch = fn => { globalThis.fetch = fn; };
+const reply = (status, body) => async () => ({ status, json: async () => body });
+Coach.init({ url: "https://w.test", getToken: async () => "tok" });
+
+test("send: network throw rejects with kind 'error' and keeps the question for retry", async () => {
+  const u = fixture();
+  stubFetch(async () => { throw new TypeError("offline"); });
+  await assert.rejects(Coach.send(u, TODAY, "Hi?"), e => e.kind === "error");
+  assert.deepEqual(Coach.chatFor(u, TODAY), [{ role: "user", text: "Hi?" }]);
+});
+
+test("send: capped drops the just-sent question", async () => {
+  const u = fixture();
+  u.coach = { notes: {}, chat: { date: TODAY, messages: [{ role: "user", text: "a" }, { role: "assistant", text: "b" }] } };
+  stubFetch(reply(429, { error: "daily_limit" }));
+  await assert.rejects(Coach.send(u, TODAY, "One more?"), e => e.kind === "capped");
+  assert.deepEqual(Coach.chatFor(u, TODAY).map(m => m.text), ["a", "b"]);
+  assert.equal(Coach.isCapped(u, TODAY), true);
+});
+
+test("send: unavailable (old Worker) drops the just-sent question", async () => {
+  const u = fixture();
+  u.id = "other";
+  stubFetch(reply(400, { error: "no_facts" }));
+  await assert.rejects(Coach.send(u, TODAY, "Hello?"), e => e.kind === "unavailable");
+  assert.deepEqual(Coach.chatFor(u, TODAY), []);
+  assert.equal(Coach.available(), false);
 });

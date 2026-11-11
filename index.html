@@ -1232,7 +1232,7 @@ const PROFILE_GOALS = [["loseWeight","⚖️"],["strength","💪"],["brainHealth
 const PROFILE_TONES = [["cheer","🎉"],["straight","🎯"]];
 function ensureProfile(u){
   const p = Object.assign({age:null, sex:"", heightCm:null, activity:"", goals:[], likes:"", avoids:"",
-    familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||"")}, u.profile);
+    familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||""), coachOn:true}, u.profile);
   if(!Array.isArray(p.goals)) p.goals = Object.values(p.goals||{});
   return u.profile = p;
 }
@@ -1327,6 +1327,7 @@ const T = {
     pfLikes:"Foods you love", pfLikesPh:"e.g. salmon, berries, lentils",
     pfAvoids:"Foods you avoid or can't eat", pfAvoidsPh:"e.g. shellfish, spicy food",
     pfFamily:"Family history of memory problems", pfFamilyHint:"Shared with your coach only if on",
+    pfCoachOn:"AI coach", pfCoachOnHint:"Daily tip and chat. Your profile is shared with the coach only when this is on.",
     pfNotes:"Anything else your coach should know", pfNotesPh:"e.g. menopausal, walk every morning, night shifts",
     profileSaved:"Saved ✓",
     mcTitle:"Meet your coach 👋", mcStep:"Step {n} of 3",
@@ -1512,6 +1513,7 @@ const T = {
     pfLikes:"Comidas que te encantan", pfLikesPh:"p. ej. salmón, frutos rojos, lentejas",
     pfAvoids:"Comidas que evitas o no puedes comer", pfAvoidsPh:"p. ej. mariscos, picante",
     pfFamily:"Antecedentes familiares de problemas de memoria", pfFamilyHint:"Solo se comparte con tu coach si está activado",
+    pfCoachOn:"Coach con IA", pfCoachOnHint:"Consejo diario y chat. Tu perfil solo se comparte con el coach cuando esto está activado.",
     pfNotes:"Algo más que tu coach deba saber", pfNotesPh:"p. ej. menopausia, camino cada mañana, turnos de noche",
     profileSaved:"Guardado ✓",
     mcTitle:"Conoce a tu coach 👋", mcStep:"Paso {n} de 3",
@@ -2126,15 +2128,22 @@ function profileFields(part){
     + txt("notes","pfNotes",500,true);
 }
 function renderProfileForm(){
-  document.getElementById("aboutMe").innerHTML = `<h3 class="pf-title">${t("aboutMe")}</h3><p class="pf-hint">${t("aboutMeHint")}</p>`
+  document.getElementById("aboutMe").innerHTML = `<h3 class="pf-title">${t("aboutMe")}</h3><p class="pf-hint">${t("aboutMeHint")}</p>
+    <label class="setting-row"><span><b>${t("pfCoachOn")}</b><small>${t("pfCoachOnHint")}</small></span>
+      <input type="checkbox" data-pf="coachOn" ${profile().coachOn!==false?"checked":""}></label>`
     + ["basics","goals","food","more"].map(profileFields).join("");
 }
-// Save one field at a time (like the old bio box); one "Saved" toast and one insight refresh per burst of edits.
+// Save one field at a time (like the old bio box); one "Saved" toast per burst of edits.
+// A change to a field the weight breakdown uses drops the saved one; the next Metrics visit / weigh-in redoes it.
 let profileTimer;
+const INSIGHT_FIELDS = ["age","sex","heightCm","activity","notes"];
 function saveProfile(patch, quiet){
-  const u=user(); Object.assign(profile(u), patch); u.profileAt=Date.now(); delete u.insight; save();
+  const u=user(), p=profile(u);
+  if(INSIGHT_FIELDS.some(k=>k in patch && patch[k]!==p[k])) delete u.insight;
+  Object.assign(p, patch); u.profileAt=Date.now(); save();
+  if("coachOn" in patch) renderBrainCard();
   clearTimeout(profileTimer);
-  profileTimer=setTimeout(()=>{ if(!quiet) toast(t("profileSaved")); requestAiInsight(); }, 1200);
+  profileTimer=setTimeout(()=>{ if(!quiet) toast(t("profileSaved")); }, 1200);
 }
 const PROFILE_NUM = { age:[10,110], heightCm:[100,230] };
 function onProfileEvent(e){
@@ -2162,7 +2171,14 @@ function onProfileEvent(e){
 
 /* ---------- Meet your coach ---------- */
 let mcStep=0;
-function maybeShowMeetCoach(){ if(session && !user().coachIntroSeen && !document.getElementById("authOverlay").classList.contains("on")) openMeetCoach(); }
+// Only once the coach has really answered (a note for today), after the first pull, and never over another dialog
+// (auth, level-up, chat…). Called after the first pull, when a note arrives, and when the level-up closes.
+function maybeShowMeetCoach(){
+  const u=user();
+  if(!session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
+  if(document.querySelector(".overlay.on")) return;
+  openMeetCoach();
+}
 function openMeetCoach(){ mcStep=0; renderMeetCoach(); document.getElementById("coachOverlay").classList.add("on"); }
 function renderMeetCoach(){
   const intro=[t("mcIntro"),t("mcFoodIntro"),t("mcMoreIntro")][mcStep], last=mcStep===2;
@@ -2694,7 +2710,7 @@ function renderTabs(){
 function switchTab(tab){
   curTab = tab;
   renderTabs();
-  if(tab==="metrics") renderMetrics();
+  if(tab==="metrics"){ renderMetrics(); if(!user().insight) requestAiInsight(); }
   if(tab==="brain") renderBrainView(Game.badges(user(), todayStr()));
   if(tab==="fridge"){ renderFridge(); document.getElementById("fridgeIdeas").innerHTML=""; }
 }
@@ -2924,8 +2940,10 @@ function renderInsight(){
     ${foot ? `<p class="ins-foot">${foot}</p>` : ""}
     ${session ? "" : `<p class="ins-foot">${t("coachLogin")}</p>`}`;
 }
+const weightProfile = p => ({age:p.age, sex:p.sex, heightCm:p.heightCm, activity:p.activity, notes:p.notes});
 // Ask the Worker for a written explanation of the latest period; the rule-based text stays as the fallback.
 async function requestAiInsight(){
+  if(insightPending) return;
   const u=user();
   if(!INSIGHTS_URL || !cloudEnabled() || !session || u.insightsOn===false) return;
   const f=breakdownFacts(); if(!f || !f.loggedDays) return;
@@ -2933,8 +2951,8 @@ async function requestAiInsight(){
   try{
     const r=await fetch(INSIGHTS_URL,{method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+await idToken()},
-      // `bio` (= profile notes) stays for the older deployed Worker, which ignores `profile`.
-      body:JSON.stringify({lang:u.lang==="es"?"es":"en", profile:profile(u), bio:profile(u).notes, facts:f})});
+      // Only the fields the weight prompt uses. `bio` (= profile notes) stays for the older deployed Worker, which ignores `profile`.
+      body:JSON.stringify({lang:u.lang==="es"?"es":"en", profile:weightProfile(profile(u)), bio:profile(u).notes, facts:f})});
     if(!r.ok) throw new Error("insight "+r.status);
     const ai=await r.json();
     u.insight={fromDate:f.fromDate, toDate:f.toDate, ai, at:Date.now()};
@@ -2946,10 +2964,10 @@ async function requestAiInsight(){
 /* ---------- Coach: daily note (brain card) + chat sheet ---------- */
 Coach.init({ url:INSIGHTS_URL, getToken:idToken, hasSession:()=>cloudEnabled() && !!session,
   getProfile:u=>profile(u), getUser:id=>state.users.find(u=>u.id===id),
-  onChange:()=>{ save(); renderBrainCard(); renderChat(); } });
+  onChange:()=>{ save(); renderBrainCard(); renderChat(); maybeShowMeetCoach(); } });
 // Note area on the brain card: today's note (model text, escaped) + the chat button. The nextHint line above always stays.
 function coachBlock(u){
-  if(!INSIGHTS_URL || !cloudEnabled()) return "";
+  if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
   const noteHtml = note ? `<div class="br-note"><p class="br-note-head">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
@@ -2957,11 +2975,11 @@ function coachBlock(u){
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
 function requestCoachNote(){
-  if(curTab==="tracker" && celebrateReady && cloudEnabled() && session) Coach.ensureNote(user(), todayStr());
+  if(curTab==="tracker" && celebrateReady && cloudEnabled() && session && profile().coachOn!==false) Coach.ensureNote(user(), todayStr());
 }
 let chatWaiting=false, chatError=false;
 function openChat(){
-  if(!session) return;
+  if(!session || profile().coachOn===false) return;
   chatError=false;
   document.getElementById("chatOverlay").classList.add("on");
   renderChat();
@@ -3591,7 +3609,7 @@ document.getElementById("recentRow").addEventListener("click",e=>{
   const b=e.target.closest("[data-recent]"), m=b && recentList[+b.dataset.recent]; if(m) relogMeal(m);
 });
 document.getElementById("levelOverlay").addEventListener("click",e=>{
-  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk") e.currentTarget.classList.remove("on");
+  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk"){ e.currentTarget.classList.remove("on"); maybeShowMeetCoach(); }
 });
 document.getElementById("brainOverlay").addEventListener("click",e=>{
   if(e.target.id==="brainOverlay"||e.target.closest("[data-close-brain]")){ closeChipPicker(); return; }

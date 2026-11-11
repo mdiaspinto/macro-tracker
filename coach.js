@@ -15,13 +15,17 @@ const Coach = (() => {
     if (!p.familyHistory) delete p.familyHistory;
     if (!String(p.notes || "").trim()) delete p.notes;
     const ws = B.weekScore(u, today), lv = B.levelFor(B.lifetimePoints(u, today));
+    const totals = d => {
+      const ms = eatenMeals(u, d), sum = k => ms.reduce((a, m) => a + (Number(m[k]) || 0), 0);
+      return { n: ms.length, kcal: sum("ap") * 4 + sum("ac") * 4 + sum("af") * 9, protein: sum("ap") };
+    };
+    // Weekly averages cover completed days only (Monday..yesterday); today's partial day is reported separately.
     let days = 0, kcal = 0, protein = 0;
-    for (let d = ws.start; d <= today; d = addDays(d, 1)) {
-      const ms = eatenMeals(u, d);
-      if (!ms.length) continue;
-      const sum = k => ms.reduce((a, m) => a + (Number(m[k]) || 0), 0);
-      days++; kcal += sum("ap") * 4 + sum("ac") * 4 + sum("af") * 9; protein += sum("ap");
+    for (let d = ws.start; d < today; d = addDays(d, 1)) {
+      const x = totals(d);
+      if (x.n) { days++; kcal += x.kcal; protein += x.protein; }
     }
+    const now = totals(today);
     const t = u.targets && u.targets[u.goal];
     return {
       profile: p,
@@ -39,6 +43,7 @@ const Coach = (() => {
         avgProtein: days ? Math.round(protein / days) : null,
         proteinTarget: t ? Number(t.p) || 0 : null,
       },
+      today: { kcal: Math.round(now.kcal), protein: Math.round(now.protein) },
       yesterday: eatenMeals(u, addDays(today, -1)).map(m => String(m.name || "").trim()).filter(Boolean).slice(0, 8),
     };
   }
@@ -132,6 +137,12 @@ const Coach = (() => {
     if (res.status !== "ok") {
       if (res.status === "unavailable") unavailable = true;
       if (res.status === "capped") capped.add(keyOf(user, today));
+      // No answer will ever come today: drop the question so a reload doesn't show it unanswered.
+      if (text && (res.status === "capped" || res.status === "unavailable"))
+        new Set([chat, todayChat(fresh(user), today)]).forEach(c => {
+          const i = c.messages.findLastIndex(m => m && m.role === "user" && m.text === text);
+          if (i >= 0) c.messages.splice(i, 1);
+        });
       changed();
       throw fail(res.status);
     }

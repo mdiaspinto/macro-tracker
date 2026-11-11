@@ -5,7 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const MODEL = "claude-haiku-5-5";
 const MAX_BODY_BYTES = 40000;
-const DAILY_LIMITS = { note: 3, chat: 30 };
+const DAILY_LIMITS = { weight: 20, note: 3, chat: 30 };
 const MAX_CHAT_MESSAGES = 10;
 
 const SYSTEM = `You explain a person's weight change between two weigh-ins, inside their personal food-tracking app.
@@ -65,7 +65,7 @@ const COACH_RULES = `Rules:
 
 const NOTE_SYSTEM = `You write the short daily note on the home card of a personal food-tracking app that also scores how brain-friendly the week's eating is.
 
-You receive a JSON summary the app calculated: profile, this week's brain-food bar and the categories still missing (with how much remains), streak, level, points to the next level, average calories and protein against targets, and yesterday's meals.
+You receive a JSON summary the app calculated: profile, this week's brain-food bar and the categories still missing (with how much remains), streak, level, points to the next level, average calories and protein over this week's completed days (Monday to yesterday; null when none) against targets, "today" (calories and protein eaten so far today, a partial day: never judge it as a full day), and yesterday's meals.
 
 Write:
 - note: 2-3 sentences on how the week is going, using their actual numbers or foods.
@@ -75,7 +75,7 @@ ${COACH_RULES}`;
 
 const CHAT_SYSTEM = `You are the coach inside a personal food-tracking app that also scores how brain-friendly the week's eating is. You answer the person's questions about their food, week, and goals.
 
-The first user message begins with a JSON summary the app calculated: profile, this week's brain-food bar and missing categories, streak, level, points to the next level, average calories and protein against targets, and yesterday's meals. Use it to ground your answers.
+The first user message begins with a JSON summary the app calculated: profile, this week's brain-food bar and missing categories, streak, level, points to the next level, average calories and protein over this week's completed days (Monday to yesterday; null when none) against targets, "today" (calories and protein eaten so far today, a partial day: never judge it as a full day), and yesterday's meals. Use it to ground your answers.
 
 Reply in at most about 120 words, in plain prose, no lists unless asked.
 
@@ -162,7 +162,9 @@ function buildRequest(kind, body) {
       ],
     };
   }
-  const context = `<data>${JSON.stringify({ lang: lang(body), summary: body.summary ?? {} })}</data>`;
+  // "<" escaped (still valid JSON) so user text can't close the <data> tag.
+  const data = JSON.stringify({ lang: lang(body), summary: body.summary ?? {} }).replace(/</g, "\\u003c");
+  const context = `<data>${data}</data>`;
   if (kind === "note") return { messages: [{ role: "user", content: context }] };
   const turns = chatTurns(body.messages);
   if (!turns.length) return null;
@@ -202,11 +204,8 @@ export async function handle(request, env, deps = {}) {
   const built = buildRequest(kind, body);
   if (!built) return json({ error: "no_message" }, 400, headers);
 
-  let remaining;
-  if (kind !== "weight") {
-    remaining = await checkCap(env, kind, username);
-    if (remaining < 0) return json({ error: "daily_limit" }, 429, headers);
-  }
+  const remaining = await checkCap(env, kind, username);
+  if (remaining < 0) return json({ error: "daily_limit" }, 429, headers);
 
   const prompt = PROMPTS[kind];
   try {
