@@ -84,6 +84,64 @@ const Brain = (() => {
     return tags;
   }
 
-  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags };
+  const mealTags = meal => Array.isArray(meal.brain) ? meal.brain : detectTags(meal.name);
+
+  // Local-date helpers: "YYYY-MM-DD" <-> Date via local getters (never UTC).
+  const parseDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const fmtDate = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return fmtDate(d); };
+  const weekStart = date => addDays(date, -((parseDate(date).getDay() + 6) % 7));
+
+  function weekScore(user, date) {
+    const start = weekStart(date), days = (user && user.days) || {}, habits = (user && user.habits) || {};
+    const counts = {}, limitCounts = {}, fill = {};
+    CATEGORIES.forEach(c => counts[c.id] = 0);
+    Object.keys(LIMIT_TAGS).forEach(t => limitCounts[t] = 0);
+    let oily = 0, meals = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(start, i);
+      (days[d] || []).filter(ml => ml.eaten === true).forEach(ml => {
+        meals++;
+        const tags = mealTags(ml);
+        CATEGORIES.forEach(c => { if (c.kind === "food" && tags.includes(c.id)) counts[c.id]++; });
+        Object.keys(LIMIT_TAGS).forEach(t => { if (tags.includes(t)) limitCounts[t]++; });
+        if (tags.includes("oilyFish")) oily++;
+      });
+      const h = habits[d] || {};
+      CATEGORIES.forEach(c => { if (c.kind === "habit" && h[c.id] === true) counts[c.id]++; });
+    }
+    let sum = 0;
+    CATEGORIES.forEach(c => { fill[c.id] = Math.min(1, counts[c.id] / c.target); sum += fill[c.id]; });
+    const full = CATEGORIES.every(c => fill[c.id] >= 1);
+    const clean = meals >= 7 && Object.keys(LIMIT_TAGS).every(t => limitCounts[t] <= LIMIT_TAGS[t]);
+    const points = Math.round(30 * sum) + 5 * Math.min(oily, 2) + (full ? 50 : 0) + (clean ? 30 : 0);
+    let nextHint = null;
+    CATEGORIES.forEach(c => {
+      const remaining = c.target - counts[c.id];
+      if (remaining > 0 && (!nextHint || remaining < nextHint.remaining)) nextHint = { id: c.id, remaining };
+    });
+    return { start, bar: sum / CATEGORIES.length, fill, counts, limitCounts, oily, meals, clean, full, points, nextHint };
+  }
+
+  function lifetimePoints(user, today) {
+    const keys = Object.keys((user && user.days) || {}).concat(Object.keys((user && user.habits) || {}));
+    if (!keys.length) return 0;
+    let total = 0;
+    for (let w = weekStart(keys.sort()[0]), last = weekStart(today); w <= last; w = addDays(w, 7)) total += weekScore(user, w).points;
+    return total;
+  }
+
+  const LEVELS = [
+    { id: "sprout", emoji: "🌱", min: 0 }, { id: "growing", emoji: "🌿", min: 500 }, { id: "sharp", emoji: "💡", min: 1500 },
+    { id: "brilliant", emoji: "✨", min: 3500 }, { id: "genius", emoji: "🧠", min: 7000 }, { id: "legend", emoji: "🏆", min: 12000 },
+  ];
+  function levelFor(points) {
+    let i = LEVELS.length - 1;
+    while (i > 0 && points < LEVELS[i].min) i--;
+    const next = LEVELS[i + 1] || null;
+    return { level: LEVELS[i], next, toNext: next ? next.min - points : 0 };
+  }
+
+  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags, mealTags, weekStart, weekScore, lifetimePoints, LEVELS, levelFor };
 })();
 if (typeof module !== "undefined") module.exports = Brain; else window.Brain = Brain;

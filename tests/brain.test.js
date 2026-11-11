@@ -53,3 +53,68 @@ test("peppers plural and soy milk", () => {
   has("Stuffed peppers", "veg"); has("mixed peppers", "veg");
   hasnt("leche de soja", "beans"); hasnt("lait de soja", "beans"); hasnt("soy milk latte", "beans");
 });
+
+const m = (name, eaten = true, extra = {}) => ({ id: name + Math.random(), name, eaten, ap: 0, ac: 0, af: 0, ...extra });
+const mk = (days, habits) => ({ days, habits, targets: { lean: { p: 100, c: 100, f: 50 } }, goal: "lean" });
+
+test("weekStart is local Monday", () => {
+  assert.equal(Brain.weekStart("2026-11-15"), "2026-11-09"); // Sunday
+  assert.equal(Brain.weekStart("2026-11-09"), "2026-11-09"); // Monday
+  assert.equal(Brain.weekStart("2026-11-16"), "2026-11-16");
+});
+test("fill caps at target; what-if ignored", () => {
+  const u = mk({"2026-11-10":[m("salmon"),m("salmon"),m("salmon"),m("sardines",false)]});
+  const s = Brain.weekScore(u, "2026-11-11");
+  assert.equal(s.counts.fish, 3); assert.equal(s.fill.fish, 1); assert.equal(s.oily, 3);
+});
+test("points formula", () => {
+  const u = mk({"2026-11-10":[m("salmon")]});
+  // fish 1/2 → 0.5 × 30 = 15, +5 oily, not full, not clean (1 meal)
+  assert.equal(Brain.weekScore(u, "2026-11-10").points, 20);
+});
+test("explicit chips beat detection", () => {
+  const u = mk({"2026-11-10":[m("mystery bowl", true, {brain:["nuts"]})]});
+  assert.equal(Brain.weekScore(u, "2026-11-10").counts.nuts, 1);
+});
+test("habits: only true counts", () => {
+  const u = mk({}, {"2026-11-10":{strength:true, walk:false}});
+  const s = Brain.weekScore(u, "2026-11-10");
+  assert.equal(s.counts.strength, 1); assert.equal(s.counts.walk, 0);
+});
+test("full bar: +50, clean +30, oily capped at 2, nextHint null", () => {
+  const days = {}, habits = {};
+  const week = ["2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-14","2026-11-15"];
+  week.forEach((d, i) => {
+    const tags = ["grains","veg","olive"];
+    if (i < 6) tags.push("greens"); if (i < 5) tags.push("nuts"); if (i < 3) tags.push("beans");
+    if (i < 2) tags.push("berries", "fish", "oilyFish"); if (i === 2) tags.push("fish", "oilyFish"); // 3 oily, capped at 2
+    days[d] = [m("x", true, {brain: tags}), m("y", true, {brain:["grains"]}), m("z", true, {brain:["grains"]})];
+    habits[d] = {sleep:true, strength: i < 2, walk: i < 5, social: i < 3, mind: i < 3};
+  });
+  const s = Brain.weekScore(mk(days, habits), "2026-11-12");
+  assert.equal(s.bar, 1); assert.equal(s.full, true); assert.equal(s.clean, true);
+  assert.equal(s.points, 390 + 10 + 50 + 30); assert.equal(s.nextHint, null);
+});
+test("clean week needs ≥7 meals and limits respected", () => {
+  const seven = {}; ["09","10","11","12","13","14","15"].forEach(d => seven["2026-11-"+d] = [m("rice")]);
+  assert.equal(Brain.weekScore(mk(seven), "2026-11-10").clean, true);
+  const fried = structuredClone(seven); fried["2026-11-10"].push(m("a",true,{brain:["fried"]}), m("b",true,{brain:["fried"]}));
+  assert.equal(Brain.weekScore(mk(fried), "2026-11-10").clean, false);
+  const six = structuredClone(seven); delete six["2026-11-15"];
+  assert.equal(Brain.weekScore(mk(six), "2026-11-10").clean, false);
+});
+test("nextHint picks closest unfilled", () => {
+  assert.deepEqual(Brain.weekScore(mk({"2026-11-10":[m("salmon")]}), "2026-11-10").nextHint, {id:"fish", remaining:1});
+});
+test("lifetime sums weeks; empty user is 0", () => {
+  const u = mk({"2026-11-03":[m("salmon")], "2026-11-10":[m("salmon")]});
+  assert.equal(Brain.lifetimePoints(u, "2026-11-11"), 40);
+  assert.equal(Brain.lifetimePoints({}, "2026-11-11"), 0);
+});
+test("levels", () => {
+  assert.equal(Brain.levelFor(0).level.id, "sprout");
+  assert.equal(Brain.levelFor(1500).level.id, "sharp");
+  assert.equal(Brain.levelFor(1499).toNext, 1);
+  assert.equal(Brain.levelFor(20000).next, null);
+});
+test("missing fields never throw", () => { assert.equal(Brain.weekScore({}, "2026-11-10").points, 0); });
