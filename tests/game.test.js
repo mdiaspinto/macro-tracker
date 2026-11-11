@@ -27,6 +27,11 @@ test("streak: what-if-only and malformed days are gaps", () => {
 test("streak: stops before earliest eaten day", () => {
   assert.equal(Game.streak(mk(["2026-11-11"]), "2026-11-11"), 1);
 });
+test("streak: gaps on a Sunday and the following Monday are both forgiven", () => {
+  const days = range("2026-11-02", "2026-11-11").filter(d => d !== "2026-11-08" && d !== "2026-11-09");
+  assert.equal(Game.streak(mk(days), "2026-11-11"), 8);
+});
+// streakHistory is not used by the app; it is kept as the test oracle for streak.
 test("streakHistory matches streak for every day", () => {
   const days = range("2026-10-01", "2026-11-11").filter(d => !["2026-10-06", "2026-10-08", "2026-11-04", "2026-11-11"].includes(d));
   const u = mk(days), h = Game.streakHistory(u, "2026-11-11");

@@ -945,6 +945,7 @@
       <p class="lvlup-kicker" data-i18n="lvlUpTitle">Level up!</p>
       <h3 id="lvlUpName"></h3>
       <p class="lvlup-msg" data-i18n="lvlUpMsg"></p>
+      <p class="lvlup-msg" id="lvlUpExtra" hidden style="margin-top:-10px;font-weight:700;color:var(--text)"></p>
       <button class="btn btn-primary full" id="lvlUpOk" data-i18n="lvlUpOk">Keep going</button>
     </div>
   </div>
@@ -1299,7 +1300,7 @@ const T = {
     bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {emoji} {level}", bvTop:"You reached the top level! 🏆",
     bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a 🔥 streak.",
     bvWeeksHead:"Last 8 weeks", bvWeeksHint:"How full your brain bar got", bvWeekLabel:"Week of {date}: {pct}%",
-    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned", bvEarned:"Earned {date}",
+    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned", bvEarned:"Earned {date}", bvEarnedWeek:"Week of {date}",
     bvWhyHead:"Why it matters", bvWhyNote:"These are links found in research, not promises, and not medical advice.",
     badge_firstLog:"First log", badge_streak7:"7-day streak", badge_streak30:"30-day streak", badge_fishWeek:"Fish week", badge_fullBrain:"Full brain",
     badge_cleanWeek:"Clean week", badge_strongWeek:"Strong week", badge_berryLover:"Berry lover", badge_greenMachine:"Green machine",
@@ -1323,7 +1324,7 @@ const T = {
     why_sleep:"Sleeping 7 hours or more is linked to better memory.",
     why_social:"Time with friends and family is linked to a sharper mind as we age.",
     why_mind:"Learning new things, puzzles and games that challenge you are linked to a sharper mind.",
-    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}",
+    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in 🧠 Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
@@ -1468,7 +1469,7 @@ const T = {
     bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"Te faltan {n} puntos para {emoji} {level}", bvTop:"¡Llegaste al nivel más alto! 🏆",
     bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu 🔥 racha.",
     bvWeeksHead:"Últimas 8 semanas", bvWeeksHint:"Cuánto llenaste tu barra del cerebro", bvWeekLabel:"Semana del {date}: {pct}%",
-    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas", bvEarned:"Conseguida el {date}",
+    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas", bvEarned:"Conseguida el {date}", bvEarnedWeek:"Semana del {date}",
     bvWhyHead:"Por qué importa", bvWhyNote:"Son relaciones que ha encontrado la investigación, no promesas ni consejo médico.",
     badge_firstLog:"Primer registro", badge_streak7:"Racha de 7 días", badge_streak30:"Racha de 30 días", badge_fishWeek:"Semana de pescado", badge_fullBrain:"Cerebro completo",
     badge_cleanWeek:"Semana limpia", badge_strongWeek:"Semana fuerte", badge_berryLover:"Amor por los frutos rojos", badge_greenMachine:"Máquina verde",
@@ -1492,7 +1493,7 @@ const T = {
     why_sleep:"Dormir 7 horas o más está ligado a una mejor memoria.",
     why_social:"Pasar tiempo con amigos y familia está ligado a una mente más ágil con la edad.",
     why_mind:"Aprender cosas nuevas y hacer crucigramas o juegos que te reten está ligado a una mente más ágil.",
-    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}",
+    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en 🧠 Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
@@ -2368,6 +2369,10 @@ function fmtAxisDate(s){
   const [y,m,d]=s.split("-").map(Number);
   return new Date(y,m-1,d).toLocaleDateString(lang()==="es"?"es-ES":"en-US",{month:"short",day:"numeric"});
 }
+function fmtNumDate(s){
+  const [y,m,d]=s.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString(lang()==="es"?"es-ES":"en-US",{day:"numeric",month:"numeric"});
+}
 function statTile(lab,val){
   return `<div class="stat"><div class="stat-lab">${escapeHtml(lab)}</div><div class="stat-val">${val}</div></div>`;
 }
@@ -2394,6 +2399,15 @@ function badgeHint(id){
   const l=Brain.LEVELS.find(x=>x.id===id.slice(6));
   return t("badgeHint_level",{n:l.min.toLocaleString(lang()==="es"?"es-ES":"en-US")});
 }
+const WEEK_BADGES=["fishWeek","fullBrain","cleanWeek","strongWeek","berryLover","greenMachine","socialButterfly"];
+// Badges stay earned once celebrated, even if the derived grade later drops (goal switch, deleted meal). Week-based/level dates are a week's Monday.
+function shelfBadges(list,celebrated){
+  return list.map(b=>{
+    const day=(celebrated||{})[Game.celebrationKey(b.id.startsWith("level:") ? {type:"level",id:b.id.slice(6)} : {type:"badge",id:b.id})];
+    const e=b.earned || !!day, date=b.earned ? b.date : day;
+    return {id:b.id, earned:e, date, weekly:b.earned && (b.id.startsWith("level:") || WEEK_BADGES.includes(b.id))};
+  });
+}
 function renderBrainView(badgeList){
   const u=user(), today=todayStr(), loc=lang()==="es"?"es-ES":"en-US";
   const pts=Brain.lifetimePoints(u,today), L=Brain.levelFor(pts), lv=L.level, n=Game.streak(u,today);
@@ -2407,14 +2421,15 @@ function renderBrainView(badgeList){
     <p class="bv-sub">${t("bvPointsHow")}</p>`;
   const cur=Brain.weekStart(today);
   document.getElementById("bvWeeks").innerHTML = `<div class="bv-weeks">${lastWeekStarts(today,8).map(w=>{
-    const p=Math.round(Brain.weekScore(u,w).bar*100), d=fmtAxisDate(w);
+    const p=Math.round(Brain.weekScore(u,w).bar*100), d=fmtNumDate(w);
     return `<div class="bv-wk${w===cur?" cur":""}" role="img" aria-label="${escapeAttr(t("bvWeekLabel",{date:d, pct:p}))}">
       <span class="pc" aria-hidden="true">${p}%</span><span class="col" aria-hidden="true"><span style="height:${p}%"></span></span><span class="dt" aria-hidden="true">${escapeHtml(d)}</span></div>`;
   }).join("")}</div>`;
-  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:badgeList.filter(b=>b.earned).length, total:badgeList.length});
-  document.getElementById("bvBadges").innerHTML = badgeList.map(b=>
+  const shelf=shelfBadges(badgeList,u.celebrated);
+  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:shelf.filter(b=>b.earned).length, total:shelf.length});
+  document.getElementById("bvBadges").innerHTML = shelf.map(b=>
     `<div class="bv-badge${b.earned?"":" locked"}"><span class="em" aria-hidden="true">${badgeEmoji(b.id)}</span>
-      <div><b>${escapeHtml(badgeName(b.id))}</b><small>${escapeHtml(b.earned ? t("bvEarned",{date:fmtAxisDate(b.date)}) : badgeHint(b.id))}</small></div></div>`).join("");
+      <div><b>${escapeHtml(badgeName(b.id))}</b><small>${escapeHtml(b.earned ? t(b.weekly?"bvEarnedWeek":"bvEarned",{date:fmtAxisDate(b.date)}) : badgeHint(b.id))}</small></div></div>`).join("");
   document.getElementById("bvWhy").innerHTML = Brain.CATEGORIES.map(c=>
     `<li><span class="em" aria-hidden="true">${c.emoji}</span><span>${t("why_"+c.id)}</span></li>`).join("");
 }
@@ -2425,10 +2440,11 @@ function confetti(){
   document.body.appendChild(box);
   setTimeout(()=>box.remove(),2100);
 }
-function openLevelUp(id){
+function openLevelUp(id,extra){
   const l=Brain.LEVELS.find(x=>x.id===id);
   document.getElementById("lvlUpEmoji").textContent=l.emoji;
   document.getElementById("lvlUpName").textContent=t("lvl_"+id);
+  const ex=document.getElementById("lvlUpExtra"); ex.textContent=extra||""; ex.hidden=!extra;
   document.getElementById("levelOverlay").classList.add("on");
   setTimeout(()=>document.getElementById("lvlUpOk").focus(),50);
 }
@@ -2440,21 +2456,31 @@ function scheduleCelebrate(badgeList){
   celebrateTimer=setTimeout(()=>{ if(user().id===id) celebrate(badgeList); },0);
 }
 // Show at most 3 new celebrations (highest new level > full week > badges), then mark ALL of them so a backlog never bursts or repeats.
+// Backlog order: highest new level, then full week, then badges newest-first, capped. Returns the shown items and how many were left out.
+function pickCelebrations(items,badgeList,cap){
+  const dt=id=>(badgeList.find(b=>b.id===id)||{}).date||"";
+  const lv=items.filter(c=>c.type==="level").pop();
+  const bs=items.filter(c=>c.type==="badge").sort((a,b)=>dt(b.id)<dt(a.id)?-1:dt(b.id)>dt(a.id)?1:0);
+  const show=[lv].concat(items.filter(c=>c.type==="fullWeek"),bs).filter(Boolean).slice(0,cap);
+  return {show, more:items.length-show.length};
+}
+// Held until the first cloud pull settles (when signed in), so another device's `celebrated` map is merged first.
+let celebrateReady=true;
 let celebrating=false;
 function celebrate(badgeList){
-  if(celebrating || document.getElementById("authOverlay").classList.contains("on")) return;
+  if(!celebrateReady || celebrating || document.getElementById("authOverlay").classList.contains("on")) return;
   const u=user(), today=todayStr(), items=Game.newCelebrations(u,today,badgeList);
   if(!items.length) return;
   celebrating=true;
   try{
-    const lv=items.filter(c=>c.type==="level").pop();
-    const show=[lv].concat(items.filter(c=>c.type==="fullWeek"), items.filter(c=>c.type==="badge")).filter(Boolean).slice(0,3);
+    const {show,more}=pickCelebrations(items,badgeList,3), lv=show.find(c=>c.type==="level");
     const msgs=show.filter(c=>c.type==="fullWeek").map(()=>t("brainFull"));
     const bs=show.filter(c=>c.type==="badge").map(c=>badgeEmoji(c.id)+" "+badgeName(c.id));
     if(bs.length) msgs.push(t(bs.length>1?"celebBadges":"celebBadge",{list:bs.join(", ")}));
     if(show.some(c=>c.type!=="badge") && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
-    if(lv) openLevelUp(lv.id);
-    if(msgs.length) toast(msgs.join(" · "), null, 4500);
+    if(more>0) msgs.push(t("celebMore",{n:more}));
+    if(lv) openLevelUp(lv.id, msgs.join(" · "));
+    else if(msgs.length) toast(msgs.join(" · "), null, 4500);
     u.celebrated=u.celebrated||{};
     items.forEach(c=>{ u.celebrated[Game.celebrationKey(c)]=today; });
     save();
@@ -3567,9 +3593,11 @@ async function pullRemote(){
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
+      celebrateReady=true;
       renderAll();
     }
   }catch(e){}
+  finally{ if(!celebrateReady){ celebrateReady=true; renderAll(); } }
 }
 
 /* ---- auth UI ---- */
@@ -3632,6 +3660,7 @@ function updateAccountUI(){
 /* ---- boot ---- */
 function startApp(){
   closeAuth();
+  celebrateReady=!(cloudEnabled() && session);
   renderAll();
   updateAccountUI();
   if(cloudEnabled() && session){
