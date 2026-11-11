@@ -16,5 +16,5 @@ EMAIL_DOMAIN = "macro-tracker-d8908.firebaseapp.com"
 
 [[kv_namespaces]]
 binding = "COACH_LIMITS"
-# TODO before deploy: npx wrangler kv namespace create COACH_LIMITS and paste the id here
-id = "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
+# Daily coach caps (created with: npx wrangler kv namespace create COACH_LIMITS)
+id = "248d198bd7e94c7ea6f8fc5282382edd"
