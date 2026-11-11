@@ -220,6 +220,40 @@
   .rc .em{flex:none;font-size:16px}
   .br-star{font-size:14.5px;font-weight:700;line-height:1.4;margin:-4px 0 14px;padding:8px 12px;border-radius:12px;background:var(--accent-soft)}
 
+  /* Coach: daily note on the brain card + chat bottom sheet */
+  .br-note{margin:-2px 0 12px;padding:10px 14px;border-radius:12px;border-left:4px solid var(--brain);
+    background:color-mix(in srgb,var(--brain) 10%,var(--panel));font-size:15px;line-height:1.5}
+  .br-note-head{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brain);margin:0 0 4px}
+  .br-note p{margin:0}
+  .br-note .tip{margin-top:6px;font-weight:700}
+  .br-ask{width:100%;justify-content:center;min-height:48px;margin:0 0 14px;font-size:15px;border:2px solid var(--brain);
+    background:color-mix(in srgb,var(--brain) 14%,var(--panel));color:var(--text)}
+  .br-ask:hover{background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
+  .overlay.sheet{align-items:flex-end;padding:0}
+  .overlay.sheet .modal{display:flex;flex-direction:column;max-width:560px;height:85vh;height:85dvh;max-height:85vh;max-height:85dvh;overflow:hidden;
+    border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+  .chat-log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .chat-empty{margin:auto 0;text-align:center;color:var(--muted);font-size:15px;line-height:1.5;padding:0 12px}
+  .chat-msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  .chat-msg.me{align-self:flex-end;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-bottom-right-radius:4px}
+  .chat-msg.bot{align-self:flex-start;background:color-mix(in srgb,var(--brain) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--brain) 35%,transparent);border-bottom-left-radius:4px}
+  .chat-msg.typing{display:flex;gap:5px;align-items:center;min-height:44px}
+  .chat-msg.typing span{width:8px;height:8px;border-radius:50%;background:var(--brain);animation:chatDot 1.2s infinite ease-in-out}
+  .chat-msg.typing span:nth-child(2){animation-delay:.2s}
+  .chat-msg.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes chatDot{0%,80%,100%{opacity:.3}40%{opacity:1}}
+  .chat-status{padding:0 16px;font-size:14.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .chat-status:empty{display:none}
+  .chat-status .err{color:var(--over)}
+  .chat-status .btn{min-height:44px}
+  .chat-form{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line);margin-top:8px}
+  .chat-form input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line-strong);
+    background:var(--panel-2);font-size:16px}
+  .chat-form input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+  .chat-form .btn{min-height:48px;font-size:15px}
+  .chat-form :disabled{opacity:.55;cursor:default}
+  .overlay.sheet .head .x{width:44px;height:44px}
+
   /* ---------- Brain tab: level, weekly history, badges, why it matters ---------- */
   @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #brainView > .section.wide{grid-column:1 / -1} }
   .bv-level{display:flex;align-items:center;gap:16px;margin-bottom:14px}
@@ -951,6 +985,19 @@
   </div>
 </div>
 
+<!-- Coach chat (bottom sheet) -->
+<div class="overlay sheet" id="chatOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
+    <div class="head"><h3 id="chatTitle" data-i18n="chatTitle">Your coach 💬</h3><button class="x" data-close-chat data-i18n-title="chatClose">×</button></div>
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <div class="chat-status" id="chatStatus"></div>
+    <form class="chat-form" id="chatForm">
+      <input id="chatInput" type="text" maxlength="500" autocomplete="off" enterkeyhint="send" data-i18n-ph="chatPh">
+      <button class="btn btn-primary" id="chatSend" type="submit" data-i18n="chatSend">Send</button>
+    </form>
+  </div>
+</div>
+
 <!-- Meet your coach (one-time, 3 steps) -->
 <div class="overlay" id="coachOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
@@ -1037,6 +1084,7 @@
 
 <script src="brain.js"></script>
 <script src="game.js"></script>
+<script src="coach.js"></script>
 <script>
 "use strict";
 const KEY = "macroTracker.v1";
@@ -1252,7 +1300,11 @@ const T = {
     authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
     dailyTotals:"Daily totals", pctTarget:"% of target",
     insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, Claude writes the explanation from your food totals.",
-    insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach", insEmpty:"Log at least two weigh-ins to see what drove the change.",
+    insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach",
+    coachNoteHead:"Your coach says", coachAsk:"Ask your coach 💬", chatTitle:"Your coach 💬", chatClose:"Close",
+    chatEmpty:"Ask anything about your food, your week or your goals.", chatPh:"Type your question…", chatSend:"Send",
+    chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow! 👋",
+    chatError:"Your coach couldn't answer just now.", chatRetry:"Try again", insEmpty:"Log at least two weigh-ins to see what drove the change.",
     insGained:"You gained {kg} in {days} days", insLost:"You lost {kg} in {days} days", insSame:"Your weight held steady over {days} days",
     insStatAte:"Ate / day", insStatMaint:"Maintenance", insStatExpected:"Expected from food", insStatActual:"Actual change",
     insSurplus:"You averaged {eat} kcal a day, about {diff} kcal above your estimated maintenance of {maint}. That alone predicts {exp}.",
@@ -1433,7 +1485,11 @@ const T = {
     authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
     dailyTotals:"Totales del día", pctTarget:"% del objetivo",
     insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, Claude redacta la explicación a partir de tus totales.",
-    insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
+    insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach",
+    coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach 💬", chatTitle:"Tu coach 💬", chatClose:"Cerrar",
+    chatEmpty:"Pregunta lo que quieras sobre tu comida, tu semana o tus metas.", chatPh:"Escribe tu pregunta…", chatSend:"Enviar",
+    chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana! 👋",
+    chatError:"Tu coach no pudo responder ahora.", chatRetry:"Intentar de nuevo", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
     insGained:"Subiste {kg} en {days} días", insLost:"Bajaste {kg} en {days} días", insSame:"Tu peso se mantuvo estable en {days} días",
     insStatAte:"Comido / día", insStatMaint:"Mantenimiento", insStatExpected:"Esperado por comida", insStatActual:"Cambio real",
     insSurplus:"Comiste en promedio {eat} kcal al día, unas {diff} kcal por encima de tu mantenimiento estimado de {maint}. Eso solo predice {exp}.",
@@ -1638,6 +1694,7 @@ function renderAll(){
   renderRatios();
   renderMeals();
   renderBrainCard();
+  requestCoachNote();
   renderRecent();
   renderLib();
   renderDatalist();
@@ -1923,7 +1980,7 @@ function renderBrainCard(){
       <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("brainTitle"))}"><span style="width:${lastBrainBar}%"></span></div>
       <span class="br-pct">${pct}%</span>
     </div>
-    <p class="br-next">${next}</p>${star}
+    <p class="br-next">${next}</p>${star}${coachBlock(u)}
     <div class="br-icons">${icons}</div>
     <div class="br-hab-lab">${t("brainHabits",{day:prettyDate(curDate)})}</div>
     <div class="br-habits">${habits}</div>`;
@@ -2886,6 +2943,64 @@ async function requestAiInsight(){
   finally{ insightPending=null; if(curTab==="metrics") renderInsight(); }
 }
 
+/* ---------- Coach: daily note (brain card) + chat sheet ---------- */
+Coach.init({ url:INSIGHTS_URL, getToken:idToken, hasSession:()=>cloudEnabled() && !!session,
+  getProfile:u=>profile(u), getUser:id=>state.users.find(u=>u.id===id),
+  onChange:()=>{ save(); renderBrainCard(); renderChat(); } });
+// Note area on the brain card: today's note (model text, escaped) + the chat button. The nextHint line above always stays.
+function coachBlock(u){
+  if(!INSIGHTS_URL || !cloudEnabled()) return "";
+  if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
+  const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
+  const noteHtml = note ? `<div class="br-note"><p class="br-note-head">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
+  return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${t("coachAsk")}</button>` : "");
+}
+// Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
+function requestCoachNote(){
+  if(curTab==="tracker" && celebrateReady && cloudEnabled() && session) Coach.ensureNote(user(), todayStr());
+}
+let chatWaiting=false, chatError=false;
+function openChat(){
+  if(!session) return;
+  chatError=false;
+  document.getElementById("chatOverlay").classList.add("on");
+  renderChat();
+  setTimeout(()=>document.getElementById("chatInput").focus(),50);
+}
+function closeChat(){ document.getElementById("chatOverlay").classList.remove("on"); }
+function renderChat(){
+  if(!document.getElementById("chatOverlay").classList.contains("on")) return;
+  const u=user(), today=todayStr(), msgs=Coach.chatFor(u,today), capped=Coach.isCapped(u,today), left=Coach.remainingFor(u,today);
+  const log=document.getElementById("chatLog");
+  log.innerHTML = (msgs.length ? "" : `<p class="chat-empty">${t("chatEmpty")}</p>`)
+    + msgs.map(m=>`<div class="chat-msg ${m.role==="assistant" ? "bot" : "me"}">${escapeHtml(m.text)}</div>`).join("")
+    + (chatWaiting ? `<div class="chat-msg bot typing" role="status" aria-label="${escapeAttr(t("chatTyping"))}"><span></span><span></span><span></span></div>` : "");
+  log.scrollTop=log.scrollHeight;
+  document.getElementById("chatStatus").innerHTML = capped ? `<span>${t("chatCapped")}</span>`
+    : chatError ? `<span class="err">${t("chatError")}</span><button class="btn btn-ghost" data-chat-retry>${t("chatRetry")}</button>`
+    : left!=null && left<=5 ? `<span>${t("chatLeft",{n:left})}</span>` : "";
+  document.getElementById("chatInput").disabled=capped;
+  document.getElementById("chatSend").disabled=capped || chatWaiting;
+}
+// text = new question; no text = retry the unanswered history.
+async function sendChat(text){
+  if(chatWaiting) return;
+  chatWaiting=true; chatError=false; renderChat();
+  try{ await Coach.send(user(), todayStr(), text); }
+  catch(e){ chatError = e.kind!=="capped"; }
+  finally{ chatWaiting=false; renderChat(); }
+}
+document.getElementById("chatForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const inp=document.getElementById("chatInput"), v=inp.value.trim();
+  if(!v || chatWaiting) return;
+  inp.value=""; sendChat(v);
+});
+document.getElementById("chatOverlay").addEventListener("click",e=>{
+  if(e.target.id==="chatOverlay"||e.target.closest("[data-close-chat]")){ closeChat(); return; }
+  if(e.target.closest("[data-chat-retry]")) sendChat();
+});
+
 /* ---- the chart renderer ---- */
 function drawLineChart(container, points, opts){
   opts=opts||{};
@@ -3469,6 +3584,8 @@ document.getElementById("mealsBody").addEventListener("click",e=>{
 });
 document.getElementById("brainCard").addEventListener("click",e=>{
   const h=e.target.closest("[data-habit]"); if(h) toggleHabit(h.dataset.habit);
+  if(e.target.closest("[data-coach-chat]")) openChat();
+  if(e.target.closest("[data-coach-login]")) openAuth();
 });
 document.getElementById("recentRow").addEventListener("click",e=>{
   const b=e.target.closest("[data-recent]"), m=b && recentList[+b.dataset.recent]; if(m) relogMeal(m);
@@ -3714,7 +3831,8 @@ function mergeUser(primary,secondary){
     habitsAt: Brain.unionHabitsAt(primary.habitsAt, secondary.habitsAt),
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen),
-    celebrated: Object.assign({}, secondary.celebrated, primary.celebrated)
+    celebrated: Object.assign({}, secondary.celebrated, primary.celebrated),
+    coach:   Coach.mergeCoach(primary.coach, secondary.coach)
   });
 }
 // `primary` wins on scalar conflicts (targets/goal/lang); collections are unioned.
