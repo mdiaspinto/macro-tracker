@@ -1,0 +1,20 @@
+name = "macro-tracker-insights"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Firebase Web API key (public) — used to check the caller's ID token.
+FIREBASE_API_KEY = "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ"
+# Only these app usernames may spend the Anthropic key (sign-up is open to anyone).
+ALLOWED_USERS = "mdiaspinto,leonor"
+# Pages allowed to call this Worker.
+ALLOWED_ORIGINS = "https://mdiaspinto.github.io,http://localhost:8765"
+EMAIL_DOMAIN = "macro-tracker-d8908.firebaseapp.com"
+
+# Secret, set with: npx wrangler secret put ANTHROPIC_API_KEY
+
+[[kv_namespaces]]
+binding = "COACH_LIMITS"
+# Daily coach caps (created with: npx wrangler kv namespace create COACH_LIMITS)
+id = "248d198bd7e94c7ea6f8fc5282382edd"
