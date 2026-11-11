@@ -35,3 +35,17 @@ test("messy input never throws", () => {
   has("Salmón (bio) 🐟", "fish"); has("SPINACH-salad", "greens");
 });
 test("no wine category", () => assert.ok(!Brain.CATEGORIES.some(c => c.id === "wine")));
+test("generic words do not misclassify", () => {
+  hasnt("Salt and pepper chicken", "veg"); hasnt("poulet au poivre", "veg");
+  hasnt("shepherd's pie", "sweets"); hasnt("oat milk latte", "grains");
+  hasnt("Poulet viande blanche", "redMeat");
+  hasnt("leche de almendras", "nuts"); hasnt("lait d'avoine", "grains");
+});
+test("positives still work", () => {
+  has("bell pepper", "veg"); has("poivron rouge", "veg"); has("apple pie", "sweets");
+  has("oats", "grains"); has("porridge", "grains"); has("viande hachée", "redMeat");
+});
+test("ligatures", () => {
+  has("bœuf bourguignon", "redMeat");
+  assert.equal(Brain.normalize("bœuf"), "boeuf");
+});
