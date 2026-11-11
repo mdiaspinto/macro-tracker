@@ -163,3 +163,19 @@ test("newCelebrations: empty user", () => {
   assert.deepEqual(Game.newCelebrations(empty(), "2026-11-11"), []);
   assert.ok(Game.badges(empty(), "2026-11-11").every(b => !b.earned));
 });
+test("streak badges: a logged-day-only start, gaps forgiven like streak()", () => {
+  // 6 days, a rest day (Fri 11-06 forgiven), then 6 more: 12 logged days; streak reaches 7 on the 7th logged day
+  const days = range("2026-11-01", "2026-11-12").filter(d => d !== "2026-11-06");
+  assert.equal(byId(mk(days), "2026-11-12").streak7.date, "2026-11-08");
+  // unlogged past day can never be the date: 6 days, one gap day, then 1 day -> streak reaches 7 on the day after the gap
+  const u = mk(["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-09"]);
+  assert.equal(byId(u, "2026-11-09").streak7.date, "2026-11-09");
+  assert.equal(Game.streakHistory(u, "2026-11-09")["2026-11-08"], 6);
+  // two gaps in one week break the run
+  const v = mk(["2026-11-02", "2026-11-04", "2026-11-06", "2026-11-07", "2026-11-08"]);
+  assert.equal(byId(v, "2026-11-08").streak7.earned, false);
+});
+test("newCelebrations with a precomputed badge list matches omitting it", () => {
+  const u = fullWeek(empty(), "2026-11-09");
+  assert.deepEqual(Game.newCelebrations(u, "2026-11-11", Game.badges(u, "2026-11-11")), Game.newCelebrations(u, "2026-11-11"));
+});
