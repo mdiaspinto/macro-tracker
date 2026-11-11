@@ -451,9 +451,26 @@
   .setting-row b{font-size:14px}
   .setting-row small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:2px}
   .setting-row input{width:20px;height:20px;accent-color:var(--accent);flex:none}
-  .bio-field{margin-top:16px}
-  .bio-field textarea{resize:vertical;line-height:1.5;min-height:76px}
-  .bio-field small{color:var(--muted);font-size:12.5px;line-height:1.45}
+
+  /* ---------- About me / Meet your coach ---------- */
+  .pf-title{font-size:16px;font-weight:800;margin:0 0 4px}
+  .pf-hint{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 4px}
+  .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .pf .field input,.pf .field select{min-height:44px}
+  .pf .field textarea{resize:vertical;line-height:1.5;min-height:76px}
+  .pf .field{margin-top:12px}
+  .pf .field label{display:flex;flex-direction:column;gap:6px}
+  .pf .field :is(input,select,textarea){font-weight:400}
+  .pf-grid .field{margin-top:0}
+  .pf-label{font-size:12.5px;color:var(--muted);font-weight:600;margin:16px 0 6px}
+  .pf .bp-chip small{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
+  .pf .setting-row{min-height:44px;margin-top:16px}
+  .pf .setting-row input{width:24px;height:24px}
+  .mc-step{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brain);margin:0 0 6px}
+  .mc-actions{display:flex;gap:10px;margin-top:20px}
+  .mc-actions .btn{flex:1;justify-content:center;min-height:48px}
+  .mc-skip{display:block;margin:12px auto 0;min-height:44px;padding:0 14px;background:transparent;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:2px}
+  .mc-skip:hover{color:var(--text)}
 
   /* ---------- My Fridge ---------- */
   .fr-explain{font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 14px;max-width:68ch}
@@ -887,11 +904,8 @@
         <span><b data-i18n="insSetting">Weight-change breakdown</b><small data-i18n="insSettingHint">After each weigh-in, explain what you ate and why your weight moved.</small></span>
         <input type="checkbox" id="insightsToggle">
       </label>
-      <div class="field bio-field">
-        <label for="bioInput" data-i18n="bioLabel">About you</label>
-        <textarea id="bioInput" rows="3" maxlength="300" data-i18n-ph="bioPh" placeholder="e.g. 52, woman, menopausal, walks daily"></textarea>
-        <small data-i18n="bioHint">Shared with Claude so the breakdown fits you: age, sex, menopause, medication, training. Saved when you leave the box.</small>
-      </div>
+      <div class="divider"></div>
+      <div class="pf" id="aboutMe"></div>
     </div>
   </div>
 </div>
@@ -934,6 +948,14 @@
   <div class="modal">
     <div class="head"><h3 id="brainPickTitle"></h3><button class="x" data-close-brain>×</button></div>
     <div class="body" id="brainPickBody"></div>
+  </div>
+</div>
+
+<!-- Meet your coach (one-time, 3 steps) -->
+<div class="overlay" id="coachOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
+    <div class="head"><h3 id="mcTitle" data-i18n="mcTitle">Meet your coach 👋</h3></div>
+    <div class="body pf" id="mcBody"></div>
   </div>
 </div>
 
@@ -1156,6 +1178,18 @@ function initialUsers(){
     makeUser("Leonor","es",{p:110,c:130,f:40},{p:120,c:140,f:45}),
   ];
 }
+/* ---------- Profile (About me) ---------- */
+// Declared before load() runs. Lazily fills missing fields too, since Firebase drops nulls and empty arrays.
+const PROFILE_GOALS = [["loseWeight","⚖️"],["strength","💪"],["brainHealth","🧠"],["energy","⚡"]];
+const PROFILE_TONES = [["cheer","🎉"],["straight","🎯"]];
+function ensureProfile(u){
+  const p = Object.assign({age:null, sex:"", heightCm:null, activity:"", goals:[], likes:"", avoids:"",
+    familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||"")}, u.profile);
+  if(!Array.isArray(p.goals)) p.goals = Object.values(p.goals||{});
+  return u.profile = p;
+}
+function profile(u){ return ensureProfile(u||user()); }
+function migrateProfiles(s){ s.users.forEach(ensureProfile); s.migrations.profileFromBio = true; return s; }
 
 /* ---------- Translations ---------- */
 const T = {
@@ -1234,8 +1268,20 @@ const T = {
     insMaintData:"Maintenance is estimated from your own logs and weight trend.",
     insMaintTargets:"Maintenance is estimated from your targets and gets more accurate after about two weeks of logging and weigh-ins.",
     insNoFood:"No food was logged between these weigh-ins, so there is nothing to explain the change with yet.",
-    bioLabel:"About you", bioPh:"e.g. 52, woman, menopausal, walks daily", bioSaved:"Bio saved",
-    bioHint:"Shared with Claude so the breakdown fits you: age, sex, menopause, medication, training. Saved when you leave the box.",
+    aboutMe:"About me", aboutMeHint:"Your coach and the weight-change breakdown use this to fit you. It saves as you go — change it anytime.",
+    pfHeight:"Height (cm)", pfGoals:"What matters to you", pfTone:"How should your coach talk to you?",
+    goal_loseWeight:"Lose weight", goal_strength:"Get stronger", goal_brainHealth:"Brain health", goal_energy:"More energy",
+    tone_cheer:"Cheerleader", tone_cheerHint:"Upbeat and encouraging", tone_straight:"Straight talk", tone_straightHint:"Short and to the point",
+    pfLikes:"Foods you love", pfLikesPh:"e.g. salmon, berries, lentils",
+    pfAvoids:"Foods you avoid or can't eat", pfAvoidsPh:"e.g. shellfish, spicy food",
+    pfFamily:"Family history of memory problems", pfFamilyHint:"Shared with your coach only if on",
+    pfNotes:"Anything else your coach should know", pfNotesPh:"e.g. menopausal, walk every morning, night shifts",
+    profileSaved:"Saved ✓",
+    mcTitle:"Meet your coach 👋", mcStep:"Step {n} of 3",
+    mcIntro:"Your coach gives you a short tip each day and answers your questions about food and habits linked to a healthier brain. Three quick questions so it gets to know you.",
+    mcFoodIntro:"What do you like to eat, and what do you stay away from?",
+    mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
+    mcSkip:"Skip", mcBack:"Back", mcNext:"Next", mcDone:"Done", mcDoneToast:"All set — your coach knows you a bit better!",
     insByClaude:"Explanation written by Claude from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
     authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
@@ -1403,8 +1449,20 @@ const T = {
     insMaintData:"El mantenimiento se estima a partir de tus registros y tu tendencia de peso.",
     insMaintTargets:"El mantenimiento se estima a partir de tus objetivos y será más preciso tras unas dos semanas de registros y pesajes.",
     insNoFood:"No se registró comida entre estos pesajes, así que aún no hay con qué explicar el cambio.",
-    bioLabel:"Sobre ti", bioPh:"p. ej. 52 años, mujer, menopausia, camina a diario", bioSaved:"Bio guardada",
-    bioHint:"Se comparte con Claude para que la explicación se ajuste a ti: edad, sexo, menopausia, medicación, entrenamiento. Se guarda al salir del cuadro.",
+    aboutMe:"Sobre mí", aboutMeHint:"Tu coach y la explicación del cambio de peso usan esto para ajustarse a ti. Se guarda solo — cámbialo cuando quieras.",
+    pfHeight:"Altura (cm)", pfGoals:"Lo que te importa", pfTone:"¿Cómo quieres que te hable tu coach?",
+    goal_loseWeight:"Bajar de peso", goal_strength:"Ganar fuerza", goal_brainHealth:"Salud del cerebro", goal_energy:"Más energía",
+    tone_cheer:"Con mucho ánimo", tone_cheerHint:"Alegre y motivador", tone_straight:"Directo al grano", tone_straightHint:"Breve y claro",
+    pfLikes:"Comidas que te encantan", pfLikesPh:"p. ej. salmón, frutos rojos, lentejas",
+    pfAvoids:"Comidas que evitas o no puedes comer", pfAvoidsPh:"p. ej. mariscos, picante",
+    pfFamily:"Antecedentes familiares de problemas de memoria", pfFamilyHint:"Solo se comparte con tu coach si está activado",
+    pfNotes:"Algo más que tu coach deba saber", pfNotesPh:"p. ej. menopausia, camino cada mañana, turnos de noche",
+    profileSaved:"Guardado ✓",
+    mcTitle:"Conoce a tu coach 👋", mcStep:"Paso {n} de 3",
+    mcIntro:"Tu coach te da un consejo corto cada día y responde tus preguntas sobre comida y hábitos ligados a un cerebro más sano. Tres preguntas rápidas para que te conozca.",
+    mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
+    mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
+    mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
     insByClaude:"Explicación redactada por Claude a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
     authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
@@ -1554,6 +1612,8 @@ function load(){
           if(L) L.targets = { lean:{p:110,c:130,f:40}, bulk:{p:120,c:140,f:45} };
           s.migrations.fixProfileTargets = true;
         }
+        // One-time: the free-text bio becomes the coach profile's notes.
+        if(!s.migrations.profileFromBio) migrateProfiles(s);
         // Lazy: existing accounts gain the fridge fields (no migration flag needed).
         s.users.forEach(u=>{ if(!Array.isArray(u.fridge)) u.fridge=[]; if(!u.fridgeSeen) u.fridgeSeen={}; });
         localStorage.setItem(KEY, JSON.stringify(s));
@@ -1983,7 +2043,85 @@ function renderTargets(){
     <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
     <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
   document.getElementById("insightsToggle").checked = u.insightsOn!==false;
-  document.getElementById("bioInput").value = u.bio||"";
+  renderProfileForm();
+}
+// About-me fields, in groups so Meet-your-coach can show one step at a time.
+// Inputs carry data-pf=<profile key>; chips carry data-goal / data-tone. No ids, so both copies can coexist.
+function profileFields(part){
+  const p=profile(), opt=(v,label,cur)=>`<option value="${v}" ${v===cur?"selected":""}>${escapeHtml(label)}</option>`;
+  const txt=(k,label,max,area)=>`<div class="field"><label>${t(label)}
+      ${area?`<textarea data-pf="${k}" rows="3" maxlength="${max}" placeholder="${escapeHtml(t(label+"Ph"))}">${escapeHtml(p[k])}</textarea>`
+        :`<input data-pf="${k}" maxlength="${max}" placeholder="${escapeHtml(t(label+"Ph"))}" value="${escapeHtml(p[k])}">`}</label></div>`;
+  if(part==="basics") return `<div class="pf-grid">
+      <div class="field"><label>${t("quizAge")}<input data-pf="age" type="number" inputmode="numeric" min="10" max="110" step="1" value="${p.age||""}"></label></div>
+      <div class="field"><label>${t("quizSex")}<select data-pf="sex">${opt("",t("quizChoose"),p.sex)}${opt("male",t("sexMale"),p.sex)}${opt("female",t("sexFemale"),p.sex)}</select></label></div>
+      <div class="field"><label>${t("pfHeight")}<input data-pf="heightCm" type="number" inputmode="numeric" min="100" max="230" step="1" value="${p.heightCm||""}"></label></div>
+      <div class="field"><label>${t("quizActivity")}<select data-pf="activity">${opt("",t("quizChoose"),p.activity)}
+        ${["sedentary","light","moderate","active","very"].map(a=>opt(a,t("act"+a[0].toUpperCase()+a.slice(1)),p.activity)).join("")}</select></label></div>
+    </div>`;
+  if(part==="goals") return `<p class="pf-label">${t("pfGoals")}</p>
+    <div class="bp-grid">${PROFILE_GOALS.map(([g,em])=>`<button type="button" class="bp-chip" data-goal="${g}" aria-pressed="${p.goals.includes(g)}"><span class="em" aria-hidden="true">${em}</span>${t("goal_"+g)}</button>`).join("")}</div>
+    <p class="pf-label">${t("pfTone")}</p>
+    <div class="bp-grid">${PROFILE_TONES.map(([v,em])=>`<button type="button" class="bp-chip" data-tone="${v}" aria-pressed="${p.tone===v}"><span class="em" aria-hidden="true">${em}</span><span>${t("tone_"+v)}<small>${t("tone_"+v+"Hint")}</small></span></button>`).join("")}</div>`;
+  if(part==="food") return txt("likes","pfLikes",200) + txt("avoids","pfAvoids",200);
+  return `<label class="setting-row"><span><b>${t("pfFamily")}</b><small>${t("pfFamilyHint")}</small></span>
+      <input type="checkbox" data-pf="familyHistory" ${p.familyHistory?"checked":""}></label>`
+    + txt("notes","pfNotes",500,true);
+}
+function renderProfileForm(){
+  document.getElementById("aboutMe").innerHTML = `<h3 class="pf-title">${t("aboutMe")}</h3><p class="pf-hint">${t("aboutMeHint")}</p>`
+    + ["basics","goals","food","more"].map(profileFields).join("");
+}
+// Save one field at a time (like the old bio box); one "Saved" toast and one insight refresh per burst of edits.
+let profileTimer;
+function saveProfile(patch, quiet){
+  const u=user(); Object.assign(profile(u), patch); u.profileAt=Date.now(); delete u.insight; save();
+  clearTimeout(profileTimer);
+  profileTimer=setTimeout(()=>{ if(!quiet) toast(t("profileSaved")); requestAiInsight(); }, 1200);
+}
+const PROFILE_NUM = { age:[10,110], heightCm:[100,230] };
+function onProfileEvent(e){
+  const el=e.target.closest("[data-pf],[data-goal],[data-tone]"); if(!el) return;
+  const quiet=!!el.closest("#coachOverlay"), p=profile();
+  if(e.type==="click"){
+    if(el.dataset.goal){
+      const g=el.dataset.goal, on=!p.goals.includes(g);
+      saveProfile({goals: on ? p.goals.concat(g) : p.goals.filter(x=>x!==g)}, quiet);
+      el.setAttribute("aria-pressed", on);
+    } else if(el.dataset.tone){
+      saveProfile({tone: el.dataset.tone}, quiet);
+      el.parentNode.querySelectorAll("[data-tone]").forEach(b=>b.setAttribute("aria-pressed", b===el));
+    }
+    return;
+  }
+  const k=el.dataset.pf; if(!k) return;
+  let v = el.type==="checkbox" ? el.checked : el.value.trim();
+  if(PROFILE_NUM[k]){
+    const n=Math.round(parseFloat(v)), [lo,hi]=PROFILE_NUM[k];
+    v = n>=lo && n<=hi ? n : null; el.value = v||"";
+  }
+  saveProfile({[k]:v}, quiet);
+}
+
+/* ---------- Meet your coach ---------- */
+let mcStep=0;
+function maybeShowMeetCoach(){ if(session && !user().coachIntroSeen && !document.getElementById("authOverlay").classList.contains("on")) openMeetCoach(); }
+function openMeetCoach(){ mcStep=0; renderMeetCoach(); document.getElementById("coachOverlay").classList.add("on"); }
+function renderMeetCoach(){
+  const intro=[t("mcIntro"),t("mcFoodIntro"),t("mcMoreIntro")][mcStep], last=mcStep===2;
+  document.getElementById("mcBody").innerHTML = `<p class="mc-step">${t("mcStep",{n:mcStep+1})}</p>
+    <p class="pf-hint">${intro}</p>
+    ${profileFields(["goals","food","more"][mcStep])}
+    <div class="mc-actions">
+      ${mcStep?`<button class="btn btn-ghost" data-mc="back">${t("mcBack")}</button>`:""}
+      <button class="btn btn-primary" data-mc="${last?"done":"next"}">${t(last?"mcDone":"mcNext")}</button>
+    </div>
+    <button class="mc-skip" data-mc="skip">${t("mcSkip")}</button>`;
+}
+function closeMeetCoach(done){
+  user().coachIntroSeen=true; save();
+  document.getElementById("coachOverlay").classList.remove("on");
+  if(done) toast(t("mcDoneToast"));
 }
 function saveTargets(){
   const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
@@ -2738,7 +2876,8 @@ async function requestAiInsight(){
   try{
     const r=await fetch(INSIGHTS_URL,{method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+await idToken()},
-      body:JSON.stringify({lang:u.lang==="es"?"es":"en", bio:u.bio||"", facts:f})});
+      // `bio` (= profile notes) stays for the older deployed Worker, which ignores `profile`.
+      body:JSON.stringify({lang:u.lang==="es"?"es":"en", profile:profile(u), bio:profile(u).notes, facts:f})});
     if(!r.ok) throw new Error("insight "+r.status);
     const ai=await r.json();
     u.insight={fromDate:f.fromDate, toDate:f.toDate, ai, at:Date.now()};
@@ -3407,8 +3546,13 @@ document.getElementById("addUserBtn").addEventListener("click",()=>{
   if(!name) return;
   const lg=document.getElementById("newUserLang").value;
   const u=defaultUser(name, lg);
-  const est=estimateTargets(readQuiz());   // personalised targets if the quiz was filled in
+  const q=readQuiz(), est=estimateTargets(q);   // personalised targets if the quiz was filled in
   if(est){ u.targets={ lean:est.lean, bulk:est.bulk }; }
+  const p=profile(u);   // seed About me from whatever quiz answers were given
+  if(q.age>0) p.age=Math.round(q.age);
+  if(q.sex) p.sex=q.sex;
+  if(q.cm>0) p.heightCm=Math.round(q.cm);
+  if(q.age>0 || q.sex || q.cm>0 || q.kg>0){ p.activity=q.activity; u.profileAt=Date.now(); }
   state.users.push(u); state.activeId=u.id;
   inp.value=""; resetQuiz(); save(); renderAll(); renderUserList(); renderTargets();
   toast(est ? t("addedUserEst",{name}) : t("addedUser",{name}));
@@ -3423,10 +3567,14 @@ document.getElementById("insightsToggle").addEventListener("change",e=>{
   user().insightsOn=e.target.checked; save();
   if(curTab==="metrics") renderInsight();
 });
-document.getElementById("bioInput").addEventListener("change",e=>{
-  const u=user(); u.bio=e.target.value.trim(); delete u.insight; save();
-  toast(t("bioSaved"));
-  requestAiInsight();
+["aboutMe","mcBody"].forEach(id=>["click","change"].forEach(ev=>document.getElementById(id).addEventListener(ev,onProfileEvent)));
+document.getElementById("mcBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-mc]"); if(!b) return;
+  // Text fields save on change; blur the focused one first so its last edit isn't lost (iOS keeps focus on tap).
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const a=b.dataset.mc;
+  if(a==="skip"||a==="done") closeMeetCoach(a==="done");
+  else { mcStep+= a==="next" ? 1 : -1; renderMeetCoach(); }
 });
 
 document.getElementById("suggestBtn").addEventListener("click",openSuggest);
@@ -3554,7 +3702,11 @@ function unionFridge(a,b){
   return out;
 }
 function mergeUser(primary,secondary){
+  // Profile: the most recently edited copy wins (a migration-made profile has no profileAt, so any real edit beats it).
+  const pf = !primary.profile || (secondary.profileAt||0) > (primary.profileAt||0) ? secondary : primary;
   return Object.assign({}, secondary, primary, {
+    profile: pf.profile, profileAt: pf.profileAt,
+    coachIntroSeen: !!(primary.coachIntroSeen || secondary.coachIntroSeen),
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
     weights: unionWeights(primary.weights, secondary.weights),
@@ -3664,7 +3816,7 @@ function startApp(){
   renderAll();
   updateAccountUI();
   if(cloudEnabled() && session){
-    pullRemote();
+    pullRemote().then(maybeShowMeetCoach);   // after the pull, so an intro done on another device counts
     if(!focusHooked){ window.addEventListener("focus", pullRemote); focusHooked=true; }
   }
 }
