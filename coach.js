@@ -140,8 +140,10 @@ const Coach = (() => {
       // No answer will ever come today: drop the question so a reload doesn't show it unanswered.
       if (text && (res.status === "capped" || res.status === "unavailable"))
         new Set([chat, todayChat(fresh(user), today)]).forEach(c => {
-          const i = c.messages.findLastIndex(m => m && m.role === "user" && m.text === text);
-          if (i >= 0) c.messages.splice(i, 1);
+          for (let i = c.messages.length - 1; i >= 0; i--) {   // no findLastIndex: older iPhones (iOS < 15.4)
+            const m = c.messages[i];
+            if (m && m.role === "user" && m.text === text) { c.messages.splice(i, 1); break; }
+          }
         });
       changed();
       throw fail(res.status);
