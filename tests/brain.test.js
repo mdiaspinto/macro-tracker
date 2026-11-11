@@ -124,3 +124,12 @@ test("malformed day data never throws", () => {
     assert.equal(Brain.lifetimePoints(u, "2026-11-11"), 0);
   });
 });
+test("unionHabits keeps keys from both; primary wins incl. explicit false", () => {
+  const a = {"2026-11-10":{walk:false}}, b = {"2026-11-10":{walk:true, sleep:true}, "2026-11-09":{mind:true}};
+  assert.deepEqual(Brain.unionHabits(a,b), {"2026-11-10":{walk:false, sleep:true}, "2026-11-09":{mind:true}});
+  assert.deepEqual(Brain.unionHabits(undefined, b), b);
+});
+test("retagOnRename", () => {
+  assert.deepEqual(Brain.retagOnRename({name:"salad"}, "spinach salad"), ["greens"]);
+  assert.deepEqual(Brain.retagOnRename({brain:["nuts"], brainManual:true}, "spinach salad"), ["nuts"]);
+});

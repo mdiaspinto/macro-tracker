@@ -142,6 +142,15 @@ const Brain = (() => {
     return { level: LEVELS[i], next, toNext: next ? next.min - points : 0 };
   }
 
-  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags, mealTags, weekStart, weekScore, lifetimePoints, LEVELS, levelFor };
+  function unionHabits(primary, secondary) {
+    const out = {};
+    new Set(Object.keys(secondary || {}).concat(Object.keys(primary || {}))).forEach(d => {
+      out[d] = Object.assign({}, (secondary || {})[d], (primary || {})[d]);
+    });
+    return out;
+  }
+  function retagOnRename(meal, newName) { return meal.brainManual ? meal.brain : detectTags(newName); }
+
+  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags, mealTags, weekStart, weekScore, lifetimePoints, LEVELS, levelFor, unionHabits, retagOnRename };
 })();
 if (typeof module !== "undefined") module.exports = Brain; else window.Brain = Brain;

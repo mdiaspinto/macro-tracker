@@ -854,6 +854,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="brain.js"></script>
 <script>
 "use strict";
 const KEY = "macroTracker.v1";
@@ -1547,7 +1548,7 @@ function addMeal(eaten){
   const d=readForm();
   if(!(d.name && d.qty>0 && (d.p||d.c||d.f))) return;
   dayMeals().push({id:uid(), name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, qty:d.qty, unit:d.unit,
-                   ap:d.ap, ac:d.ac, af:d.af, eaten});
+                   ap:d.ap, ac:d.ac, af:d.af, eaten, brain:Brain.detectTags(d.name)});
   // save to library
   if(document.getElementById("saveLib").checked){
     const foods=user().foods;
@@ -1565,6 +1566,17 @@ function addMeal(eaten){
   document.getElementById("fUnit").value="g"; setUnit("g");
   updatePreview();
   document.getElementById("fName").focus();
+}
+function toggleHabit(id){
+  const h=user().habits||(user().habits={});
+  const day=h[curDate]||(h[curDate]={});
+  day[id]=!day[id];
+  save(); renderAll();
+}
+function setMealBrain(mealId,tags){
+  const m=dayMeals().find(x=>x.id===mealId); if(!m) return;
+  m.brain=tags; m.brainManual=true;
+  save(); renderAll();
 }
 function quickUse(name){
   const f=user().foods.find(x=>x.name===name); if(!f) return;
@@ -1918,6 +1930,7 @@ function saveEdit(){
   if(!d.name) return;
   if(editCtx.type==="meal"){
     const m=dayMeals().find(x=>x.id===editCtx.id); if(!m) return;
+    if(d.name!==m.name) m.brain=Brain.retagOnRename(m,d.name);
     Object.assign(m,{name:d.name, p:d.p, c:d.c, f:d.f, ref:d.ref, unit:d.unit, qty:d.qty,
       ap:d.ap, ac:d.ac, af:d.af, eaten:document.getElementById("eEaten").checked});
   } else {
@@ -3062,6 +3075,7 @@ function mergeUser(primary,secondary){
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
     weights: unionWeights(primary.weights, secondary.weights),
+    habits:  Brain.unionHabits(primary.habits, secondary.habits),
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen)
   });
