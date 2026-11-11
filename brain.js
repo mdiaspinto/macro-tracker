@@ -100,7 +100,7 @@ const Brain = (() => {
     let oily = 0, meals = 0;
     for (let i = 0; i < 7; i++) {
       const d = addDays(start, i);
-      (days[d] || []).filter(ml => ml.eaten === true).forEach(ml => {
+      (Array.isArray(days[d]) ? days[d] : []).filter(ml => ml && ml.eaten === true).forEach(ml => {
         meals++;
         const tags = mealTags(ml);
         CATEGORIES.forEach(c => { if (c.kind === "food" && tags.includes(c.id)) counts[c.id]++; });

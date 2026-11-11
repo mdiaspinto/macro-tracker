@@ -118,3 +118,9 @@ test("levels", () => {
   assert.equal(Brain.levelFor(20000).next, null);
 });
 test("missing fields never throw", () => { assert.equal(Brain.weekScore({}, "2026-11-10").points, 0); });
+test("malformed day data never throws", () => {
+  [{days:{"2026-11-10":[null]}}, {days:{"2026-11-10":{}}}].forEach(u => {
+    assert.equal(Brain.weekScore(u, "2026-11-10").points, 0);
+    assert.equal(Brain.lifetimePoints(u, "2026-11-11"), 0);
+  });
+});
