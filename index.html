@@ -1671,6 +1671,8 @@ function toggleHabit(id){
   const h=user().habits||(user().habits={});
   const day=h[curDate]||(h[curDate]={});
   day[id]=!day[id];
+  const at=user().habitsAt||(user().habitsAt={});
+  (at[curDate]||(at[curDate]={}))[id]=Date.now();
   save(); renderAll();
 }
 function setMealBrain(mealId,tags){
@@ -1772,7 +1774,7 @@ function renderRecent(){
 }
 function relogMeal(m){
   dayMeals().push({id:uid(), name:m.name, p:m.p, c:m.c, f:m.f, ref:m.ref, qty:m.qty, unit:m.unit,
-                   ap:m.ap, ac:m.ac, af:m.af, eaten:true, brain:m.brain, brainManual:m.brainManual});
+                   ap:m.ap, ac:m.ac, af:m.af, eaten:true, brain:Array.isArray(m.brain)?m.brain.slice():m.brain, brainManual:m.brainManual});
   save(); renderAll();
   toast(t("added",{name:m.name}));
 }
@@ -3284,7 +3286,8 @@ function mergeUser(primary,secondary){
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
     weights: unionWeights(primary.weights, secondary.weights),
-    habits:  Brain.unionHabits(primary.habits, secondary.habits),
+    habits:  Brain.unionHabits(primary.habits, secondary.habits, primary.habitsAt, secondary.habitsAt),
+    habitsAt: Brain.unionHabitsAt(primary.habitsAt, secondary.habitsAt),
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen)
   });

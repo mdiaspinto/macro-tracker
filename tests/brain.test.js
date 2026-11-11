@@ -133,3 +133,34 @@ test("retagOnRename", () => {
   assert.deepEqual(Brain.retagOnRename({name:"salad"}, "spinach salad"), ["greens"]);
   assert.deepEqual(Brain.retagOnRename({brain:["nuts"], brainManual:true}, "spinach salad"), ["nuts"]);
 });
+test("lifetimePoints ignores empty day keys and starts at first real activity", () => {
+  const meal = {name:"salmon", eaten:true};
+  const a = {days:{"2026-11-10":[meal]}}, b = {days:{"1900-01-01":[], "2026-11-10":[meal]}};
+  assert.equal(Brain.lifetimePoints(b, "2026-11-11"), Brain.lifetimePoints(a, "2026-11-11"));
+  assert.ok(Brain.lifetimePoints(a, "2026-11-11") > 0);
+  assert.equal(Brain.lifetimePoints({days:{"1900-01-01":[]}, habits:{"1900-01-02":{walk:false}}}, "2026-11-11"), 0);
+});
+test("negated sugar is not sweets", () => {
+  hasnt("Café con leche sin azúcar", "sweets"); hasnt("sugar-free yogurt", "sweets"); hasnt("yaourt sans sucre", "sweets");
+  hasnt("Yogur sin azúcar", "sweets"); hasnt("no added sugar oats", "sweets");
+  has("Galletas sin azúcar", "sweets"); has("sugar", "sweets");
+});
+test("manually cleared chips survive a sync that drops brain: []", () => {
+  assert.deepEqual(Brain.mealTags({name:"salmon", brainManual:true}), []);
+  assert.deepEqual(Brain.retagOnRename({brainManual:true}, "spinach"), []);
+});
+test("salads are greens; cheeseburger is red meat and cheese", () => {
+  has("Ensalada mixta", "greens"); has("Green salad", "greens"); has("salade niçoise", "greens");
+  has("Cheeseburger", "redMeat", "cheese");
+});
+test("unionHabits with timestamps: newer wins, tie/missing → primary", () => {
+  const p = {"2026-11-10":{walk:true}}, s = {"2026-11-10":{walk:false}};
+  assert.deepEqual(Brain.unionHabits(p, s, {"2026-11-10":{walk:100}}, {"2026-11-10":{walk:200}}), {"2026-11-10":{walk:false}});
+  assert.deepEqual(Brain.unionHabits(p, s, {"2026-11-10":{walk:200}}, {"2026-11-10":{walk:100}}), {"2026-11-10":{walk:true}});
+  assert.deepEqual(Brain.unionHabits(p, s, {"2026-11-10":{walk:100}}, {"2026-11-10":{walk:100}}), {"2026-11-10":{walk:true}});
+  assert.deepEqual(Brain.unionHabits(p, s), {"2026-11-10":{walk:true}});
+});
+test("unionHabitsAt takes per-key max", () => {
+  assert.deepEqual(Brain.unionHabitsAt({a:{walk:100, mind:5}}, {a:{walk:200}, b:{sleep:1}}), {a:{walk:200, mind:5}, b:{sleep:1}});
+  assert.deepEqual(Brain.unionHabitsAt(undefined, undefined), {});
+});
