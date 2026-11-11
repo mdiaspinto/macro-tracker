@@ -20,6 +20,7 @@
     --accent:#F2B632; --accent-ink:#1C1500; --accent-text:#8A5A00; --accent-soft:rgba(242,182,50,.16);
     --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
+    --brain:#7A4FD6;
     --grid:rgba(20,22,26,.08); --cross:rgba(20,22,26,.3);
     --focus:#2F6FD6;
     --radius:16px; --radius-sm:10px;
@@ -35,6 +36,7 @@
       --accent:#F5C451; --accent-ink:#1C1500; --accent-text:#F5C451; --accent-soft:rgba(245,196,81,.14);
       --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
+      --brain:#B79CFF;
       --grid:rgba(255,255,255,.07); --cross:rgba(255,255,255,.3);
       --focus:#7DB8FF;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
@@ -156,6 +158,61 @@
   .ratios .chip .tg{opacity:.75}
   .ratios .chip.lab{color:var(--text);font-weight:700;width:100%}
   .suggest-cta{width:100%;justify-content:center;margin:0 0 18px}
+
+  /* ---------- Brain card (weekly brain-food score) ---------- */
+  .brain{background:var(--panel);border:2px solid var(--ink);border-radius:var(--radius);padding:14px 16px 16px;margin-bottom:12px;
+    background-image:linear-gradient(color-mix(in srgb,var(--brain) 10%,transparent),transparent 140px)}
+  .br-head{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
+  .br-title{font-size:22px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.1}
+  .br-sub{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .br-level{flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 9px;border-radius:999px;
+    border:2px solid var(--brain);background:color-mix(in srgb,var(--brain) 14%,var(--panel));font-size:14px;font-weight:800}
+  .br-level .em{font-size:18px;line-height:1}
+  .br-meter{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
+  .br-bar{flex:1;height:24px;border:2px solid var(--ink);border-radius:999px;background:var(--panel-2);overflow:hidden}
+  .br-bar > span{display:block;height:100%;background:var(--brain);border-radius:999px;transition:width .5s ease}
+  .br-pct{font-size:30px;font-weight:900;font-stretch:var(--wdth-display);line-height:1;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
+  .br-next{font-size:15px;font-weight:700;margin:0 0 12px}
+  .br-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px}
+  .br-ic{aspect-ratio:1;display:grid;place-items:center;border:2px solid var(--line);border-radius:12px;font-size:21px;line-height:1}
+  .br-ic.full{border-color:var(--brain)}
+  .br-hab-lab{font-size:14px;font-weight:800;margin-bottom:8px}
+  .br-habits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .br-hab{position:relative;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    padding:6px 1px;border-radius:12px;border:2px solid var(--line-strong);background:var(--panel);
+    font-size:12.5px;font-weight:700;font-stretch:87.5%;line-height:1.15;text-align:center}
+  .br-hab .em{font-size:24px;line-height:1}
+  .br-hab:hover{border-color:var(--ink)}
+  .br-hab[aria-pressed="true"]{border-color:var(--brain);background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
+  .br-hab[aria-pressed="true"]::after{content:"✓";position:absolute;top:3px;right:6px;font-size:12px;font-weight:900;color:var(--brain)}
+
+  /* Brain chips on each meal + chip picker */
+  .mchips{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-height:44px;margin:2px 0 -8px -8px;padding:4px 8px;
+    border-radius:10px;background:transparent;font-size:19px;line-height:1.2;text-align:left;max-width:100%}
+  .mchips:hover{background:color-mix(in srgb,var(--brain) 12%,transparent)}
+  .mchips.empty{font-size:15px;color:var(--muted)}
+  .mchips.empty span{border:1.5px dashed var(--line-strong);border-radius:8px;padding:4px 8px}
+  .mchips .lt{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+  .bp-hint{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+  .bp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bp-chip{min-height:48px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:2px solid var(--line-strong);
+    background:var(--panel);font-size:14.5px;font-weight:700;line-height:1.2;text-align:left}
+  .bp-chip .em{font-size:22px;line-height:1;flex:none}
+  .bp-chip[aria-pressed="true"]{border-color:var(--brain);background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
+  .bp-limit-head{font-size:14px;font-weight:800;margin:18px 0 8px}
+  .bp-limits{display:flex;flex-wrap:wrap;gap:8px}
+  .bp-chip.limit{min-height:44px;color:var(--muted);font-weight:600}
+  .bp-chip.limit[aria-pressed="true"]{color:var(--text);border-color:var(--muted);background:var(--panel-2)}
+  .bp-done{margin-top:20px}
+
+  /* Recent row: one tap re-logs a meal */
+  .recent-row{display:flex;flex-wrap:wrap;gap:8px}
+  .rc{min-height:44px;max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 12px;border-radius:999px;
+    border:2px solid var(--line-strong);background:var(--panel);font-size:14.5px;font-weight:700}
+  .rc:hover{border-color:var(--ink)}
+  .rc .plus{flex:none;font-size:18px;font-weight:900;line-height:1;color:var(--brain)}
+  .rc .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rc .em{flex:none;font-size:16px}
 
   /* ---------- Section ---------- */
   .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
@@ -483,10 +540,18 @@
     <div id="cards"></div>
     <div class="ratios" id="ratios"></div>
   </section>
+  <!-- Weekly brain score: bar, level, category icons, today's habits -->
+  <section class="brain" id="brainCard"></section>
   <button class="btn btn-ghost suggest-cta" id="suggestBtn" data-i18n="suggestCta">Suggest foods to hit target</button>
 
   </div><!-- /tracker-side -->
   <div class="tracker-main">
+
+  <!-- Recent meals: one tap re-logs -->
+  <div class="section" id="recentSec" hidden>
+    <div class="head"><h2 data-i18n="recentTitle">Recent</h2><span class="hint" data-i18n="recentHint">Tap to log again</span></div>
+    <div class="body"><div class="recent-row" id="recentRow"></div></div>
+  </div>
 
   <!-- Add food -->
   <div class="section">
@@ -789,6 +854,14 @@
   <div class="modal">
     <div class="head"><h3 data-i18n="suggestTitle">Suggested to hit your targets</h3><button class="x" data-close-suggest>×</button></div>
     <div class="body" id="suggestBody"></div>
+  </div>
+</div>
+
+<!-- Brain chip picker -->
+<div class="overlay" id="brainOverlay">
+  <div class="modal">
+    <div class="head"><h3 id="brainPickTitle"></h3><button class="x" data-close-brain>×</button></div>
+    <div class="body" id="brainPickBody"></div>
   </div>
 </div>
 
@@ -1123,6 +1196,18 @@ const T = {
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
     statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
     targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
+    brainTitle:"🧠 Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
+    brainNext:"{n} more {emoji} this week", brainFull:"Every brain goal met this week! 🎉",
+    brainHabits:"Habits · {day}", brainIconLabel:"{name}: {n} of {target} this week",
+    brainEditFor:"Brain foods in {name}", brainNone:"none yet",
+    brainPickHint:"Tap to add or remove. Changes save right away.", brainLimitHead:"Go easy on", brainDone:"Done",
+    recentTitle:"Recent", recentHint:"Tap to log again", recentLog:"Log {name} again",
+    lvl_sprout:"Sprout", lvl_growing:"Growing", lvl_sharp:"Sharp", lvl_brilliant:"Brilliant", lvl_genius:"Genius", lvl_legend:"Legend",
+    cat_greens:"Leafy greens", cat_veg:"Other vegetables", cat_berries:"Berries", cat_nuts:"Nuts", cat_beans:"Beans & lentils",
+    cat_fish:"Fish", cat_oilyFish:"Oily fish", cat_grains:"Whole grains", cat_olive:"Olive oil",
+    cat_strength:"Strength training", cat_walk:"Walk or cardio, 30 min", cat_sleep:"Slept 7 h or more", cat_social:"Time with people", cat_mind:"Brain challenge",
+    hab_strength:"Strength", hab_walk:"Walk", hab_sleep:"Sleep 7h", hab_social:"People", hab_mind:"Mind",
+    tag_sweets:"sweets", tag_fried:"fried", tag_redMeat:"red meat", tag_butter:"butter", tag_cheese:"cheese",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
@@ -1249,6 +1334,18 @@ const T = {
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
     statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
     targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
+    brainTitle:"🧠 Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
+    brainNext:"Te faltan {n} {emoji} esta semana", brainFull:"¡Cumpliste todas las metas de la semana! 🎉",
+    brainHabits:"Hábitos · {day}", brainIconLabel:"{name}: {n} de {target} esta semana",
+    brainEditFor:"Comida para el cerebro en {name}", brainNone:"nada todavía",
+    brainPickHint:"Toca para agregar o quitar. Se guarda al instante.", brainLimitHead:"Con moderación", brainDone:"Listo",
+    recentTitle:"Recientes", recentHint:"Toca para registrar otra vez", recentLog:"Registrar {name} otra vez",
+    lvl_sprout:"Brote", lvl_growing:"Creciendo", lvl_sharp:"Despierto", lvl_brilliant:"Brillante", lvl_genius:"Genio", lvl_legend:"Leyenda",
+    cat_greens:"Hojas verdes", cat_veg:"Otras verduras", cat_berries:"Frutos rojos", cat_nuts:"Frutos secos", cat_beans:"Legumbres",
+    cat_fish:"Pescado", cat_oilyFish:"Pescado azul", cat_grains:"Cereales integrales", cat_olive:"Aceite de oliva",
+    cat_strength:"Ejercicio de fuerza", cat_walk:"Caminar o cardio, 30 min", cat_sleep:"Dormiste 7 h o más", cat_social:"Tiempo con gente", cat_mind:"Reto mental",
+    hab_strength:"Fuerza", hab_walk:"Caminar", hab_sleep:"Dormir 7h", hab_social:"Gente", hab_mind:"Mente",
+    tag_sweets:"dulces", tag_fried:"fritos", tag_redMeat:"carne roja", tag_butter:"mantequilla", tag_cheese:"queso",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
@@ -1331,6 +1428,8 @@ function renderAll(){
   renderCards();
   renderRatios();
   renderMeals();
+  renderBrainCard();
+  renderRecent();
   renderLib();
   renderDatalist();
   renderUnitSelectors();
@@ -1470,6 +1569,7 @@ function renderMeals(){
           <span class="m m-f">${round(m.af)}F</span>
           <span class="m m-cal">${round(cal)} kcal</span>
         </div>
+        ${mealChips(m)}
       </div>
       <div class="right"><button class="del" data-del="${m.id}" title="Remove" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button></div>
     </div>`;
@@ -1577,6 +1677,104 @@ function setMealBrain(mealId,tags){
   const m=dayMeals().find(x=>x.id===mealId); if(!m) return;
   m.brain=tags; m.brainManual=true;
   save(); renderAll();
+}
+
+/* ---------- Brain card, meal chips, Recent row ---------- */
+const BRAIN_FOODS = Brain.CATEGORIES.filter(c=>c.kind==="food").map(c=>c.id).concat("oilyFish");
+const LIMITS = Object.keys(Brain.LIMIT_TAGS);
+const brainEmoji = id => id==="oilyFish" ? "🐟" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).emoji || "";
+const foodEmojis = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>c.emoji).join("");
+let lastBrainBar = 0;
+function renderBrainCard(){
+  const u=user(), ws=Brain.weekScore(u,curDate), lv=Brain.levelFor(Brain.lifetimePoints(u,todayStr())).level;
+  const day=(u.habits||{})[curDate]||{}, pct=Math.round(ws.bar*100);
+  const icons=Brain.CATEGORIES.map(c=>{
+    const f=ws.fill[c.id], fp=Math.round(f*100);
+    const lab=escapeAttr(t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target}));
+    return `<span class="br-ic${f===1?" full":""}" role="img" aria-label="${lab}" title="${lab}"
+      style="background:linear-gradient(to top,color-mix(in srgb,var(--brain) 30%,transparent) ${fp}%,transparent ${fp}%)"><span aria-hidden="true" style="opacity:${(.35+.65*f).toFixed(2)}">${c.emoji}</span></span>`;
+  }).join("");
+  const habits=Brain.CATEGORIES.filter(c=>c.kind==="habit").map(c=>
+    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(t("cat_"+c.id))}"><span class="em" aria-hidden="true">${c.emoji}</span>${t("hab_"+c.id)}</button>`).join("");
+  const next = ws.nextHint ? t("brainNext",{n:ws.nextHint.remaining, emoji:brainEmoji(ws.nextHint.id)}) : t("brainFull");
+  const el=document.getElementById("brainCard");
+  el.innerHTML = `
+    <div class="br-head">
+      <div><h2 class="br-title">${t("brainTitle")}</h2><div class="br-sub">${t("brainSub")}</div></div>
+      <span class="br-level"><span class="em" aria-hidden="true">${lv.emoji}</span>${t("lvl_"+lv.id)}</span>
+    </div>
+    <div class="br-meter">
+      <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("brainTitle"))}"><span style="width:${lastBrainBar}%"></span></div>
+      <span class="br-pct">${pct}%</span>
+    </div>
+    <p class="br-next">${next}</p>
+    <div class="br-icons">${icons}</div>
+    <div class="br-hab-lab">${t("brainHabits",{day:prettyDate(curDate)})}</div>
+    <div class="br-habits">${habits}</div>`;
+  // Grow the bar from its previous width so a tap visibly moves it.
+  const bar=el.querySelector(".br-bar > span"); void bar.offsetWidth; bar.style.width=pct+"%"; lastBrainBar=pct;
+}
+function mealChips(m){
+  const tags=Brain.mealTags(m), em=foodEmojis(tags), lim=LIMITS.filter(x=>tags.includes(x));
+  const names=BRAIN_FOODS.concat(LIMITS).filter(x=>tags.includes(x)).map(x=>t((LIMITS.includes(x)?"tag_":"cat_")+x)).join(", ");
+  const label=t("brainEditFor",{name:m.name})+": "+(names||t("brainNone"));
+  const inner=(em?`<span>${em}</span>`:"")+lim.map(x=>`<span class="lt">${t("tag_"+x)}</span>`).join("");
+  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||"<span>＋🧠</span>"}</button>`;
+}
+let pickerMealId = null;
+function openChipPicker(mealId){
+  pickerMealId=mealId; renderChipPicker();
+  document.getElementById("brainOverlay").classList.add("on");
+}
+function closeChipPicker(){ pickerMealId=null; document.getElementById("brainOverlay").classList.remove("on"); }
+function renderChipPicker(){
+  const m=dayMeals().find(x=>x.id===pickerMealId); if(!m){ closeChipPicker(); return; }
+  const tags=Brain.mealTags(m);
+  const chip=(id,key,cls)=>`<button class="bp-chip${cls}" data-tag="${id}" aria-pressed="${tags.includes(id)}">${cls?"":`<span class="em" aria-hidden="true">${brainEmoji(id)}</span>`}${t(key+id)}</button>`;
+  document.getElementById("brainPickTitle").textContent="🧠 "+m.name;
+  document.getElementById("brainPickBody").innerHTML = `
+    <p class="bp-hint">${t("brainPickHint")}</p>
+    <div class="bp-grid">${BRAIN_FOODS.map(id=>chip(id,"cat_","")).join("")}</div>
+    <div class="bp-limit-head">${t("brainLimitHead")}</div>
+    <div class="bp-limits">${LIMITS.map(id=>chip(id,"tag_"," limit")).join("")}</div>
+    <button class="btn btn-primary full bp-done" data-close-brain>${t("brainDone")}</button>`;
+}
+// Adding oily fish also adds fish; removing fish also removes oily fish.
+function toggleMealTag(tag){
+  const m=dayMeals().find(x=>x.id===pickerMealId); if(!m) return;
+  let tags=Brain.mealTags(m).slice();
+  if(tags.includes(tag)) tags=tags.filter(x=>x!==tag && !(tag==="fish" && x==="oilyFish"));
+  else { tags.push(tag); if(tag==="oilyFish" && !tags.includes("fish")) tags.push("fish"); }
+  setMealBrain(m.id,tags);
+  renderChipPicker();
+  const b=document.querySelector(`#brainPickBody [data-tag="${tag}"]`); if(b) b.focus();
+}
+// Last `limit` distinct eaten meals (by case-insensitive name) across all days, newest first.
+function recentMeals(u, limit){
+  const seen=new Set(), out=[], days=(u && u.days)||{};
+  Object.keys(days).sort().reverse().forEach(d=>{
+    const ms=Array.isArray(days[d])?days[d]:[];
+    for(let i=ms.length-1; i>=0 && out.length<limit; i--){
+      const m=ms[i], k=m && m.eaten===true && String(m.name||"").trim().toLowerCase();
+      if(k && !seen.has(k)){ seen.add(k); out.push(m); }
+    }
+  });
+  return out;
+}
+let recentList = [];
+function renderRecent(){
+  recentList=recentMeals(user(),8);
+  document.getElementById("recentSec").hidden=!recentList.length;
+  document.getElementById("recentRow").innerHTML=recentList.map((m,i)=>{
+    const em=foodEmojis(Brain.mealTags(m));
+    return `<button class="rc" data-recent="${i}" aria-label="${escapeAttr(t("recentLog",{name:m.name}))}"><span class="plus" aria-hidden="true">+</span><span class="nm">${escapeHtml(m.name)}</span>${em?`<span class="em" aria-hidden="true">${em}</span>`:""}</button>`;
+  }).join("");
+}
+function relogMeal(m){
+  dayMeals().push({id:uid(), name:m.name, p:m.p, c:m.c, f:m.f, ref:m.ref, qty:m.qty, unit:m.unit,
+                   ap:m.ap, ac:m.ac, af:m.af, eaten:true, brain:m.brain, brainManual:m.brainManual});
+  save(); renderAll();
+  toast(t("added",{name:m.name}));
 }
 function quickUse(name){
   const f=user().foods.find(x=>x.name===name); if(!f) return;
@@ -2853,10 +3051,22 @@ document.getElementById("estimateBtn").addEventListener("click",estimateMacros);
 
 document.getElementById("mealsBody").addEventListener("click",e=>{
   const tog=e.target.closest("[data-toggle]"), del=e.target.closest("[data-del]"), ed=e.target.closest("[data-edit]");
+  const br=e.target.closest("[data-brain]");
+  if(br){ openChipPicker(br.dataset.brain); return; }
   if(tog){ const m=dayMeals().find(x=>x.id===tog.dataset.toggle); if(m){m.eaten=!m.eaten; save(); renderAll();} return; }
   if(del){ const meals=dayMeals(); const i=meals.findIndex(x=>x.id===del.dataset.del);
     if(i>=0){ const nm=meals[i].name; deleteWithUndo(()=>meals.splice(i,1), t("deletedItem",{name:nm})); } return; }
   if(ed){ openEditMeal(ed.dataset.edit); }
+});
+document.getElementById("brainCard").addEventListener("click",e=>{
+  const h=e.target.closest("[data-habit]"); if(h) toggleHabit(h.dataset.habit);
+});
+document.getElementById("recentRow").addEventListener("click",e=>{
+  const b=e.target.closest("[data-recent]"), m=b && recentList[+b.dataset.recent]; if(m) relogMeal(m);
+});
+document.getElementById("brainOverlay").addEventListener("click",e=>{
+  if(e.target.id==="brainOverlay"||e.target.closest("[data-close-brain]")){ closeChipPicker(); return; }
+  const b=e.target.closest("[data-tag]"); if(b) toggleMealTag(b.dataset.tag);
 });
 document.getElementById("libList").addEventListener("click",e=>{
   const q=e.target.closest("[data-quick]"), d=e.target.closest("[data-libdel]"), ed=e.target.closest("[data-libedit]");
