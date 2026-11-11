@@ -1131,7 +1131,7 @@ const T = {
     authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
     dailyTotals:"Daily totals", pctTarget:"% of target",
     insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, Claude writes the explanation from your food totals.",
-    insTitle:"Why your weight changed", insEmpty:"Log at least two weigh-ins to see what drove the change.",
+    insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach", insEmpty:"Log at least two weigh-ins to see what drove the change.",
     insGained:"You gained {kg} in {days} days", insLost:"You lost {kg} in {days} days", insSame:"Your weight held steady over {days} days",
     insStatAte:"Ate / day", insStatMaint:"Maintenance", insStatExpected:"Expected from food", insStatActual:"Actual change",
     insSurplus:"You averaged {eat} kcal a day, about {diff} kcal above your estimated maintenance of {maint}. That alone predicts {exp}.",
@@ -1269,7 +1269,7 @@ const T = {
     authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
     dailyTotals:"Totales del día", pctTarget:"% del objetivo",
     insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, Claude redacta la explicación a partir de tus totales.",
-    insTitle:"Por qué cambió tu peso", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
+    insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
     insGained:"Subiste {kg} en {days} días", insLost:"Bajaste {kg} en {days} días", insSame:"Tu peso se mantuvo estable en {days} días",
     insStatAte:"Comido / día", insStatMaint:"Mantenimiento", insStatExpected:"Esperado por comida", insStatActual:"Cambio real",
     insSurplus:"Comiste en promedio {eat} kcal al día, unas {diff} kcal por encima de tu mantenimiento estimado de {maint}. Eso solo predice {exp}.",
@@ -2220,9 +2220,7 @@ function unitSpan(u){ return `<span style="font-size:12px;color:var(--muted);fon
 
 /* ---- tab switching ---- */
 function renderTabs(){
-  const show = cloudEnabled() && !!session;
-  document.getElementById("tabs").style.display = show ? "flex" : "none";
-  if(!show) curTab = "tracker";
+  document.getElementById("tabs").style.display = "flex";
   document.querySelectorAll("#tabs .tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===curTab));
   document.getElementById("trackerView").style.display = curTab==="tracker" ? "" : "none";
   document.getElementById("fridgeView").style.display  = curTab==="fridge"  ? "" : "none";
@@ -2457,7 +2455,8 @@ function renderInsight(){
     ${stats ? `<div class="chart-stats">${stats}</div>` : ""}
     ${saved ? `<p class="ins-summary">${escapeHtml(saved.summary)}</p>` : ""}
     <ul class="ins-points">${(saved ? saved.points : rulePoints(f)).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
-    ${foot ? `<p class="ins-foot">${foot}</p>` : ""}`;
+    ${foot ? `<p class="ins-foot">${foot}</p>` : ""}
+    ${session ? "" : `<p class="ins-foot">${t("coachLogin")}</p>`}`;
 }
 // Ask the Worker for a written explanation of the latest period; the rule-based text stays as the fallback.
 async function requestAiInsight(){
@@ -2770,7 +2769,7 @@ function handlePicardPayload(payload){
   if(!payload) return;
   const res=importPicardPayload(payload);
   save();
-  if(session) switchTab("fridge"); else renderAll();
+  switchTab("fridge");
   renderFridge();
   if(res.added>0) toast(t("fridgeSyncedN",{n:res.added}));
   else toast(t("fridgeSyncedNone"));
