@@ -40,6 +40,50 @@ const Game = (() => {
     return Math.abs(kcal - target) <= 0.1 * target && p >= 0.9 * t.p;
   }
 
-  return { streak, streakHistory, dayStar };
+  const BADGES = [
+    ["firstLog", "🌟"], ["streak7", "🔥"], ["streak30", "🏅"], ["fishWeek", "🐟"], ["fullBrain", "🧠"], ["cleanWeek", "🧼"],
+    ["strongWeek", "🏋️"], ["berryLover", "🫐"], ["greenMachine", "🥬"], ["socialButterfly", "🦋"], ["macroMaster", "🎯"],
+  ].map(([id, emoji]) => ({ id, emoji })).concat(B.LEVELS.slice(1).map(l => ({ id: "level:" + l.id, emoji: l.emoji })));
+
+  // Mon-Sun weekScores from the first week with any data through today's week (computed once per call).
+  function weekScores(user, today) {
+    const days = (user && user.days) || {}, habits = (user && user.habits) || {};
+    const keys = Object.keys(days).filter(d => logged(user, d)).concat(Object.keys(habits).filter(d => Object.values(habits[d] || {}).includes(true))).filter(d => d <= today).sort();
+    const out = [];
+    if (keys.length) for (let w = B.weekStart(keys[0]), last = B.weekStart(today); w <= last; w = addDays(w, 7)) out.push(B.weekScore(user, w));
+    return out;
+  }
+
+  function badges(user, today) {
+    const ws = weekScores(user, today), first = earliest(user), hist = streakHistory(user, today), date = {};
+    const firstWeek = f => { const w = ws.find(f); return w ? w.start : null; };
+    const fourth = id => { const q = ws.filter(w => w.fill[id] >= 1); return q.length >= 4 ? q[3].start : null; };
+    const reach = n => Object.keys(hist).sort().find(d => hist[d] >= n) || null;
+    let run = 0, master = null;
+    for (const d of Object.keys(hist).sort()) { run = dayStar(user, d) ? run + 1 : 0; if (run === 7) { master = d; break; } }
+    let cum = 0; const levelAt = {};
+    ws.forEach(w => { cum += w.points; B.LEVELS.forEach(l => { if (l.min > 0 && cum >= l.min && !levelAt[l.id]) levelAt[l.id] = w.start; }); });
+    Object.assign(date, {
+      firstLog: first && first <= today ? first : null, streak7: reach(7), streak30: reach(30),
+      fishWeek: firstWeek(w => w.fill.fish >= 1), strongWeek: firstWeek(w => w.fill.strength >= 1),
+      fullBrain: firstWeek(w => w.full), cleanWeek: firstWeek(w => w.clean),
+      berryLover: fourth("berries"), greenMachine: fourth("greens"), socialButterfly: fourth("social"), macroMaster: master,
+    });
+    B.LEVELS.forEach(l => { date["level:" + l.id] = levelAt[l.id] || null; });
+    return BADGES.map(b => ({ id: b.id, earned: !!date[b.id], date: date[b.id] || null }));
+  }
+
+  const celebrationKey = c => c.type === "level" ? "level:" + c.id : c.type === "fullWeek" ? "week:" + c.id : c.id;
+
+  // Earned badges / reached levels / the current week's full bar that aren't yet in user.celebrated.
+  function newCelebrations(user, today) {
+    const done = (user && user.celebrated) || {}, out = [];
+    badges(user, today).filter(b => b.earned).forEach(b => out.push(b.id.startsWith("level:") ? { type: "level", id: b.id.slice(6) } : { type: "badge", id: b.id }));
+    const cur = B.weekScore(user, today);
+    if (cur.full) out.push({ type: "fullWeek", id: cur.start });
+    return out.filter(c => !done[celebrationKey(c)]);
+  }
+
+  return { streak, streakHistory, dayStar, BADGES, badges, newCelebrations, celebrationKey };
 })();
 if (typeof module !== "undefined") module.exports = Game; else window.Game = Game;
