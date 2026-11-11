@@ -49,3 +49,7 @@ test("ligatures", () => {
   has("bœuf bourguignon", "redMeat");
   assert.equal(Brain.normalize("bœuf"), "boeuf");
 });
+test("peppers plural and soy milk", () => {
+  has("Stuffed peppers", "veg"); has("mixed peppers", "veg");
+  hasnt("leche de soja", "beans"); hasnt("lait de soja", "beans"); hasnt("soy milk latte", "beans");
+});
