@@ -319,7 +319,7 @@ test("memory rules live in the chat prompt only", async () => {
   const [note, chat, weight] = ai.calls;
   assert.match(chat.system, /remember/);
   assert.match(chat.system, /one-off/);
-  assert.match(chat.system, /memoryDeclined/);
+  assert.doesNotMatch(chat.system, /memoryDeclined|declined/i);
   assert.match(chat.system, /60 characters/);
   assert.doesNotMatch(note.system, /one-off|memoryDeclined/);
   assert.doesNotMatch(weight.system, /one-off|memoryDeclined/);

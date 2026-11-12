@@ -12,7 +12,7 @@ const Coach = (() => {
   // Remembered facts (profile.memory) and ones the person said no to (profile.memoryDeclined).
   const list = v => (Array.isArray(v) ? v.filter(x => typeof x === "string" && x.trim()) : []);
   const normFact = text => String(text == null ? "" : text).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase().replace(/\s+/g, " ").trim().replace(/[\s.,;:!?…"'¡¿]+$/, "");
+    .toLowerCase().replace(/\s+/g, " ").trim().replace(/^[\s¡¿"']+/, "").replace(/[\s.,;:!?…"'¡¿]+$/, "");
   const cleanFact = text => String(text == null ? "" : text).replace(/\s+/g, " ").trim().slice(0, FACT_LEN).trim();
   const has = (arr, text) => { const n = normFact(text); return arr.some(x => normFact(x) === n); };
   function canSuggest(profile, text) {
@@ -33,6 +33,24 @@ const Coach = (() => {
     const d = list((profile || {}).memoryDeclined), fact = cleanFact(text);
     return !fact || has(d, fact) ? d : d.concat(fact).slice(-DECLINED_MAX);
   }
+  // Save a (possibly edited) fact: also drops it from the declined list, so a fact is never in both.
+  function saveFact(profile, text) {
+    const p = profile || {}, mem = list(p.memory), declined = list(p.memoryDeclined), fact = cleanFact(text);
+    const n = normFact(fact), left = declined.filter(x => normFact(x) !== n);
+    if (!n) return { status: "empty", memory: mem, memoryDeclined: declined };
+    if (has(mem, fact)) return { status: "duplicate", memory: mem, memoryDeclined: left };
+    if (mem.length >= MEMORY_MAX) return { status: "full", memory: mem, memoryDeclined: declined };
+    return { status: "added", memory: mem.concat(fact), memoryDeclined: left };
+  }
+  // Remove a remembered fact by text and keep it from being proposed again.
+  function forgetFact(profile, text) {
+    const p = profile || {}, n = normFact(text), stored = list(p.memory).filter(x => normFact(x) === n)[0];
+    return { memory: removeMemory(p, text), memoryDeclined: declineMemory(p, stored || text) };
+  }
+  // A card's half-edited draft survives a re-render only for the same user, day, message and fact.
+  const draftKey = (user, today, i, fact) => [user && user.id, today, i, normFact(fact)].join("|");
+  const keepDraft = (prev, next) => typeof prev === "string" && typeof next === "string" && prev === next;
+  const canRemember = draft => !!cleanFact(draft);
   // Index of the latest suggestion if nobody has answered it yet, else -1 (older suggestions are never revived).
   function pendingRemember(messages) {
     const ms = Array.isArray(messages) ? messages : [];
@@ -48,7 +66,9 @@ const Coach = (() => {
     const u = user || {}, p = Object.assign({}, prof || u.profile || {});
     if (!p.familyHistory) delete p.familyHistory;
     if (!String(p.notes || "").trim()) delete p.notes;
-    ["memory", "memoryDeclined"].forEach(k => { const l = list(p[k]); if (l.length) p[k] = l; else delete p[k]; });
+    const mem = list(p.memory);
+    if (mem.length) p.memory = mem; else delete p.memory;
+    delete p.memoryDeclined;   // stays on the device: it only keeps the app from re-proposing, the model never needs it
     const ws = B.weekScore(u, today), lv = B.levelFor(B.lifetimePoints(u, today));
     const totals = d => {
       const ms = eatenMeals(u, d), sum = k => ms.reduce((a, m) => a + (Number(m[k]) || 0), 0);
@@ -114,7 +134,7 @@ const Coach = (() => {
   const profOf = user => (cfg.getProfile ? cfg.getProfile(user) : undefined);
   const ready = () => !!(cfg.url && !unavailable && (!cfg.hasSession || cfg.hasSession()));
 
-  function init(options) { cfg = options || {}; }
+  function init(options) { cfg = options || {}; unavailable = false; capped.clear(); }
   function coachOf(user) {
     if (!user.coach || typeof user.coach !== "object") user.coach = {};
     if (!user.coach.notes || typeof user.coach.notes !== "object") user.coach.notes = {};
@@ -197,6 +217,6 @@ const Coach = (() => {
   const isCapped = (user, today) => capped.has(keyOf(user, today));
   const remainingFor = (user, today) => { const n = left[keyOf(user, today)]; return typeof n === "number" ? n : null; };
 
-  return { summary, normFact, canSuggest, addMemory, removeMemory, declineMemory, pendingRemember, mergeCoach, classify, init, noteFor, chatFor, ensureNote, send, available, isCapped, remainingFor };
+  return { summary, normFact, canSuggest, addMemory, removeMemory, declineMemory, saveFact, forgetFact, memoryOf: p => list((p || {}).memory), draftKey, keepDraft, canRemember, pendingRemember, mergeCoach, classify, init, noteFor, chatFor, ensureNote, send, available, isCapped, remainingFor };
 })();
 if (typeof module !== "undefined") module.exports = Coach; else window.Coach = Coach;

@@ -87,7 +87,7 @@ Length: quick questions get 2-4 sentences; questions asking to explain something
 ${COACH_RULES}
 
 Memory:
-- "remember" is "" unless the person has just revealed a LASTING fact about themselves that would help future coaching and is not already in "profile" (including profile.memory) or in profile.memoryDeclined. Then put that fact in "remember" so the app can ask them to confirm it.
+- "remember" is "" unless the person has just revealed a LASTING fact about themselves that would help future coaching and is not already in "profile" (including profile.memory). Then put that fact in "remember" so the app can ask them to confirm it.
 - Good: ongoing symptoms or conditions they describe (trouble sleeping, hot flushes, constipation, joint pain), diagnoses they state, allergies and intolerances, strong likes and dislikes, routines (night shifts, trains 3 times a week), personal goals, family history, medications they take (as a plain fact).
 - Never: one-off questions (what has more protein, a recipe), a passing mood or a single bad day, facts about other people that do not affect them, anything you would have to infer or guess (never turn "I'm always tired" into a condition).
 - Write it as a short fact in the language given by "lang", third person without a name, at most 60 characters, for example "Struggles to sleep" or "Le cuesta dormir". At most one per reply; otherwise "".
