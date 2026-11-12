@@ -385,6 +385,61 @@
   .lib-item .quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   @media(max-width:480px){ .lib-item{flex-wrap:wrap} .lib-item .lmac{order:5;width:100%;margin-left:0} }
 
+
+  /* ---------- Collection ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px}
+  .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .shop-wallet img{width:56px;height:56px;border-radius:12px;flex:none;object-fit:cover}
+  .shop-wallet .wtxt{flex:1;min-width:120px}
+  .shop-bal{font-size:24px;font-weight:800;font-stretch:87.5%}
+  .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .shop-short{margin-top:12px}
+  .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+  .shop-short .bar i{display:block;height:100%;background:var(--accent)}
+  .shop-short small{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
+  .shop-col{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .shop-col.done{border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
+  .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .shop-col .ch b{font-size:15px;font-weight:800}
+  .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:10px;overflow:hidden;background:var(--panel-2);padding:0;border:1px solid var(--line)}
+  .shop-grid button.tile{cursor:pointer}
+  .shop-grid .tile img{display:block;width:100%;height:100%;object-fit:cover}
+  .shop-grid .sil{filter:brightness(0);opacity:.12}
+  @media (prefers-color-scheme: dark){ .shop-grid .sil{filter:brightness(0) invert(1);opacity:.14} }
+  .shop-secrets{margin-top:16px}
+  .shop-secrets .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .shop-secrets .ch b{font-size:15px;font-weight:800}
+  .shop-secrets .ch span{font-size:13px;color:var(--muted)}
+  .shop-secrets .grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .shop-teaser{font-size:13.5px;color:var(--muted);text-align:center;padding:8px 0}
+  .shop-done{font-size:14px;font-weight:700;text-align:center;margin-top:12px}
+  .rv{width:100%;max-width:380px;text-align:center;outline:none}
+  .rv-stage{position:relative;width:min(78vw,300px);aspect-ratio:445/520;margin:0 auto}
+  .rv-stage>img,.rv-char img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .rv-char{position:absolute;inset:0;opacity:0}
+  .rv-char.show{opacity:1}
+  .rv-char.pop img{animation:rvPop .6s cubic-bezier(.2,1.4,.4,1) both}
+  .rv-box.wig{animation:rvWig .6s ease-in-out}
+  .rv-box.bnc{animation:rvBounce .2s ease-out}
+  .rv-spark{position:absolute;inset:0;pointer-events:none}
+  .rv-spark i{position:absolute;left:50%;top:45%;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--accent);opacity:0;animation:rvSpark 1.1s ease-out forwards}
+  .rv.secret .rv-spark i{background:#FFD24A;box-shadow:0 0 8px 2px #FFD24A}
+  .rv-cap{min-height:92px;margin-top:14px;color:var(--text);opacity:0}
+  .rv-cap.show{opacity:1;transition:opacity .4s}
+  .rv-cap .n{font-size:20px;font-weight:800;font-stretch:87.5%}
+  .rv-cap .s{font-size:14px;color:var(--muted);margin-top:3px}
+  .rv-cap .k{font-size:18px;font-weight:800;color:var(--accent-text);margin-bottom:4px}
+  #rvOk{margin-top:6px;visibility:hidden}
+  #rvOk.show{visibility:visible}
+  @keyframes rvWig{0%,100%{transform:rotate(0)}15%{transform:rotate(-7deg)}35%{transform:rotate(7deg)}55%{transform:rotate(-5deg)}75%{transform:rotate(4deg)}}
+  @keyframes rvBounce{0%{transform:scale(.94)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+  @keyframes rvPop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+  @keyframes rvSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.3)}}
+  .charview{text-align:center}
+  .charview img{width:100%;max-width:360px;border-radius:14px;display:block;margin:0 auto 12px}
+
   /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
@@ -735,6 +790,8 @@
   <!-- Metrics -->
   <div id="metricsView" style="display:none">
 
+    <div class="card" id="collectionCard"></div>
+
     <div class="section">
       <div class="head"><h2 data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
       <div class="body">
@@ -1006,6 +1063,23 @@
   </div>
 </div>
 
+<!-- Collection: large character view -->
+<div class="overlay" id="charOverlay">
+  <div class="modal charview" role="dialog" aria-modal="true" aria-labelledby="charName">
+    <div class="head"><h3 id="charName"></h3><button class="x" data-close-char>×</button></div>
+    <div class="body"><img id="charImg" alt=""></div>
+  </div>
+</div>
+
+<!-- Collection: box opening reveal -->
+<div class="overlay" id="revealOverlay">
+  <div class="rv" role="dialog" aria-modal="true" aria-live="polite" tabindex="-1">
+    <div class="rv-stage"><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
+    <div class="rv-cap" id="rvCap"></div>
+    <button class="btn btn-primary" id="rvOk"></button>
+  </div>
+</div>
+
 <!-- Level-up celebration -->
 <div class="overlay" id="levelOverlay">
   <div class="modal lvlup" role="dialog" aria-modal="true" aria-labelledby="lvlUpName">
@@ -1085,6 +1159,7 @@
 <script src="brain.js"></script>
 <script src="game.js"></script>
 <script src="coach.js"></script>
+<script src="shop.js"></script>
 <script>
 "use strict";
 const KEY = "macroTracker.v1";
@@ -1425,6 +1500,11 @@ const T = {
     why_mind:"Learning new things, puzzles and games that challenge you are linked to a sharper mind.",
     celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in 🧠 Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
+
+    shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
+    shopShort:"{n} more ⭐ for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
+    shopTeaser:"✨ Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"✨ Secret! ✨",
+    shopDup:"You already have {name}! +{r} ⭐ back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
@@ -1611,6 +1691,11 @@ const T = {
     why_mind:"Aprender cosas nuevas y hacer crucigramas o juegos que te reten está ligado a una mente más ágil.",
     celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en 🧠 Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
+
+    shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
+    shopShort:"Te faltan {n} ⭐ para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
+    shopTeaser:"✨ Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"✨ ¡Secreto! ✨",
+    shopDup:"¡Ya tienes a {name}! +{r} ⭐ de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
@@ -2677,6 +2762,8 @@ function pickCelebrations(items,badgeList,cap){
 }
 // Held until the first cloud pull settles (when signed in), so another device's `celebrated` map is merged first.
 let celebrateReady=true;
+// Gate for creating a shop snapshot: true when signed out, or once a cloud pull/login has succeeded (history is complete).
+let shopReady=false;
 let celebrating=false;
 function celebrate(badgeList){
   if(!celebrateReady || celebrating || document.getElementById("authOverlay").classList.contains("on")) return;
@@ -2747,7 +2834,187 @@ function macroSeries(){
 }
 
 /* ---- render metrics ---- */
+
+/* ---------- Collection (shop) ---------- */
+let boxBusy=false;
+function ensureShop(u){
+  if(!u.shop && shopReady===true){
+    const today=todayStr();
+    u.shop=Shop.newShop(today, Brain.lifetimePoints(u, today));
+    save();
+  }
+  return !!u.shop;
+}
+function shopChar(id){ return Shop.byId(id); }
+function shopName(c){ return lang()==="es" ? c.es : c.en; }
+function renderCollection(){
+  const el=document.getElementById("collectionCard"); if(!el) return;
+  const u=user(), today=todayStr();
+  const ready=ensureShop(u);
+  const owned=ready ? Shop.owned(u) : [];
+  let h='<div class="head"><h2 style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
+  // wallet
+  let bal=null, canOpen=false, free=false;
+  if(ready){
+    bal=Shop.balance(u, today, Brain.lifetimePoints(u, today));
+    free=Shop.freeAvailable(u);
+    canOpen=free || bal.balance>=Shop.PRICE;
+  }
+  h+='<div class="shop-wallet"><img src="img/box-1.webp" width="56" height="56" alt="" loading="lazy"><div class="wtxt">';
+  h+='<div class="shop-bal">'+(ready?escapeHtml(t("shopBalance",{n:bal.balance})):"…")+'</div>';
+  if(ready){
+    const b=Math.min(Brain.weekScore(u, Brain.weekStart(today)).points, bal.brain);
+    h+='<div class="shop-week">'+escapeHtml(t("shopWeek",{b:b, w:Shop.weightPoints(u, today).thisWeek}))+'</div>';
+  }
+  h+='</div><button class="btn btn-primary" data-shop-open'+((canOpen&&!boxBusy)?"":" disabled")+'>'+
+     escapeHtml(free?t("shopFree"):t("shopOpen",{p:Shop.PRICE}))+'</button></div>';
+  if(ready && !canOpen){
+    const need=Shop.PRICE-bal.balance, pct=Math.max(0,Math.min(100,Math.round(bal.balance/Shop.PRICE*100)));
+    h+='<div class="shop-short"><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+escapeHtml(t("shopShort",{n:need}))+'</small></div>';
+  }
+  // collections
+  const have={}; owned.forEach(id=>{have[id]=true;});
+  Shop.COLLECTIONS.forEach(col=>{
+    const pr=ready?Shop.progress(u, col.id):{have:0,total:6};
+    h+='<div class="shop-col'+(pr.have>=pr.total?" done":"")+'"><div class="ch"><b>'+escapeHtml(col.name)+'</b><span>'+
+       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div><div class="shop-grid">';
+    Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common").forEach(c=>{
+      if(have[c.id]) h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>';
+      else h+='<span class="tile"><img class="sil" src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="" aria-hidden="true"></span>';
+    });
+    h+='</div></div>';
+  });
+  // secrets: built only from found secrets
+  const found=ready?Shop.secretsFound(u):[];
+  h+='<div class="shop-secrets">';
+  if(found.length){
+    h+='<div class="ch"><b>'+escapeHtml(t("shopSecrets"))+'</b><span>'+escapeHtml(t("shopFound",{n:found.length}))+'</span></div><div class="grid4 shop-grid">';
+    found.forEach(id=>{ const c=shopChar(id); if(!c) return;
+      h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>'; });
+    h+='</div>';
+  } else h+='<div class="shop-teaser">'+escapeHtml(t("shopTeaser"))+'</div>';
+  h+='</div>';
+  if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
+  el.innerHTML=h;
+}
+function openBox(){
+  const u=user();
+  if(boxBusy || !ensureShop(u)) return;
+  const today=todayStr();
+  const free=Shop.freeAvailable(u);
+  if(!free && Shop.balance(u, today, Brain.lifetimePoints(u, today)).balance<Shop.PRICE){ renderCollection(); return; }
+  boxBusy=true;
+  let result;
+  try{
+    result=Shop.draw(Shop.owned(u), Math.random, {noDup:free});
+    Shop.addPull(u, result, free, Date.now(), Math.random);
+    save();
+  }catch(err){ boxBusy=false; renderCollection(); throw err; }
+  try{ showReveal(result, free); }catch(err){ boxBusy=false; renderCollection(); throw err; }
+}
+const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+let rvTimers=[], rvState=null; // rvState: {result, phase:"anim"|"done"}
+function rvLater(fn,ms){ rvTimers.push(setTimeout(fn,ms)); }
+function showReveal(result, free){
+  const ov=document.getElementById("revealOverlay"), box=document.getElementById("rvBox");
+  const rv=ov.querySelector(".rv"), ch=document.getElementById("rvChar"), cap=document.getElementById("rvCap"), ok=document.getElementById("rvOk");
+  const reduced=reducedMotion(), c=shopChar(result.id);
+  const secret=!!c && c.tier==="secret";
+  ["img/box-1.webp","img/box-2.webp","img/box-3.webp","img/box-4.webp"].forEach(src=>{ new Image().src=src; });
+  rvTimers.forEach(clearTimeout); rvTimers=[];
+  rvState={result:result, phase:"anim"};
+  rv.classList.toggle("secret", secret);
+  ch.className="rv-char"; ch.style.opacity=""; ch.style.transition=""; ch.innerHTML=""; cap.className="rv-cap"; cap.innerHTML="";
+  document.getElementById("rvSpark").innerHTML="";
+  ok.className="btn btn-primary"; ok.textContent=t("shopNice");
+  ov.classList.add("on");
+  const finish=()=>{
+    if(!rvState || rvState.phase==="done") return;
+    rvState.phase="done";
+    rvTimers.forEach(clearTimeout); rvTimers=[];
+    box.className="rv-box"; box.src="img/box-4.webp";
+    if(c){ // the character is only put in the DOM here, at the moment of reveal
+      ch.innerHTML='<img src="'+escapeHtml(c.img)+'" alt="'+escapeHtml(shopName(c))+'">';
+      ch.className="rv-char show"+(reduced?"":" pop");
+      if(reduced) ch.style.opacity="0";
+      const nm=escapeHtml(shopName(c));
+      let h="";
+      if(result.dup) h='<div class="n">'+escapeHtml(t("shopDup",{name:shopName(c),r:Shop.REFUND}))+'</div>';
+      else if(secret) h='<div class="k">'+escapeHtml(t("shopSecret"))+'</div><div class="n">'+nm+'</div><div class="s">'+
+        escapeHtml(t("shopSecrets")+" · "+t("shopFound",{n:Shop.secretsFound(user()).length}))+'</div>';
+      else{
+        const col=Shop.COLLECTIONS.filter(x=>x.id===c.col)[0], pr=Shop.progress(user(), c.col);
+        h='<div class="n">'+nm+'</div><div class="s">'+escapeHtml((col?col.name+" · ":"")+t("shopProgress",{have:pr.have,total:pr.total}))+'</div>';
+      }
+      cap.innerHTML=h;
+    }
+    cap.className="rv-cap show"; ok.className="btn btn-primary show";
+    if(reduced){ // animations are disabled globally, so fade with a JS-set opacity instead of an animation event
+      // the global reduced-motion rule forces transition:none!important, so only an inline !important beats it
+      ch.style.setProperty("transition","opacity .4s","important"); cap.style.setProperty("transition","opacity .4s","important");
+      void ch.offsetWidth; setTimeout(()=>{ ch.style.opacity="1"; },30);
+    }else{
+      const sp=document.getElementById("rvSpark"), n=secret?22:12;
+      let q=""; for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, d=70+Math.random()*80;
+        q+='<i style="--sx:'+Math.round(Math.cos(a)*d)+'px;--sy:'+Math.round(Math.sin(a)*d)+'px;animation-delay:'+(Math.random()*.25).toFixed(2)+'s"></i>'; }
+      sp.innerHTML=q;
+    }
+    ok.focus();
+  };
+  rvState.finish=finish;
+  box.className="rv-box"; box.src="img/box-1.webp";
+  if(reduced){ finish(); return; }
+  box.classList.add("wig");
+  const pop=src=>{ box.src=src; box.className="rv-box"; void box.offsetWidth; box.classList.add("bnc"); };
+  rvLater(()=>pop("img/box-2.webp"),600);
+  rvLater(()=>pop("img/box-3.webp"),800);
+  rvLater(()=>pop("img/box-4.webp"),1000);
+  rvLater(finish,1200+(secret?1000:0));
+  rv.focus();
+}
+function closeReveal(){
+  const st=rvState; if(!st) return;
+  rvTimers.forEach(clearTimeout); rvTimers=[]; rvState=null;
+  const ov=document.getElementById("revealOverlay");
+  ov.classList.remove("on");
+  document.getElementById("rvChar").innerHTML=""; document.getElementById("rvCap").innerHTML="";
+  document.getElementById("rvSpark").innerHTML="";
+  boxBusy=false;
+  renderCollection();
+  const c=shopChar(st.result.id), u=user();
+  if(c && c.col && !st.result.dup && Shop.progress(u, c.col).have===6){
+    u.celebrated=u.celebrated||{};
+    const key="collection:"+c.col;
+    if(!u.celebrated[key]){
+      const col=Shop.COLLECTIONS.filter(x=>x.id===c.col)[0];
+      u.celebrated[key]=todayStr(); save();
+      if(!reducedMotion()) confetti();
+      toast(t("shopColDone")+" "+(col?col.name:""), null, 4500);
+    }
+  }
+}
+(function(){
+  const ov=document.getElementById("revealOverlay");
+  ov.addEventListener("click", ()=>{ if(!rvState) return; if(rvState.phase==="anim") rvState.finish(); else closeReveal(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && rvState) closeReveal(); });
+})();
+function openCharView(id){
+  const c=shopChar(id); if(!c || Shop.owned(user()).indexOf(id)<0) return;
+  document.getElementById("charName").textContent=shopName(c);
+  const im=document.getElementById("charImg"); im.src=c.img; im.alt=shopName(c);
+  document.querySelector("#charOverlay [data-close-char]").setAttribute("aria-label", t("shopClose"));
+  document.getElementById("charOverlay").classList.add("on");
+}
+document.getElementById("collectionCard").addEventListener("click", e=>{
+  const o=e.target.closest("[data-shop-open]"); if(o){ if(!o.disabled) openBox(); return; }
+  const c=e.target.closest("[data-char]"); if(c) openCharView(c.dataset.char);
+});
+(function(){
+  const ov=document.getElementById("charOverlay");
+  ov.addEventListener("click", e=>{ if(e.target===ov || e.target.closest("[data-close-char]")) ov.classList.remove("on"); });
+})();
 function renderMetrics(){
+  renderCollection();
   document.getElementById("wUnit").value = weightUnit();
   if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
   renderCalChart();
@@ -3854,6 +4121,7 @@ function mergeUser(primary,secondary){
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen),
     celebrated: Object.assign({}, secondary.celebrated, primary.celebrated),
+    shop:    Shop.mergeShop(primary.shop, secondary.shop),
     coach:   Coach.mergeCoach(primary.coach, secondary.coach)
   });
 }
@@ -3889,9 +4157,9 @@ async function pullRemote(){
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
-      celebrateReady=true;
+      celebrateReady=true; shopReady=true;
       renderAll();
-    }
+    }else if(!shopReady){ shopReady=true; renderAll(); } // fetch succeeded, account has no state yet
   }catch(e){}
   finally{ if(!celebrateReady){ celebrateReady=true; renderAll(); } }
 }
@@ -3924,8 +4192,11 @@ async function doCreate(){
     saveSession(await authCall("signUp", f.u, f.pw));
     const legacy=await legacyGet(f.u);
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
+    (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
+      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());   // current device data seeds the new account
+    shopReady=true;
     authBusy(false); startApp(); toast(t("authCreated",{name:f.u}));
   }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
@@ -3936,13 +4207,16 @@ async function doLogin(){
     saveSession(await authCall("signInWithPassword", f.u, f.pw));
     const remote=await cloudGet();
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
+    (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
+      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());        // push merged back so the account gains local logs
+    shopReady=true;
     authBusy(false); startApp(); toast(t("authWelcome",{name:f.u}));
   }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
 function doLogout(){
-  session=null; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
+  session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
   authEl("usersOverlay").classList.remove("on");
   openAuth();
 }
@@ -3957,6 +4231,7 @@ function updateAccountUI(){
 function startApp(){
   closeAuth();
   celebrateReady=!(cloudEnabled() && session);
+  shopReady=!(cloudEnabled() && session) || shopReady; // keep true after a successful login/create
   renderAll();
   updateAccountUI();
   if(cloudEnabled() && session){
