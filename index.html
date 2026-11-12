@@ -259,7 +259,7 @@
     background:var(--panel);font-size:16px}
   .chat-form input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
   .chat-form .btn{min-height:48px;font-size:15px}
-  .chat-form :disabled{opacity:.55;cursor:default}
+  .chat-form input:disabled{opacity:.55;cursor:default} /* the Send button is muted by .btn:disabled */
   .overlay.sheet .head .x{width:44px;height:44px}
 
   /* ---------- Brain tab: level, weekly history, badges, why it matters ---------- */
@@ -410,6 +410,8 @@
   .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
   .shop-col .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
   .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* Wide screens: keep the collection a readable column so character tiles stay small and sharp */
+  @media(min-width:960px){ #collectionView{max-width:520px} } /* lines up with the tab bar above it */
   .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:14px;overflow:hidden;background:var(--panel-2);padding:0;border:1.5px solid var(--line)}
   .shop-grid button.tile{cursor:pointer}
@@ -2717,7 +2719,10 @@ function celebrate(badgeList){
 /* ---- tab switching ---- */
 function renderTabs(){
   document.getElementById("tabs").style.display = "flex";
-  document.querySelectorAll("#tabs .tab").forEach(b=> b.classList.toggle("active", b.dataset.tab===curTab));
+  document.querySelectorAll("#tabs .tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab===curTab);
+    if(b.dataset.tab===curTab) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
   document.getElementById("trackerView").style.display = curTab==="tracker" ? "" : "none";
   document.getElementById("metricsView").style.display = curTab==="metrics" ? "" : "none";
   document.getElementById("brainView").style.display   = curTab==="brain"   ? "" : "none";
