@@ -1,9 +1,10 @@
-// Weight-change breakdown: turns the app's precomputed numbers into a short
-// written explanation with Claude. The Anthropic key lives here (as a Worker
-// secret) so it never ships in the public page.
-import Anthropic from "@anthropic-ai/sdk";
+// Weight-change breakdown and the AI coach: turns the app's precomputed numbers
+// into short written text with an open-weight model on Cloudflare Workers AI
+// (the `AI` binding), so no API key ships in the public page.
 
-const MODEL = "claude-haiku-5-5";
+// Gemma 4 26B A4B: best Spanish and instruction following of the Workers AI
+// models tried on these prompts, and among the cheapest per token.
+const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const MAX_BODY_BYTES = 40000;
 const DAILY_LIMITS = { weight: 20, note: 3, chat: 30 };
 const MAX_CHAT_MESSAGES = 10;
@@ -172,14 +173,25 @@ function buildRequest(kind, body) {
   return { messages: turns };
 }
 
-const defaultCreateMessage = (env) => (params) =>
-  new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }).messages.create(params);
+// Thinking off: Gemma reasons by default, which is ~3x slower and ~4x the tokens,
+// and the facts are precomputed, so this is plain writing.
+const defaultGenerate = (env) => async ({ system, messages, schema, maxTokens }) => {
+  const out = await env.AI.run(MODEL, {
+    messages: [{ role: "system", content: system }, ...messages],
+    response_format: { type: "json_schema", json_schema: { name: "out", schema, strict: true } },
+    chat_template_kwargs: { enable_thinking: false },
+    max_completion_tokens: maxTokens,
+    temperature: 0.6,
+  });
+  const choice = out?.choices?.[0];
+  return { text: choice?.message?.content || "", finish: choice?.finish_reason };
+};
 
-// deps.verifyToken(token, env) -> username|null; deps.createMessage(params) -> Message.
+// deps.verifyToken(token, env) -> username|null; deps.generate({system, messages, schema, maxTokens}) -> {text, finish}.
 // Both default to the real implementations (tests inject fakes).
 export async function handle(request, env, deps = {}) {
   const verifyToken = deps.verifyToken || usernameFromToken;
-  const createMessage = deps.createMessage || defaultCreateMessage(env);
+  const generate = deps.generate || defaultGenerate(env);
   const headers = cors(request.headers.get("Origin") || "", env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (request.method !== "POST") return json({ error: "method" }, 405, headers);
@@ -209,28 +221,17 @@ export async function handle(request, env, deps = {}) {
 
   const prompt = PROMPTS[kind];
   try {
-    // Haiku with thinking off: the facts are precomputed, so this is plain writing.
-    const response = await createMessage({
-      model: MODEL,
-      max_tokens: prompt.maxTokens,
-      thinking: { type: "disabled" },
-      output_config: { effort: "low", format: { type: "json_schema", schema: prompt.schema } },
-      system: prompt.system,
-      messages: built.messages,
-    });
-    if (response.stop_reason === "refusal") return json({ error: "refusal" }, 502, headers);
-    if (response.stop_reason === "max_tokens") return json({ error: "truncated" }, 502, headers);
+    const { text, finish } = await generate({ system: prompt.system, messages: built.messages, schema: prompt.schema, maxTokens: prompt.maxTokens });
+    if (finish === "length") return json({ error: "truncated" }, 502, headers);
 
-    const text = response.content.find((b) => b.type === "text")?.text || "";
     const out = JSON.parse(text);
     if (kind === "note") return json({ note: out.note, tip: out.tip }, 200, headers);
     if (kind === "chat") return json({ reply: out.reply, remaining }, 200, headers);
     return json({ headline: out.headline, summary: out.summary, points: out.points.slice(0, 6) }, 200, headers);
   } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) return json({ error: "rate_limited" }, 429, headers);
-    if (error instanceof Anthropic.APIError) return json({ error: "upstream", status: error.status }, 502, headers);
     if (error instanceof SyntaxError) return json({ error: "bad_model_output" }, 502, headers);
-    throw error;
+    console.error("model error", error?.message || error); // visible in `wrangler tail`
+    return json({ error: "upstream" }, 502, headers);
   }
 }
 
