@@ -117,16 +117,17 @@ async function usernameFromToken(idToken, env) {
   return email.endsWith(suffix) ? email.slice(0, -suffix.length) : null;
 }
 
-// Counts one use of `kind` for `username` today (UTC). Returns the remaining
-// uses, or -1 when the daily cap is already reached. KV is eventually
-// consistent, so an occasional extra use is acceptable.
-async function checkCap(env, kind, username) {
-  const limit = DAILY_LIMITS[kind];
+// Today's (UTC) cap for `kind` and `username`: `left` is the uses remaining
+// before this call, and `use()` records one. Call `use()` only once the model
+// has answered, so failed calls never count. KV is eventually consistent, so an
+// occasional extra use is acceptable.
+async function capFor(env, kind, username) {
   const key = `${kind}:${username}:${new Date().toISOString().slice(0, 10)}`;
   const used = parseInt((await env.COACH_LIMITS.get(key)) || "0", 10) || 0;
-  if (used >= limit) return -1;
-  await env.COACH_LIMITS.put(key, String(used + 1), { expirationTtl: 172800 });
-  return limit - used - 1;
+  return {
+    left: DAILY_LIMITS[kind] - used,
+    use: () => env.COACH_LIMITS.put(key, String(used + 1), { expirationTtl: 172800 }),
+  };
 }
 
 // Last N messages as alternating user/assistant turns that start with a user turn.
@@ -216,8 +217,8 @@ export async function handle(request, env, deps = {}) {
   const built = buildRequest(kind, body);
   if (!built) return json({ error: "no_message" }, 400, headers);
 
-  const remaining = await checkCap(env, kind, username);
-  if (remaining < 0) return json({ error: "daily_limit" }, 429, headers);
+  const cap = await capFor(env, kind, username);
+  if (cap.left <= 0) return json({ error: "daily_limit" }, 429, headers);
 
   const prompt = PROMPTS[kind];
   try {
@@ -225,9 +226,12 @@ export async function handle(request, env, deps = {}) {
     if (finish === "length") return json({ error: "truncated" }, 502, headers);
 
     const out = JSON.parse(text);
-    if (kind === "note") return json({ note: out.note, tip: out.tip }, 200, headers);
-    if (kind === "chat") return json({ reply: out.reply, remaining }, 200, headers);
-    return json({ headline: out.headline, summary: out.summary, points: out.points.slice(0, 6) }, 200, headers);
+    const result =
+      kind === "note" ? { note: out.note, tip: out.tip }
+      : kind === "chat" ? { reply: out.reply, remaining: cap.left - 1 }
+      : { headline: out.headline, summary: out.summary, points: out.points.slice(0, 6) };
+    await cap.use();
+    return json(result, 200, headers);
   } catch (error) {
     if (error instanceof SyntaxError) return json({ error: "bad_model_output" }, 502, headers);
     console.error("model error", error?.message || error); // visible in `wrangler tail`
