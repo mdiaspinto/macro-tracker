@@ -3656,6 +3656,9 @@ document.getElementById("userList").addEventListener("click",e=>{
     if(!confirm(t("confirmDelUser"))) return;
     const id=del.dataset.userdel;
     deleteWithUndo(()=>{
+      const gone=state.users.find(u=>u.id===id);
+      // Remembered so a device that still has this profile can't sync it back.
+      if(gone) state.removedUsers=Object.assign({}, state.removedUsers, {[gone.name.toLowerCase()]:Date.now()});
       state.users=state.users.filter(u=>u.id!==id);
       if(state.activeId===id) state.activeId=state.users[0].id;
     }, t("deletedUser"));
@@ -3681,6 +3684,7 @@ document.getElementById("addUserBtn").addEventListener("click",()=>{
   if(!name) return;
   const lg=document.getElementById("newUserLang").value;
   const u=defaultUser(name, lg);
+  u.addedAt=Date.now();   // newer than any earlier deletion of this name, so the sync keeps it
   const q=readQuiz(), est=estimateTargets(q);   // personalised targets if the quiz was filled in
   if(est){ u.targets={ lean:est.lean, bulk:est.bulk }; }
   const p=profile(u);   // seed About me from whatever quiz answers were given
@@ -3861,11 +3865,15 @@ function mergeState(primary,secondary){
   primary.users.forEach(u=>{ const k=u.name.toLowerCase(); byName[k]=u; order.push(k); });
   secondary.users.forEach(u=>{ const k=u.name.toLowerCase();
     if(byName[k]) byName[k]=mergeUser(byName[k],u); else { byName[k]=u; order.push(k); } });
-  const users=order.map(k=>byName[k]);
+  // Deleted profiles (name -> time): newest time per name wins; a profile is dropped unless it was added after its deletion.
+  const removedUsers=Object.assign({}, secondary.removedUsers);
+  Object.entries(primary.removedUsers||{}).forEach(([k,at])=>{ if(!(removedUsers[k]>=at)) removedUsers[k]=at; });
+  const kept=order.filter(k=>!(removedUsers[k] > (byName[k].addedAt||0)));
+  const users=(kept.length ? kept : order).map(k=>byName[k]);
   let activeId=primary.activeId;
   if(!users.find(u=>u.id===activeId)) activeId=users[0] && users[0].id;
   const migrations=Object.assign({}, secondary.migrations, primary.migrations);
-  return { users, activeId, migrations };
+  return { users, activeId, migrations, removedUsers };
 }
 
 /* ---- background sync ---- */
