@@ -3,45 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#EEF0EC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16181B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F5F6F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111713" media="(prefers-color-scheme: dark)">
 <title>Macro Tracker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36' width='36' height='36'><rect width='36' height='36' rx='9' fill='%2316201B'/><rect x='5' y='5' width='11.5' height='11.5' rx='4' fill='%234F8DF5'/><rect x='19.5' y='5' width='11.5' height='11.5' rx='4' fill='%233FB27F'/><rect x='5' y='19.5' width='11.5' height='11.5' rx='4' fill='%23FFC93C'/><rect x='19.5' y='19.5' width='11.5' height='11.5' rx='4' fill='%23A07CF2'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
 <style>
   /* ======================================================================
      Tokens — light is the base, dark follows the system setting.
      ====================================================================== */
   :root{
     color-scheme:light dark;
-    --bg:#EEF0EC; --panel:#FFFFFF; --panel-2:#F4F5F2; --line:#DCDFD8; --line-strong:#C6CAC2;
-    --text:#14161A; --muted:#596068; --faint:#7D848B; --ink:#14161A;
-    --accent:#F2B632; --accent-ink:#1C1500; --accent-text:#8A5A00; --accent-soft:rgba(242,182,50,.16);
+    --bg:#F5F6F0; --panel:#FFFFFF; --panel-2:#EEF1E8; --line:#E1E5DB; --line-strong:#CBD2C4;
+    --text:#16201B; --muted:#55615A; --faint:#7C877F; --ink:#16201B;
+    --accent:#FFC93C; --accent-ink:#2A1F00; --accent-text:#8A5A00; --accent-soft:rgba(255,201,60,.18);
     --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
     --brain:#7A4FD6; --streak:#D9480F;
-    --grid:rgba(20,22,26,.08); --cross:rgba(20,22,26,.3);
+    --grid:rgba(22,32,27,.08); --cross:rgba(22,32,27,.3);
     --focus:#2F6FD6;
-    --radius:16px; --radius-sm:10px;
-    --shadow:0 1px 2px rgba(20,22,26,.06),0 8px 24px rgba(20,22,26,.08);
-    --shadow-lg:0 24px 60px rgba(20,22,26,.22);
-    --scrim:rgba(20,22,26,.45);
+    --radius:22px; --radius-sm:14px;
+    --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px rgba(22,32,27,.10);
+    --shadow-lg:0 24px 60px rgba(22,32,27,.24);
+    --scrim:rgba(22,32,27,.45);
     --wdth-display:75%;
+    --font-display:"Bricolage Grotesque","Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#16181B; --panel:#1E2125; --panel-2:#272B30; --line:#31363C; --line-strong:#464C53;
-      --text:#F1F2EF; --muted:#A3A9AF; --faint:#737A82; --ink:#F1F2EF;
-      --accent:#F5C451; --accent-ink:#1C1500; --accent-text:#F5C451; --accent-soft:rgba(245,196,81,.14);
+      --bg:#111713; --panel:#18201B; --panel-2:#202A24; --line:#2A352E; --line-strong:#3A473F;
+      --text:#EEF2EC; --muted:#A4AFA7; --faint:#77837B; --ink:#EEF2EC;
+      --accent:#FFCF4D; --accent-ink:#2A1F00; --accent-text:#FFCF4D; --accent-soft:rgba(255,207,77,.14);
       --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
       --brain:#B79CFF; --streak:#FF8A4C;
-      --grid:rgba(255,255,255,.07); --cross:rgba(255,255,255,.3);
+      --grid:rgba(238,242,236,.07); --cross:rgba(238,242,236,.3);
       --focus:#7DB8FF;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
       --shadow-lg:0 24px 60px rgba(0,0,0,.6);
-      --scrim:rgba(0,0,0,.65);
+      --scrim:rgba(5,9,7,.7);
     }
   }
 
@@ -55,7 +57,12 @@
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   .wrap{max-width:1120px;margin:0 auto;padding:16px 16px 96px}
-  h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.005em}
+  h1,h2,h3{margin:0;font-family:var(--font-display);font-weight:700;letter-spacing:-.01em}
+  /* Section heading marker: a small square in the colour of the data (data-mk on the heading) */
+  [data-mk]::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px;
+    background:var(--mk,var(--accent));vertical-align:middle;position:relative;top:-.08em}
+  [data-mk="cal"]{--mk:var(--cal)} [data-mk="protein"]{--mk:var(--protein)} [data-mk="weight"]{--mk:var(--weight)}
+  [data-mk="brain"]{--mk:var(--brain)} [data-mk="accent"]{--mk:var(--accent)}
   button{font-family:inherit;cursor:pointer;border:none;color:inherit}
   input,select,textarea{font-family:inherit;color:var(--text)}
   :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
@@ -66,42 +73,43 @@
   /* ---------- Top bar ---------- */
   .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 18px}
   .brand{display:flex;align-items:center;gap:11px;margin-right:auto;min-width:0}
-  .brand .logo,.auth-brand .logo{
-    width:36px;height:36px;border-radius:9px;flex:none;
-    background:var(--accent);color:var(--accent-ink);
-    display:grid;place-items:center;font-weight:900;font-size:19px;
-    font-stretch:var(--wdth-display);
-  }
-  .brand h1{font-size:21px;font-weight:800;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.1}
+  .brand .logo,.auth-brand .logo{width:36px;height:36px;border-radius:9px;flex:none;display:block}
+  .logo svg{display:block;width:100%;height:100%}
+  @media (prefers-color-scheme: dark){ .brand .logo,.auth-brand .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
+  .brand h1{font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  @media(max-width:400px){ .brand h1{font-size:19px} }
   .brand small{display:block;color:var(--muted);font-size:12px;font-weight:500;margin-top:1px}
 
   .pill{
-    background:var(--panel);color:var(--text);border:1px solid var(--line);
+    background:var(--panel);color:var(--text);border:1.5px solid var(--line);
     border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;
   }
   select.pill{appearance:none;-webkit-appearance:none;padding-right:32px;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 12px center;}
   .icon-btn{
-    background:var(--panel);color:var(--muted);border:1px solid var(--line);
+    background:var(--panel);color:var(--muted);border:1.5px solid var(--line);
     border-radius:999px;width:40px;height:40px;display:grid;place-items:center;
   }
   .icon-btn:hover{color:var(--text);border-color:var(--line-strong)}
   .icon-btn svg{width:18px;height:18px}
 
   /* ---------- Tabs ---------- */
-  .tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px;
-    position:sticky;top:max(8px,env(safe-area-inset-top));z-index:20;box-shadow:var(--shadow)}
-  .tab{flex:1;background:transparent;color:var(--muted);border-radius:9px;padding:9px 12px;font-size:14px;font-weight:600}
+  .tabs{display:flex;gap:2px;background:var(--panel-2);border:1.5px solid var(--line);border-radius:16px;padding:4px;margin-bottom:18px;
+    position:sticky;top:max(8px,env(safe-area-inset-top));z-index:20}
+  .tab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:transparent;color:var(--muted);
+    border:1.5px solid transparent;border-radius:12px;padding:7px 4px 6px;font-size:13px;font-weight:600;line-height:1.15}
+  .tab svg{width:18px;height:18px;flex:none}
+  .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tab:hover{color:var(--text)}
-  .tab.active{background:var(--ink);color:var(--bg)}
-  @media(min-width:960px){ .tabs{max-width:480px} }
-  @media(max-width:420px){ .tab{padding:9px 6px} }
+  .tab.active{background:var(--panel);color:var(--text);border-color:var(--line);font-weight:700}
+  @media(min-width:960px){ .tabs{max-width:520px} }
+  @media(max-width:400px){ .tab{font-size:12.5px;padding:7px 2px 6px} }
 
   /* ---------- Goal toggle + date row ---------- */
-  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
-  .seg button{background:transparent;color:var(--muted);border-radius:7px;padding:6px 14px;font-size:13px;font-weight:600}
-  .seg button.active{background:var(--accent);color:var(--accent-ink)}
+  .seg{display:inline-flex;background:var(--panel-2);border:1.5px solid var(--line);border-radius:14px;padding:3px}
+  .seg button{background:transparent;color:var(--muted);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600}
+  .seg button.active{background:var(--accent);color:var(--accent-ink);font-weight:700}
   .daterow{display:grid;grid-template-columns:36px 1fr 36px;grid-template-areas:"seg seg today" "prev date next";gap:8px 6px;align-items:center;margin:0 0 14px}
   .daterow .seg{grid-area:seg;justify-self:start}
   .dr-top{grid-area:seg;display:flex;align-items:center;gap:8px;min-width:0}
@@ -111,14 +119,14 @@
   #prevDay{grid-area:prev} #dateInput{grid-area:date;width:100%;text-align:center} #nextDay{grid-area:next}
   .daterow .today{grid-area:today;justify-self:end;white-space:nowrap}
   .daterow input[type=date]{
-    background:var(--panel);color:var(--text);border:1px solid var(--line);
-    border-radius:10px;padding:7px 10px;font-size:14px;font-weight:600;min-width:0;
+    background:var(--panel);color:var(--text);border:1.5px solid var(--line);
+    border-radius:14px;padding:7px 10px;font-size:14px;font-weight:600;min-width:0;
   }
-  .daterow .nav{background:var(--panel);color:var(--text);border:1px solid var(--line);
-    border-radius:10px;width:36px;height:36px;font-size:18px;line-height:1}
+  .daterow .nav{background:var(--panel);color:var(--text);border:1.5px solid var(--line);
+    border-radius:14px;width:36px;height:36px;font-size:18px;line-height:1}
   .daterow .nav:hover,.daterow .today:hover{border-color:var(--line-strong)}
   .daterow .today{font-size:13px;font-weight:600;color:var(--text);
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+    background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:8px 12px}
 
   /* ---------- Tracker layout: label column + logging column on wide screens ---------- */
   .tracker-grid{display:block}
@@ -128,17 +136,17 @@
   }
 
   /* ---------- Daily totals: a nutrition-facts label ---------- */
-  .label{background:var(--panel);border:2px solid var(--ink);border-radius:6px;padding:12px 16px 14px;margin-bottom:12px}
+  .label{background:var(--panel);border:2px solid var(--ink);border-radius:14px;padding:12px 16px 14px;margin-bottom:12px}
   .nl-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-  .nl-title{font-size:26px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.015em;line-height:1.05}
+  .nl-title{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
   .nl-goal{font-size:13px;font-weight:600;color:var(--muted)}
   .nl-rule{background:var(--ink);height:1px;margin:8px 0}
   .nl-rule.thick{height:10px;margin:8px 0 6px}
   .nl-rule.mid{height:4px;margin:10px 0 4px}
   .nl-cal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
   .nl-cal-lab{font-size:20px;font-weight:800;font-stretch:var(--wdth-display)}
-  .nl-cal-num{font-size:46px;font-weight:900;font-stretch:var(--wdth-display);line-height:.95;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-align:right}
-  .nl-cal-num small{display:block;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
+  .nl-cal-num{font-family:var(--font-display);font-size:46px;font-weight:800;line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:right}
+  .nl-cal-num small{display:block;font-family:"Archivo",sans-serif;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
   .nl-dv{display:flex;justify-content:flex-end;font-size:12px;font-weight:700;padding:2px 0 0}
   .nl-row{display:grid;grid-template-columns:1fr auto 44px;column-gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line-strong)}
   .nl-row:first-of-type{border-top:none}
@@ -168,7 +176,7 @@
   .brain{background:var(--panel);border:2px solid var(--ink);border-radius:var(--radius);padding:14px 16px 16px;margin-bottom:12px;
     background-image:linear-gradient(color-mix(in srgb,var(--brain) 10%,transparent),transparent 140px)}
   .br-head{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
-  .br-title{font-size:22px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.1}
+  .br-title{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
   .br-sub{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4}
   .br-level{flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 9px;border-radius:999px;
     border:2px solid var(--brain);background:color-mix(in srgb,var(--brain) 14%,var(--panel));font-size:14px;font-weight:800}
@@ -176,15 +184,15 @@
   .br-meter{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
   .br-bar{flex:1;height:24px;border:2px solid var(--ink);border-radius:999px;background:var(--panel-2);overflow:hidden}
   .br-bar > span{display:block;height:100%;background:var(--brain);border-radius:999px;transition:width .5s ease}
-  .br-pct{font-size:30px;font-weight:900;font-stretch:var(--wdth-display);line-height:1;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
+  .br-pct{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
   .br-next{font-size:15px;font-weight:700;margin:0 0 12px}
   .br-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px}
-  .br-ic{aspect-ratio:1;display:grid;place-items:center;border:2px solid var(--line);border-radius:12px;font-size:21px;line-height:1}
+  .br-ic{aspect-ratio:1;display:grid;place-items:center;border:2px solid var(--line);border-radius:14px;font-size:21px;line-height:1}
   .br-ic.full{border-color:var(--brain)}
   .br-hab-lab{font-size:14px;font-weight:800;margin-bottom:8px}
   .br-habits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
   .br-hab{position:relative;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    padding:6px 1px;border-radius:12px;border:2px solid var(--line-strong);background:var(--panel);
+    padding:6px 1px;border-radius:14px;border:2px solid var(--line-strong);background:var(--panel);
     font-size:12.5px;font-weight:700;font-stretch:87.5%;line-height:1.15;text-align:center}
   .br-hab .em{font-size:24px;line-height:1}
   .br-hab:hover{border-color:var(--ink)}
@@ -197,10 +205,10 @@
   .mchips:hover{background:color-mix(in srgb,var(--brain) 12%,transparent)}
   .mchips.empty{font-size:15px;color:var(--muted)}
   .mchips.empty span{border:1.5px dashed var(--line-strong);border-radius:8px;padding:4px 8px}
-  .mchips .lt{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+  .mchips .lt{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
   .bp-hint{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.5}
   .bp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .bp-chip{min-height:48px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:2px solid var(--line-strong);
+  .bp-chip{min-height:48px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;border:2px solid var(--line-strong);
     background:var(--panel);font-size:14.5px;font-weight:700;line-height:1.2;text-align:left}
   .bp-chip .em{font-size:22px;line-height:1;flex:none}
   .bp-chip[aria-pressed="true"]{border-color:var(--brain);background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
@@ -218,12 +226,12 @@
   .rc .plus{flex:none;font-size:18px;font-weight:900;line-height:1;color:var(--brain)}
   .rc .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rc .em{flex:none;font-size:16px}
-  .br-star{font-size:14.5px;font-weight:700;line-height:1.4;margin:-4px 0 14px;padding:8px 12px;border-radius:12px;background:var(--accent-soft)}
+  .br-star{font-size:14.5px;font-weight:700;line-height:1.4;margin:-4px 0 14px;padding:8px 12px;border-radius:14px;background:var(--accent-soft)}
 
   /* Coach: daily note on the brain card + chat bottom sheet */
-  .br-note{margin:-2px 0 12px;padding:10px 14px;border-radius:12px;border-left:4px solid var(--brain);
+  .br-note{margin:-2px 0 12px;padding:10px 14px;border-radius:14px;border-left:4px solid var(--brain);
     background:color-mix(in srgb,var(--brain) 10%,var(--panel));font-size:15px;line-height:1.5}
-  .br-note-head{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brain);margin:0 0 4px}
+  .br-note-head{font-size:13.5px;font-weight:800;color:var(--brain);margin:0 0 4px}
   .br-note p{margin:0}
   .br-note .tip{margin-top:6px;font-weight:700}
   .br-ask{width:100%;justify-content:center;min-height:48px;margin:0 0 14px;font-size:15px;border:2px solid var(--brain);
@@ -231,7 +239,7 @@
   .br-ask:hover{background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
   .overlay.sheet{align-items:flex-end;padding:0}
   .overlay.sheet .modal{display:flex;flex-direction:column;max-width:560px;height:85vh;height:85dvh;max-height:85vh;max-height:85dvh;overflow:hidden;
-    border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+    border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
   .chat-log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
   .chat-empty{margin:auto 0;text-align:center;color:var(--muted);font-size:15px;line-height:1.5;padding:0 12px}
   .chat-msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -247,8 +255,8 @@
   .chat-status .err{color:var(--over)}
   .chat-status .btn{min-height:44px}
   .chat-form{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line);margin-top:8px}
-  .chat-form input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line-strong);
-    background:var(--panel-2);font-size:16px}
+  .chat-form input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);
+    background:var(--panel);font-size:16px}
   .chat-form input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
   .chat-form .btn{min-height:48px;font-size:15px}
   .chat-form :disabled{opacity:.55;cursor:default}
@@ -258,7 +266,7 @@
   @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #brainView > .section.wide{grid-column:1 / -1} }
   .bv-level{display:flex;align-items:center;gap:16px;margin-bottom:14px}
   .bv-level .em{font-size:56px;line-height:1;flex:none}
-  .bv-lvname{font-size:30px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.05}
+  .bv-lvname{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
   .bv-pts{font-size:15px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
   .bv-next{font-size:15px;font-weight:700;margin:10px 0 0}
   .bv-sub{font-size:14px;color:var(--muted);line-height:1.45;margin:8px 0 0}
@@ -271,7 +279,7 @@
   .bv-wk.cur .col{border-color:var(--ink)}
   .bv-wk.cur .dt{color:var(--text);font-weight:800}
   .bv-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-  .bv-badge{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:2px solid var(--brain);
+  .bv-badge{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;border:2px solid var(--brain);
     background:color-mix(in srgb,var(--brain) 12%,var(--panel))}
   .bv-badge .em{font-size:28px;line-height:1;flex:none}
   .bv-badge b{display:block;font-size:14px;line-height:1.25}
@@ -288,8 +296,8 @@
   .lvlup{max-width:360px;text-align:center}
   .lvlup .body{padding:28px 24px 22px}
   .lvlup-em{font-size:84px;line-height:1.1}
-  .lvlup-kicker{margin:8px 0 2px;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brain)}
-  .lvlup h3{font-size:32px;font-weight:900;font-stretch:var(--wdth-display);line-height:1.1}
+  .lvlup-kicker{margin:8px 0 2px;font-size:15px;font-weight:800;color:var(--brain)}
+  .lvlup h3{font-size:32px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
   .lvlup-msg{font-size:15px;line-height:1.5;color:var(--muted);margin:10px 0 20px}
   .lvlup .btn{min-height:48px;font-size:16px}
   .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:75}
@@ -297,9 +305,9 @@
   @keyframes confetti-fall{to{transform:translate3d(var(--dx),110vh,0) rotate(var(--rot))}}
 
   /* ---------- Section ---------- */
-  .section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
-  .section > .head{padding:14px 18px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-  .section > .head h2{font-size:17px;font-weight:800;font-stretch:87.5%}
+  .section{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+  .section > .head{padding:15px 18px 14px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .section > .head h2{font-size:17px;font-weight:800}
   .section > .head .hint{font-size:12.5px;color:var(--muted);margin-left:auto}
   .section > .body{padding:18px}
 
@@ -307,7 +315,7 @@
   .form-grid{display:grid;grid-template-columns:1fr;gap:14px}
   .field{display:flex;flex-direction:column;gap:6px;min-width:0}
   .field label,.group-label{font-size:12.5px;color:var(--muted);font-weight:600}
-  .field input,.field select,.field textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  .field input,.field select,.field textarea{background:var(--panel);border:1.5px solid var(--line);color:var(--text);
     border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;transition:border-color .15s,box-shadow .15s}
   .field input:hover{border-color:var(--line-strong)}
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
@@ -321,24 +329,24 @@
   .suffix .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:13px;pointer-events:none}
 
   .preview{
-    background:var(--panel-2);border-radius:12px;padding:12px 14px;
+    background:var(--panel-2);border-radius:14px;padding:12px 14px;
     display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px}
   .preview .pv{display:flex;flex-direction:column}
-  .preview .pv b{font-size:18px;font-weight:800;font-stretch:87.5%;font-variant-numeric:tabular-nums}
+  .preview .pv b{font-family:var(--font-display);font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
   .preview .pv span{color:var(--muted);font-size:11.5px}
 
   /* ---------- Buttons ---------- */
   .actions{display:flex;gap:10px;flex-wrap:wrap}
   .btn{border-radius:var(--radius-sm);padding:11px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;
-    border:1px solid transparent;transition:background .15s,border-color .15s,filter .15s}
+    border:1.5px solid transparent;transition:background .15s,border-color .15s,filter .15s}
   .btn-primary{background:var(--accent);color:var(--accent-ink)}
   .btn-primary:hover{filter:brightness(1.04)}
-  .btn-ghost{background:var(--panel);color:var(--text);border-color:var(--line-strong)}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--line-strong)}
   .btn-ghost:hover{background:var(--panel-2)}
-  .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  .btn:disabled{background:var(--panel-2);color:var(--faint);border-color:var(--line);cursor:not-allowed;filter:none}
   .save-lib{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
   .save-lib input{width:16px;height:16px;accent-color:var(--accent)}
-  .unit-select{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  .unit-select{background-color:var(--panel);border:1.5px solid var(--line);color:var(--text);
     border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;appearance:none;-webkit-appearance:none;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
@@ -359,7 +367,7 @@
   .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .meal .info .macros{font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
   .meal .info .macros .m{margin-right:10px;font-weight:600}
-  .badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+  .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
   .badge.whatif{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
   .meal .right{display:flex;align-items:center;gap:6px}
   .meal .del{background:transparent;color:var(--faint);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
@@ -381,36 +389,36 @@
   .lib-item button:hover{color:var(--over);background:var(--panel-2)}
   .lib-edit{background:transparent;color:var(--faint);font-size:14px;width:28px;height:28px;border-radius:7px}
   .lib-item .lib-edit:hover{color:var(--text)}
-  .lib-item .quick{background:var(--panel-2);color:var(--text);border:1px solid var(--line-strong);border-radius:7px;font-size:12.5px;font-weight:700;padding:5px 11px;width:auto;height:auto}
+  .lib-item .quick{background:transparent;color:var(--text);border:1.5px solid var(--line-strong);border-radius:999px;font-size:12.5px;font-weight:700;padding:5px 11px;width:auto;height:auto}
   .lib-item .quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   @media(max-width:480px){ .lib-item{flex-wrap:wrap} .lib-item .lmac{order:5;width:100%;margin-left:0} }
 
 
   /* ---------- Collection ---------- */
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px}
+  .card{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px 18px 18px}
   .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .shop-wallet img{width:56px;height:56px;border-radius:12px;flex:none;object-fit:cover}
+  .shop-wallet img{width:56px;height:56px;border-radius:14px;flex:none;object-fit:cover}
   .shop-wallet .wtxt{flex:1;min-width:120px}
-  .shop-bal{font-size:24px;font-weight:800;font-stretch:87.5%}
+  .shop-bal{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
   .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
   .shop-short{margin-top:12px}
-  .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+  .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
   .shop-short .bar i{display:block;height:100%;background:var(--accent)}
   .shop-short small{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
-  .shop-col{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .shop-col{margin-top:16px;border:1.5px solid var(--line);border-radius:18px;padding:12px}
   .shop-col.done{border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
   .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .shop-col .ch b{font-size:15px;font-weight:800}
+  .shop-col .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
   .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:10px;overflow:hidden;background:var(--panel-2);padding:0;border:1px solid var(--line)}
+  .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:14px;overflow:hidden;background:var(--panel-2);padding:0;border:1.5px solid var(--line)}
   .shop-grid button.tile{cursor:pointer}
   .shop-grid .tile img{display:block;width:100%;height:100%;object-fit:cover}
   .shop-grid .sil{filter:brightness(0);opacity:.12}
   @media (prefers-color-scheme: dark){ .shop-grid .sil{filter:brightness(0) invert(1);opacity:.14} }
   .shop-secrets{margin-top:16px}
   .shop-secrets .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .shop-secrets .ch b{font-size:15px;font-weight:800}
+  .shop-secrets .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
   .shop-secrets .ch span{font-size:13px;color:var(--muted)}
   .shop-secrets .grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .shop-teaser{font-size:13.5px;color:var(--muted);text-align:center;padding:8px 0}
@@ -428,9 +436,10 @@
   .rv.secret .rv-spark i{background:#FFD24A;box-shadow:0 0 8px 2px #FFD24A}
   .rv-cap{min-height:92px;margin-top:14px;color:var(--text);opacity:0}
   .rv-cap.show{opacity:1;transition:opacity .4s}
-  .rv-cap .n{font-size:20px;font-weight:800;font-stretch:87.5%}
-  .rv-cap .s{font-size:14px;color:var(--muted);margin-top:3px}
-  .rv-cap .k{font-size:18px;font-weight:800;color:var(--accent-text);margin-bottom:4px}
+  .rv-cap .n{font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.01em}
+  .rv-cap .s{font-size:14px;font-weight:500;color:var(--text);margin-top:3px}
+  .rv-cap .k{font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px}
+  @media (prefers-color-scheme: dark){ .rv-cap .s{color:var(--muted)} .rv-cap .k{color:var(--accent-text)} }
   #rvOk{margin-top:6px;visibility:hidden}
   #rvOk.show{visibility:visible}
   @keyframes rvWig{0%,100%{transform:rotate(0)}15%{transform:rotate(-7deg)}35%{transform:rotate(7deg)}55%{transform:rotate(-5deg)}75%{transform:rotate(4deg)}}
@@ -443,38 +452,38 @@
   /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
-  .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;max-height:90vh;overflow:auto}
+  .modal{background:var(--panel);border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;max-height:90vh;overflow:auto}
   .modal .head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;position:sticky;top:0;background:var(--panel);z-index:1}
-  .modal .head h3{font-size:18px;font-weight:800;font-stretch:87.5%}
-  .modal .head .x{margin-left:auto;background:transparent;color:var(--muted);font-size:22px;width:34px;height:34px;border-radius:8px}
+  .modal .head h3{font-size:19px;font-weight:800;letter-spacing:-.015em}
+  .modal .head .x{margin-left:auto;background:transparent;color:var(--muted);font-size:22px;width:34px;height:34px;border-radius:999px}
   .modal .head .x:hover{background:var(--panel-2);color:var(--text)}
   .modal .body{padding:20px}
   .targets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px 12px;align-items:center;margin-top:8px}
   .targets-grid .h{font-size:12px;color:var(--muted);font-weight:600}
   .targets-grid label{font-weight:600;font-size:14px}
-  .targets-grid input{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 11px;font-size:15px;width:100%}
+  .targets-grid input{background:var(--panel);border:1.5px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:9px 11px;font-size:15px;width:100%}
   .targets-grid input:focus{outline:none;border-color:var(--focus)}
   .user-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-  .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
-  .user-row.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius-sm);flex-wrap:wrap}
+  .user-row.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
   .user-row .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#0b1220;flex:none}
   .user-row .un{font-weight:600;flex:1;min-width:80px}
-  .user-row .sw,.account-bar .sw{font-size:12.5px;font-weight:600;background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:6px 11px;color:var(--text)}
+  .user-row .sw,.account-bar .sw{font-size:12.5px;font-weight:600;background:transparent;border:1.5px solid var(--line-strong);border-radius:999px;padding:6px 12px;color:var(--text)}
   .user-row .sw:hover,.account-bar .sw:hover{background:var(--panel-2)}
   .user-row .tgt{font-size:12px;color:var(--muted);white-space:nowrap}
   @media(max-width:480px){ .user-row > div:nth-child(2){flex-basis:calc(100% - 50px)!important} .user-row .rowlang{margin-left:44px} }
-  .rowlang{background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;flex:none}
+  .rowlang{background:var(--panel);color:var(--text);border:1.5px solid var(--line);border-radius:10px;padding:6px 8px;font-size:12.5px;flex:none}
   .addnew #newUserLang{flex:none;border-radius:var(--radius-sm)}
   .divider{height:1px;background:var(--line);margin:18px 0}
   .full{width:100%;justify-content:center}
   .addnew{display:flex;gap:8px}
-  .addnew input{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px}
+  .addnew input{flex:1;min-width:0;background:var(--panel);border:1.5px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px}
   .addnew input:focus{outline:none;border-color:var(--focus)}
 
   /* ---------- Suggestion modal ---------- */
   .sg-intro{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
   .sg-empty{text-align:center;padding:14px 6px 6px;color:var(--muted);font-size:14px;line-height:1.55}
-  .sg-list{display:flex;flex-direction:column;margin-bottom:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .sg-list{display:flex;flex-direction:column;margin-bottom:16px;border:1.5px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
   .sg-item{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
   .sg-item:last-child{border-bottom:none}
   .sg-item .sg-main{flex:1 1 150px;min-width:0}
@@ -486,7 +495,7 @@
   .sg-checks input{width:15px;height:15px;accent-color:var(--accent);flex:none}
   .sg-checks input:disabled{cursor:default}
   .badge.common{background:color-mix(in srgb,var(--protein) 14%,transparent);color:var(--protein);border-color:transparent}
-  .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--panel-2);border-radius:12px;margin-bottom:16px;font-size:13px}
+  .sg-totals{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--panel-2);border-radius:var(--radius-sm);margin-bottom:16px;font-size:13px}
   .sg-totals .row{display:flex;justify-content:space-between;gap:12px}
   .sg-totals .row span:first-child{color:var(--muted)}
   .sg-totals .row .v{font-variant-numeric:tabular-nums}
@@ -494,16 +503,17 @@
   .sg-actions .btn{flex:1;justify-content:center;min-width:130px}
 
   /* ---------- Metrics ---------- */
-  .chart-stats{display:flex;gap:0;flex-wrap:wrap;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .chart-stats{display:flex;gap:0;flex-wrap:wrap;margin-bottom:14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
   .stat{padding:10px 14px;flex:1;min-width:92px;border-left:1px solid var(--line)}
   .stat:first-child{border-left:none}
   .stat .stat-lab{font-size:12px;color:var(--muted);font-weight:600}
-  .stat .stat-val{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);margin-top:2px;font-variant-numeric:tabular-nums}
+  .stat .stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+  @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px} }
   .chart-wrap{position:relative;width:100%;margin-top:2px}
   .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
   .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.55}
-  .chart-tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);
-    border-radius:9px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
+  .chart-tip{position:absolute;pointer-events:none;background:var(--panel);border:1.5px solid var(--line);
+    border-radius:10px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
     transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
   .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
   .chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
@@ -528,9 +538,9 @@
   .insight:empty{display:none}
   .insight{margin-top:18px;padding-top:16px;border-top:4px solid var(--ink)}
   .ins-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .ins-head h3{font-size:16px;font-weight:800}
+  .ins-head h3{font-size:17px;font-weight:800}
   .ins-range{font-size:12.5px;color:var(--muted)}
-  .ins-headline{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em;line-height:1.15;margin:6px 0 14px;max-width:32ch}
+  .ins-headline{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:6px 0 14px;max-width:32ch}
   .ins-summary{font-size:14.5px;line-height:1.6;margin:14px 0 8px;max-width:70ch}
   .ins-points{margin:12px 0 0;padding-left:18px;font-size:14px;line-height:1.6;max-width:70ch}
   .ins-points li+li{margin-top:6px}
@@ -542,7 +552,7 @@
   .setting-row input{width:20px;height:20px;accent-color:var(--accent);flex:none}
 
   /* ---------- About me / Meet your coach ---------- */
-  .pf-title{font-size:16px;font-weight:800;margin:0 0 4px}
+  .pf-title{font-family:var(--font-display);font-size:17px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px}
   .pf-hint{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 4px}
   .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
   .pf .field input,.pf .field select{min-height:44px}
@@ -555,14 +565,14 @@
   .pf .bp-chip small{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px}
   .pf .setting-row{min-height:44px;margin-top:16px}
   .pf .setting-row input{width:24px;height:24px}
-  .mc-step{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brain);margin:0 0 6px}
+  .mc-step{font-size:13.5px;font-weight:800;color:var(--brain);margin:0 0 6px}
   .mc-actions{display:flex;gap:10px;margin-top:20px}
   .mc-actions .btn{flex:1;justify-content:center;min-height:48px}
   .mc-skip{display:block;margin:12px auto 0;min-height:44px;padding:0 14px;background:transparent;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:2px}
   .mc-skip:hover{color:var(--text)}
 
   /* ---------- New-user macro quiz ---------- */
-  .quiz{margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .quiz{margin:12px 0 4px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px}
   .quiz > summary{font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;user-select:none;list-style:none}
   .quiz > summary::-webkit-details-marker{display:none}
   .quiz > summary::before{content:"+";display:inline-block;width:16px;color:var(--muted);font-weight:700}
@@ -571,7 +581,7 @@
   .quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .quiz-activity{grid-column:1/-1}
   .quiz .field label{font-size:12.5px;color:var(--muted);font-weight:600}
-  .quiz select,.quiz input{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+  .quiz select,.quiz input{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
     color:var(--text);padding:9px 10px;font-size:13.5px;width:100%}
   .quiz-hgt,.quiz-wt{display:flex;gap:6px}
   .quiz-hgt input,.quiz-wt input{min-width:0}
@@ -588,22 +598,22 @@
   .auth-modal .body{padding:28px 24px 22px}
   .auth-modal .field{margin-bottom:12px}
   .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  .auth-brand h3{font-size:24px;font-weight:900;font-stretch:var(--wdth-display);letter-spacing:-.01em}
+  .auth-brand h3{font-size:24px;font-weight:800;letter-spacing:-.02em}
   .auth-intro{font-size:13.5px;color:var(--muted);margin:0 0 18px;line-height:1.5}
-  #authUpgrade{background:var(--accent-soft);color:var(--text);border-radius:10px;padding:10px 12px;margin:4px 0 0}
+  #authUpgrade{background:var(--accent-soft);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;margin:4px 0 0}
   .auth-modal .actions .btn{flex:1;justify-content:center}
   .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
   .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
   .auth-offline:hover{color:var(--text)}
-  .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+  .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:14px}
   .account-bar .acc-who{font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .account-bar .acc-who b{color:var(--accent-text)}
 
   /* ---------- Toast ---------- */
-  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:80;
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:80;
     display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-  .toast .undo-btn{background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;flex:none}
+  .toast .undo-btn{background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700;flex:none}
   .toast .undo-btn:hover{filter:brightness(1.05)}
 </style>
 </head>
@@ -613,7 +623,7 @@
   <!-- Top bar -->
   <div class="topbar">
     <div class="brand">
-      <div class="logo">M</div>
+      <div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div>
       <div><h1>Macro Tracker</h1><small id="brandSub">Loading…</small></div>
     </div>
     <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
@@ -622,10 +632,10 @@
 
   <!-- Tabs (only shown when logged into an account) -->
   <div class="tabs" id="tabs" style="display:none">
-    <button class="tab active" data-tab="tracker" data-i18n="tabTracker">Tracker</button>
-    <button class="tab" data-tab="metrics" data-i18n="tabMetrics">Metrics</button>
-    <button class="tab" data-tab="brain" data-i18n="tabBrain">Brain</button>
-    <button class="tab" data-tab="collection" data-i18n="tabCollection">Collection</button>
+    <button class="tab active" data-tab="tracker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18"/><path d="M3 11a9 9 0 0 0 18 0"/><path d="M7.5 11c-.5-3.5 1.5-6 5-7"/><path d="M12 11c.5-3 2.5-5 6-5.5"/></svg><span data-i18n="tabTracker">Tracker</span></button>
+    <button class="tab" data-tab="metrics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg><span data-i18n="tabMetrics">Metrics</span></button>
+    <button class="tab" data-tab="brain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M12 5v13"/></svg><span data-i18n="tabBrain">Brain</span></button>
+    <button class="tab" data-tab="collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg><span data-i18n="tabCollection">Collection</span></button>
   </div>
 
   <div id="trackerView" class="tracker-grid">
@@ -660,13 +670,13 @@
 
   <!-- Recent meals: one tap re-logs -->
   <div class="section" id="recentSec" hidden>
-    <div class="head"><h2 data-i18n="recentTitle">Recent</h2><span class="hint" data-i18n="recentHint">Tap to log again</span></div>
+    <div class="head"><h2 data-mk="accent" data-i18n="recentTitle">Recent</h2><span class="hint" data-i18n="recentHint">Tap to log again</span></div>
     <div class="body"><div class="recent-row" id="recentRow"></div></div>
   </div>
 
   <!-- Add food -->
   <div class="section">
-    <div class="head"><h2 data-i18n="addFood">Add food</h2><span class="hint" data-i18n="addFoodHint">Enter macros per reference amount, then how much you ate</span></div>
+    <div class="head"><h2 data-mk="accent" data-i18n="addFood">Add food</h2><span class="hint" data-i18n="addFoodHint">Enter macros per reference amount, then how much you ate</span></div>
     <div class="body">
       <div class="form-grid">
         <div class="field">
@@ -727,13 +737,13 @@
 
   <!-- Today's meals -->
   <div class="section">
-    <div class="head"><h2 id="mealsTitle">Meals</h2><span class="hint" id="mealsHint"></span></div>
+    <div class="head"><h2 data-mk="accent" id="mealsTitle">Meals</h2><span class="hint" id="mealsHint"></span></div>
     <div id="mealsBody"></div>
   </div>
 
   <!-- My foods -->
   <div class="section">
-    <div class="head"><h2 data-i18n="myFoods">My foods</h2><span class="hint" data-i18n="myFoodsHint">Frequent ingredients · tap to add quickly</span></div>
+    <div class="head"><h2 data-mk="accent" data-i18n="myFoods">My foods</h2><span class="hint" data-i18n="myFoodsHint">Frequent ingredients · tap to add quickly</span></div>
     <div class="body"><div class="lib-list" id="libList"></div></div>
   </div>
 
@@ -744,7 +754,7 @@
   <div id="metricsView" style="display:none">
 
     <div class="section">
-      <div class="head"><h2 data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
+      <div class="head"><h2 data-mk="cal" data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
       <div class="body">
         <div class="chart-stats" id="calStats"></div>
         <div class="chart-wrap" id="calChart"></div>
@@ -752,7 +762,7 @@
     </div>
 
     <div class="section">
-      <div class="head"><h2 data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
+      <div class="head"><h2 data-mk="protein" data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
       <div class="body">
         <div class="chart-legend" id="macroLegend"></div>
         <div class="chart-wrap" id="macroChart"></div>
@@ -760,7 +770,7 @@
     </div>
 
     <div class="section wide">
-      <div class="head"><h2 data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
+      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
       <div class="body">
         <div class="weight-form">
           <div class="field">
@@ -792,19 +802,19 @@
   <!-- Brain: level, last 8 weeks, badges, why it matters -->
   <div id="brainView" style="display:none">
     <div class="section">
-      <div class="head"><h2 data-i18n="bvLevelHead">Your brain level</h2></div>
+      <div class="head"><h2 data-mk="brain" data-i18n="bvLevelHead">Your brain level</h2></div>
       <div class="body" id="bvLevel"></div>
     </div>
     <div class="section">
-      <div class="head"><h2 data-i18n="bvWeeksHead">Last 8 weeks</h2><span class="hint" data-i18n="bvWeeksHint">How full your brain bar got</span></div>
+      <div class="head"><h2 data-mk="brain" data-i18n="bvWeeksHead">Last 8 weeks</h2><span class="hint" data-i18n="bvWeeksHint">How full your brain bar got</span></div>
       <div class="body" id="bvWeeks"></div>
     </div>
     <div class="section wide">
-      <div class="head"><h2 data-i18n="bvBadgesHead">Badges</h2><span class="hint" id="bvBadgesCount"></span></div>
+      <div class="head"><h2 data-mk="brain" data-i18n="bvBadgesHead">Badges</h2><span class="hint" id="bvBadgesCount"></span></div>
       <div class="body"><div class="bv-badges" id="bvBadges"></div></div>
     </div>
     <div class="section wide">
-      <div class="head"><h2 data-i18n="bvWhyHead">Why it matters</h2></div>
+      <div class="head"><h2 data-mk="brain" data-i18n="bvWhyHead">Why it matters</h2></div>
       <div class="body"><ul class="bv-why" id="bvWhy"></ul><p class="bv-note" data-i18n="bvWhyNote"></p></div>
     </div>
   </div><!-- /brainView -->
@@ -899,7 +909,7 @@
 <div class="overlay" id="authOverlay">
   <div class="modal auth-modal">
     <div class="body">
-      <div class="auth-brand"><div class="logo">M</div><h3 data-i18n="authTitle">Log in to sync</h3></div>
+      <div class="auth-brand"><div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div><h3 data-i18n="authTitle">Log in to sync</h3></div>
       <p class="auth-intro" data-i18n="authIntro">Sign in to sync your logs across your devices.</p>
       <div class="field">
         <label data-i18n="authUsername">Username</label>
@@ -1224,7 +1234,7 @@ const T = {
     targets:"Targets", dailyGoals:"Daily gram goals for each mode.", saveTargets:"Save targets",
     targetsFor:"Targets for {name}",
     left:"left", over:"over", planned:"planned", eaten:"eaten", withWhatif:"with what-if:",
-    total:"TOTAL", eatenCount:"{n} eaten", whatifCount:"{n} what-if",
+    total:"Total", eatenCount:"{n} eaten", whatifCount:"{n} what-if",
     noMeals:"No foods logged for this day yet.", addOneAbove:"Add one above ↑",
     whatifBadge:"what-if", noFoods:"No saved foods yet.", use:"Use",
     calorieSplit:"Calorie split (current / target)", target:"target",
@@ -1388,7 +1398,7 @@ const T = {
     targets:"Objetivos", dailyGoals:"Objetivos diarios en gramos para cada modo.", saveTargets:"Guardar objetivos",
     targetsFor:"Objetivos de {name}",
     left:"restantes", over:"de más", planned:"planeado", eaten:"comido", withWhatif:"con simulación:",
-    total:"TOTAL", eatenCount:"{n} comido", whatifCount:"{n} simulación",
+    total:"Total", eatenCount:"{n} comido", whatifCount:"{n} simulación",
     noMeals:"Todavía no hay alimentos registrados para este día.", addOneAbove:"Agrega uno arriba ↑",
     whatifBadge:"simulación", noFoods:"Todavía no hay alimentos guardados.", use:"Usar",
     calorieSplit:"Distribución de calorías (actual / objetivo)", target:"objetivo",
@@ -1703,7 +1713,7 @@ function renderCards(){
     {lab:t("fat"),     color:"var(--fat)",     got:eaten.f, tgt:tg.f, projGot:proj.f, u:"g"},
   ];
   document.getElementById("cards").innerHTML = `
-    <div class="nl-head"><h2 class="nl-title">${t("dailyTotals")}</h2><span class="nl-goal">${t(user().goal)}</span></div>
+    <div class="nl-head"><h2 class="nl-title" data-mk="accent">${t("dailyTotals")}</h2><span class="nl-goal">${t(user().goal)}</span></div>
     <div class="nl-rule thick"></div>
     <div class="nl-cal">
       <div class="nl-cal-lab">${t("calories")}</div>
@@ -1776,7 +1786,7 @@ function renderMeals(){
         <span class="m-f">${round(eaten.f)}F</span> ·
         <span class="m-cal">${round(eaten.cal)} kcal</span>
         <span style="color:var(--faint)">${t("eaten")}</span>
-        ${nWhat?`<br><span style="font-weight:500;color:var(--accent);font-size:12px">${t("withWhatif")} ${round(sum.p)}P · ${round(sum.c)}C · ${round(sum.f)}F · ${round(sum.cal)} kcal</span>`:""}
+        ${nWhat?`<br><span style="font-weight:500;color:var(--accent-text);font-size:12px">${t("withWhatif")} ${round(sum.p)}P · ${round(sum.c)}C · ${round(sum.f)}F · ${round(sum.cal)} kcal</span>`:""}
       </div>
       <span></span>
     </div>`;
@@ -2691,7 +2701,7 @@ function renderCollection(){
   const u=user(), today=todayStr();
   const ready=ensureShop(u);
   const owned=ready ? Shop.owned(u) : [];
-  let h='<div class="head"><h2 style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
+  let h='<div class="head"><h2 data-mk="accent" style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
   // wallet
   let bal=null, canOpen=false, free=false;
   if(ready){
@@ -3075,7 +3085,7 @@ function coachBlock(u){
   if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
-  const noteHtml = note ? `<div class="br-note"><p class="br-note-head">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
+  const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
   return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${t("coachAsk")}</button>` : "");
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
