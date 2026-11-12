@@ -218,7 +218,24 @@ test("system prompts carry the shared rules", async () => {
     assert.match(p.system, /doctor/);
     assert.match(p.system, /profile\.tone/);
   }
-  assert.match(ai.calls[1].system, /120 words/);
+  assert.match(ai.calls[1].system, /200 words/);
+});
+test("chat carries the knowledge pack and medical guardrails; the daily note stays lean", async () => {
+  const ai = fakeAi();
+  await run({ kind: "note", lang: "en", summary: {} }, env(), ai);
+  await run({ kind: "chat", lang: "en", summary: {}, messages: msgs(1) }, env(), ai);
+  const [note, chat] = ai.calls;
+  for (const p of [note, chat]) {
+    assert.match(p.system, /never diagnose/i);
+    assert.match(p.system, /start, stop or change a medication/);
+    assert.match(p.system, /get medical help now/);
+    assert.doesNotMatch(p.system, /suggest talking to a doctor\.$/m);
+  }
+  assert.match(chat.system, /REFERENCE NOTES/);
+  assert.match(chat.system, /Lancet Commission/);
+  assert.match(chat.system, /Signs of stroke/);
+  assert.doesNotMatch(note.system, /REFERENCE NOTES/);
+  assert.equal(chat.maxTokens, 900);
 });
 test("weight: 20 a day per user; 21st -> 429, old-style body otherwise unchanged", async () => {
   const e = env(), ai = fakeAi();
