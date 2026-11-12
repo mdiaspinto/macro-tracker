@@ -132,6 +132,34 @@ test("chat returns {reply, remaining} decrementing; 31st -> 429", async () => {
   assert.equal(r31.status, 429);
   assert.deepEqual(r31.json, { error: "daily_limit" });
 });
+test("failed model calls don't use the daily cap", async () => {
+  const e = env();
+  const body = { kind: "note", lang: "en", summary: {} };
+  const failures = [
+    async () => { throw new Error("credit balance too low"); },
+    async () => ({ text: "{", finish: "length" }),
+    async () => ({ text: "not json", finish: "stop" }),
+    async () => ({ text: "{}", finish: "stop" }), // weight-shaped failure below
+  ];
+  const errLog = console.error;
+  console.error = () => {};
+  try {
+    for (let i = 0; i < 5; i++) {
+      for (const generate of failures.slice(0, 3)) {
+        const r = await handle(req(body), e, { generate, verifyToken: async () => "leonor" });
+        assert.equal(r.status, 502);
+      }
+    }
+    const w = await handle(req({ lang: "en", facts: { a: 1 } }), e, { generate: failures[3], verifyToken: async () => "leonor" });
+    assert.equal(w.status, 502);
+  } finally {
+    console.error = errLog;
+  }
+  assert.equal(e.COACH_LIMITS.m.size, 0, "nothing counted");
+  const ai = fakeAi();
+  for (let i = 0; i < 3; i++) assert.equal((await run(body, e, ai, { user: "leonor" })).status, 200);
+  assert.equal((await run(body, e, ai, { user: "leonor" })).status, 429);
+});
 test("caps are per user and per kind", async () => {
   const e = env(), ai = fakeAi();
   const note = { kind: "note", lang: "en", summary: {} };
