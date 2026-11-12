@@ -138,11 +138,13 @@ const Shop = (() => {
 
   const secretsFound = user => owned(user).filter(id => { const c = byId(id); return !!c && c.tier === "secret"; });
 
-  // Union of pulls by key; start/startPoints from the side with the earlier start (tie -> a).
+  // Union of pulls by key; start/startPoints from the side with the earlier start
+  // (tie -> larger startPoints, so the result does not depend on argument order).
   const mergeShop = (a, b) => {
     if (!a && !b) return undefined;
     if (!a || !b) { const s = a || b; return { start: s.start, startPoints: s.startPoints, pulls: Object.assign({}, s.pulls) }; }
-    const first = b.start < a.start ? b : a;
+    const first = b.start < a.start ? b
+      : (b.start === a.start && (b.startPoints || 0) > (a.startPoints || 0)) ? b : a;
     return { start: first.start, startPoints: first.startPoints, pulls: Object.assign({}, b.pulls, a.pulls) };
   };
 

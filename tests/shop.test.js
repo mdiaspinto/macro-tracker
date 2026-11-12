@@ -93,3 +93,12 @@ test("weightPoints: pace means use every entry in the week, even before start; p
   assert.equal(Shop.weightPoints(u, "2026-11-09").total, 10 + 40);   // launch-week mean 99.7 -> -0.3 % (old in-window-only mean 99.9 -> -0.1 %: no bonus)
   assert.equal(Shop.weightPoints(u, "2026-11-09").thisWeek, 0);
 });
+
+test("mergeShop: equal start → larger startPoints wins in both argument orders", () => {
+  const a = { start: "2026-11-02", startPoints: 5000, pulls: {} };
+  const b = { start: "2026-11-02", startPoints: 3000, pulls: {} };
+  const ab = Shop.mergeShop(a, b), ba = Shop.mergeShop(b, a);
+  assert.equal(ab.start, ba.start);
+  assert.equal(ab.startPoints, 5000);
+  assert.equal(ba.startPoints, 5000);
+});

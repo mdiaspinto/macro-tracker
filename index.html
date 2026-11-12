@@ -1074,7 +1074,7 @@
 <!-- Collection: box opening reveal -->
 <div class="overlay" id="revealOverlay">
   <div class="rv" role="dialog" aria-modal="true" aria-live="polite" tabindex="-1">
-    <div class="rv-stage"><img class="rv-box" id="rvBox" src="img/box-1.webp" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
+    <div class="rv-stage"><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
     <div class="rv-cap" id="rvCap"></div>
     <button class="btn btn-primary" id="rvOk"></button>
   </div>
@@ -2762,6 +2762,8 @@ function pickCelebrations(items,badgeList,cap){
 }
 // Held until the first cloud pull settles (when signed in), so another device's `celebrated` map is merged first.
 let celebrateReady=true;
+// Gate for creating a shop snapshot: true when signed out, or once a cloud pull/login has succeeded (history is complete).
+let shopReady=false;
 let celebrating=false;
 function celebrate(badgeList){
   if(!celebrateReady || celebrating || document.getElementById("authOverlay").classList.contains("on")) return;
@@ -2836,7 +2838,7 @@ function macroSeries(){
 /* ---------- Collection (shop) ---------- */
 let boxBusy=false;
 function ensureShop(u){
-  if(!u.shop && celebrateReady===true){
+  if(!u.shop && shopReady===true){
     const today=todayStr();
     u.shop=Shop.newShop(today, Brain.lifetimePoints(u, today));
     save();
@@ -2908,7 +2910,6 @@ function openBox(){
     Shop.addPull(u, result, free, Date.now(), Math.random);
     save();
   }catch(err){ boxBusy=false; renderCollection(); throw err; }
-  renderCollection();
   try{ showReveal(result, free); }catch(err){ boxBusy=false; renderCollection(); throw err; }
 }
 const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -2949,7 +2950,8 @@ function showReveal(result, free){
     }
     cap.className="rv-cap show"; ok.className="btn btn-primary show";
     if(reduced){ // animations are disabled globally, so fade with a JS-set opacity instead of an animation event
-      ch.style.transition="opacity .4s"; cap.style.transition="opacity .4s";
+      // the global reduced-motion rule forces transition:none!important, so only an inline !important beats it
+      ch.style.setProperty("transition","opacity .4s","important"); cap.style.setProperty("transition","opacity .4s","important");
       void ch.offsetWidth; setTimeout(()=>{ ch.style.opacity="1"; },30);
     }else{
       const sp=document.getElementById("rvSpark"), n=secret?22:12;
@@ -4155,9 +4157,9 @@ async function pullRemote(){
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
-      celebrateReady=true;
+      celebrateReady=true; shopReady=true;
       renderAll();
-    }
+    }else if(!shopReady){ shopReady=true; renderAll(); } // fetch succeeded, account has no state yet
   }catch(e){}
   finally{ if(!celebrateReady){ celebrateReady=true; renderAll(); } }
 }
@@ -4190,8 +4192,11 @@ async function doCreate(){
     saveSession(await authCall("signUp", f.u, f.pw));
     const legacy=await legacyGet(f.u);
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
+    (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
+      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());   // current device data seeds the new account
+    shopReady=true;
     authBusy(false); startApp(); toast(t("authCreated",{name:f.u}));
   }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
@@ -4202,13 +4207,16 @@ async function doLogin(){
     saveSession(await authCall("signInWithPassword", f.u, f.pw));
     const remote=await cloudGet();
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
+    (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
+      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());        // push merged back so the account gains local logs
+    shopReady=true;
     authBusy(false); startApp(); toast(t("authWelcome",{name:f.u}));
   }catch(e){ authError(authMsg(e)); authBusy(false); }
 }
 function doLogout(){
-  session=null; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
+  session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
   authEl("usersOverlay").classList.remove("on");
   openAuth();
 }
@@ -4223,6 +4231,7 @@ function updateAccountUI(){
 function startApp(){
   closeAuth();
   celebrateReady=!(cloudEnabled() && session);
+  shopReady=!(cloudEnabled() && session) || shopReady; // keep true after a successful login/create
   renderAll();
   updateAccountUI();
   if(cloudEnabled() && session){
