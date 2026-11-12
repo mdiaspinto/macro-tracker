@@ -282,3 +282,46 @@ test("note/chat prompts say `today` is a partial day", async () => {
     assert.match(p.system, /Monday to yesterday/);
   }
 });
+
+// ---- coach memory ----
+test("chat schema requires reply and remember; note schema unchanged", async () => {
+  const ai = fakeAi();
+  await run({ kind: "chat", lang: "en", summary: {}, messages: msgs(1) }, env(), ai);
+  const s = ai.calls[0].schema;
+  assert.deepEqual(s.required, ["reply", "remember"]);
+  assert.equal(s.properties.remember.type, "string");
+  assert.equal(s.additionalProperties, false);
+});
+test("chat remember: passed through trimmed and clamped to 80; empty/whitespace/non-string omitted", async () => {
+  const withRemember = (remember) => fakeAi(() => ({ reply: "ok", remember }));
+  const body = { kind: "chat", lang: "en", summary: {}, messages: msgs(1) };
+  let r = await run(body, env(), withRemember("  Struggles to sleep  "));
+  assert.deepEqual(r.json, { reply: "ok", remaining: 29, remember: "Struggles to sleep" });
+  r = await run(body, env(), withRemember("x".repeat(120)));
+  assert.equal(r.json.remember.length, 80);
+  for (const v of ["", "   ", undefined, 5, null]) {
+    r = await run(body, env(), withRemember(v));
+    assert.deepEqual(r.json, { reply: "ok", remaining: 29 });
+  }
+});
+test("note and weight responses never carry remember", async () => {
+  const ai = fakeAi(() => ({ headline: "h", summary: "s", points: ["a"], note: "n", tip: "t", reply: "r", remember: "fact" }));
+  const n = await run({ kind: "note", lang: "en", summary: {} }, env(), ai);
+  assert.deepEqual(n.json, { note: "n", tip: "t" });
+  const w = await run({ kind: "weight", lang: "en", facts: { a: 1 } }, env(), ai);
+  assert.equal("remember" in w.json, false);
+});
+test("memory rules live in the chat prompt only", async () => {
+  const ai = fakeAi();
+  await run({ kind: "note", lang: "en", summary: {} }, env(), ai);
+  await run({ kind: "chat", lang: "en", summary: {}, messages: msgs(1) }, env(), ai);
+  await run({ kind: "weight", lang: "en", facts: { a: 1 } }, env(), ai);
+  const [note, chat, weight] = ai.calls;
+  assert.match(chat.system, /remember/);
+  assert.match(chat.system, /reveal nothing lasting/);
+  assert.match(chat.system, /not by what they ask/);
+  assert.doesNotMatch(chat.system, /memoryDeclined|declined/i);
+  assert.match(chat.system, /60 characters/);
+  assert.doesNotMatch(note.system, /reveal nothing lasting|memoryDeclined/);
+  assert.doesNotMatch(weight.system, /reveal nothing lasting|memoryDeclined/);
+});

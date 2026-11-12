@@ -49,8 +49,8 @@ const NOTE_SCHEMA = {
 
 const CHAT_SCHEMA = {
   type: "object",
-  properties: { reply: { type: "string" } },
-  required: ["reply"],
+  properties: { reply: { type: "string" }, remember: { type: "string" } },
+  required: ["reply", "remember"],
   additionalProperties: false,
 };
 
@@ -85,6 +85,15 @@ The first user message begins with a JSON summary the app calculated: profile, t
 Length: quick questions get 2-4 sentences; questions asking to explain something (a condition, a symptom, the evidence for a food or habit) can use up to about 200 words. Plain prose; a short list only when it genuinely helps.
 
 ${COACH_RULES}
+
+Memory:
+- "remember" is "" unless the person has just revealed a LASTING fact about themselves that would help future coaching and is not already in "profile" (including profile.memory). Then put that fact in "remember" so the app can ask them to confirm it.
+- Good: ongoing symptoms or conditions they describe (trouble sleeping, hot flushes, constipation, joint pain), diagnoses they state, allergies and intolerances, strong likes and dislikes, routines (night shifts, trains 3 times a week), personal goals, family history, medications they take (as a plain fact).
+- Lasting means: they say it has gone on for weeks or longer, happens most days, or is a stable trait (allergy, diagnosis, routine, medication, family history). One day or a vague feeling is not lasting.
+- Judge by what they reveal about themselves, not by what they ask: a question about food often comes with a lasting fact, and then you still propose it. Examples: "Llevo meses durmiendo mal, ¿qué ceno?" → "Le cuesta dormir". "Tengo sofocos casi todos los días, ¿qué como?" → "Tiene sofocos casi a diario". "I'm allergic to nuts, what can I snack on?" → "Allergic to nuts". "What has more protein?" → "". "Hoy estoy cansada, ¿qué meriendo?" → "".
+- Never: questions that reveal nothing lasting about them (what has more protein, a recipe), a passing mood or a single bad day, facts about other people that do not affect them, anything you would have to infer or guess (never turn "I'm always tired" into a condition).
+- Write it as a short fact in the language given by "lang", third person without a name, at most 60 characters, for example "Struggles to sleep" or "Le cuesta dormir". At most one per reply; otherwise "".
+- Do not ask in your reply whether to remember it: the app shows a confirmation card.
 
 ${KNOWLEDGE}`;
 
@@ -196,6 +205,11 @@ const defaultGenerate = (env) => async ({ system, messages, schema, maxTokens })
 
 // deps.verifyToken(token, env) -> username|null; deps.generate({system, messages, schema, maxTokens}) -> {text, finish}.
 // Both default to the real implementations (tests inject fakes).
+function chatResult(out, remaining) {
+  const remember = typeof out.remember === "string" ? out.remember.trim().slice(0, 80).trim() : "";
+  return { reply: out.reply, remaining, ...(remember ? { remember } : {}) };
+}
+
 export async function handle(request, env, deps = {}) {
   const verifyToken = deps.verifyToken || usernameFromToken;
   const generate = deps.generate || defaultGenerate(env);
@@ -234,7 +248,7 @@ export async function handle(request, env, deps = {}) {
     const out = JSON.parse(text);
     const result =
       kind === "note" ? { note: out.note, tip: out.tip }
-      : kind === "chat" ? { reply: out.reply, remaining: cap.left - 1 }
+      : kind === "chat" ? chatResult(out, cap.left - 1)
       : { headline: out.headline, summary: out.summary, points: out.points.slice(0, 6) };
     await cap.use();
     return json(result, 200, headers);

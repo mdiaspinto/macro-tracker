@@ -133,7 +133,8 @@ test("classify: maps Worker responses to ok / unavailable / capped / error", () 
 // Network glue with a stubbed fetch. Order matters: "unavailable" sticks for the module's lifetime.
 const stubFetch = fn => { globalThis.fetch = fn; };
 const reply = (status, body) => async () => ({ status, json: async () => body });
-Coach.init({ url: "https://w.test", getToken: async () => "tok" });
+const initCoach = () => Coach.init({ url: "https://w.test", getToken: async () => "tok" });
+initCoach();
 
 test("send: network throw rejects with kind 'error' and keeps the question for retry", async () => {
   const u = fixture();
@@ -151,11 +152,165 @@ test("send: capped drops the just-sent question", async () => {
   assert.equal(Coach.isCapped(u, TODAY), true);
 });
 
+// ---- coach memory ----
+test("summary: memory passes through when non-empty; memoryDeclined is never sent", () => {
+  const u = fixture();
+  const s = Coach.summary(u, TODAY, { ...u.profile, memory: ["Struggles to sleep"], memoryDeclined: ["Likes tea"] });
+  assert.deepEqual(s.profile.memory, ["Struggles to sleep"]);
+  assert.ok(!("memoryDeclined" in s.profile));
+  const e = Coach.summary(u, TODAY, { ...u.profile, memory: [], memoryDeclined: [] });
+  assert.ok(!("memory" in e.profile) && !("memoryDeclined" in e.profile));
+  const m = Coach.summary(u, TODAY, { ...u.profile, memory: "junk" });
+  assert.ok(!("memory" in m.profile));
+});
+
+test("normFact: case, accents, spacing and trailing punctuation are ignored", () => {
+  assert.equal(Coach.normFact("  Le  CUESTA dormir. "), Coach.normFact("le cuesta dormir"));
+  assert.equal(Coach.normFact("Duerme mal!!"), "duerme mal");
+  assert.equal(Coach.normFact("Está EMBARAZADA…"), Coach.normFact("esta embarazada"));
+  assert.equal(Coach.normFact(null), "");
+  assert.equal(Coach.normFact("¿Duerme mal?"), "duerme mal");
+  assert.equal(Coach.normFact(" ¡\"Le cuesta dormir\"! "), "le cuesta dormir");
+});
+
+test("saveFact: reports added / duplicate / full / empty and drops the fact from declined", () => {
+  let r = Coach.saveFact({ memory: ["A"], memoryDeclined: ["Likes tea", "B"] }, "  likes TEA. ");
+  assert.equal(r.status, "added");
+  assert.deepEqual(r.memory, ["A", "likes TEA."]);
+  assert.deepEqual(r.memoryDeclined, ["B"]);
+  r = Coach.saveFact({ memory: ["Struggles to sleep"] }, "struggles to sleep!");
+  assert.equal(r.status, "duplicate");
+  assert.deepEqual(r.memory, ["Struggles to sleep"]);
+  r = Coach.saveFact({ memory: Array.from({ length: 15 }, (_, i) => "F" + i) }, "New");
+  assert.equal(r.status, "full");
+  assert.equal(r.memory.length, 15);
+  assert.equal(Coach.saveFact({}, "   ").status, "empty");
+});
+
+test("forgetFact: removes from memory (by text) and adds it to declined, never in both", () => {
+  const p = { memory: ["A", "Has hot flushes"], memoryDeclined: ["Z"] };
+  const r = Coach.forgetFact(p, "has hot flushes.");
+  assert.deepEqual(r.memory, ["A"]);
+  assert.deepEqual(r.memoryDeclined, ["Z", "Has hot flushes"]);
+  assert.deepEqual(p.memory, ["A", "Has hot flushes"], "input not mutated");
+  assert.deepEqual(Coach.forgetFact({ memory: ["A"] }, "missing").memory, ["A"]);
+});
+
+test("memoryOf: the filtered list the UI shows; tolerates junk", () => {
+  assert.deepEqual(Coach.memoryOf({ memory: ["A", "", 3, " B "] }), ["A", " B "]);
+  assert.deepEqual(Coach.memoryOf(null), []);
+});
+
+test("draft helpers: a card's draft is kept only for the same user, day, message and fact", () => {
+  const k = Coach.draftKey({ id: "u1" }, TODAY, 3, "Has hot flushes");
+  assert.equal(Coach.keepDraft(k, Coach.draftKey({ id: "u1" }, TODAY, 3, "has hot flushes.")), true);
+  assert.equal(Coach.keepDraft(k, Coach.draftKey({ id: "u1" }, TODAY, 5, "Allergic to nuts")), false);
+  assert.equal(Coach.keepDraft(k, Coach.draftKey({ id: "u1" }, TODAY, 3, "Allergic to nuts")), false);
+  assert.equal(Coach.keepDraft(k, Coach.draftKey({ id: "u2" }, TODAY, 3, "Has hot flushes")), false);
+  assert.equal(Coach.keepDraft(k, Coach.draftKey({ id: "u1" }, "2026-11-12", 3, "Has hot flushes")), false);
+  assert.equal(Coach.keepDraft(null, k), false);
+  assert.equal(Coach.keepDraft(undefined, undefined), false);
+});
+
+test("canRemember: an empty or blank draft can never be saved", () => {
+  assert.equal(Coach.canRemember("Takes iron"), true);
+  for (const v of ["", "   ", null, undefined, "\n"]) assert.equal(Coach.canRemember(v), false);
+});
+
+test("canSuggest: false for empty, duplicate, declined, or a full list", () => {
+  const p = { memory: ["Struggles to sleep"], memoryDeclined: ["Likes tea"] };
+  assert.equal(Coach.canSuggest(p, "Has hot flushes"), true);
+  assert.equal(Coach.canSuggest(p, "   "), false);
+  assert.equal(Coach.canSuggest(p, undefined), false);
+  assert.equal(Coach.canSuggest(p, "struggles to SLEEP."), false);
+  assert.equal(Coach.canSuggest(p, "Likes tea"), false);
+  assert.equal(Coach.canSuggest({}, "Anything"), true);
+  assert.equal(Coach.canSuggest(null, "Anything"), true);
+  const full = { memory: Array.from({ length: 15 }, (_, i) => "Fact " + i) };
+  assert.equal(Coach.canSuggest(full, "One more"), false);
+});
+
+test("addMemory: dedups, trims to 80, caps at 15, doesn't mutate", () => {
+  const p = { memory: ["A"] };
+  const r = Coach.addMemory(p, "  B  ");
+  assert.deepEqual(r, ["A", "B"]);
+  assert.deepEqual(p.memory, ["A"]);
+  assert.deepEqual(Coach.addMemory({ memory: ["Struggles to sleep"] }, "struggles to sleep."), ["Struggles to sleep"]);
+  assert.deepEqual(Coach.addMemory({}, "   "), []);
+  assert.equal(Coach.addMemory({}, "x".repeat(200))[0].length, 80);
+  let m = [];
+  for (let i = 0; i < 20; i++) m = Coach.addMemory({ memory: m }, "Fact " + i);
+  assert.equal(m.length, 15);
+  assert.equal(m[14], "Fact 14");
+});
+
+test("removeMemory: by index or by text", () => {
+  const p = { memory: ["A", "B", "C"] };
+  assert.deepEqual(Coach.removeMemory(p, 1), ["A", "C"]);
+  assert.deepEqual(Coach.removeMemory(p, "c"), ["A", "B"]);
+  assert.deepEqual(Coach.removeMemory(p, 9), ["A", "B", "C"]);
+  assert.deepEqual(Coach.removeMemory({}, 0), []);
+  assert.deepEqual(p.memory, ["A", "B", "C"]);
+});
+
+test("declineMemory: dedups and keeps the newest 30", () => {
+  assert.deepEqual(Coach.declineMemory({ memoryDeclined: ["A"] }, "a."), ["A"]);
+  assert.deepEqual(Coach.declineMemory({}, "  "), []);
+  let d = [];
+  for (let i = 0; i < 35; i++) d = Coach.declineMemory({ memoryDeclined: d }, "Fact " + i);
+  assert.equal(d.length, 30);
+  assert.equal(d[0], "Fact 5");
+  assert.equal(d[29], "Fact 34");
+});
+
+test("pendingRemember: index of the latest unanswered suggestion only", () => {
+  const ms = [
+    { role: "assistant", text: "a", remember: "One" },
+    { role: "user", text: "q" },
+    { role: "assistant", text: "b", remember: "Two" },
+  ];
+  assert.equal(Coach.pendingRemember(ms), 2);
+  assert.equal(Coach.pendingRemember(ms.slice(0, 3)), 2);
+  // answering the latest must not revive an older unanswered one
+  assert.equal(Coach.pendingRemember([{ role: "assistant", remember: "Old" }, { role: "assistant", remember: "New", rememberState: "declined" }]), -1);
+  assert.equal(Coach.pendingRemember([{ role: "assistant", text: "x" }]), -1);
+  assert.equal(Coach.pendingRemember(undefined), -1);
+});
+
+test("send: stores remember on the assistant message only when canSuggest at receive time", async () => {
+  const u = fixture();
+  u.id = "mem1";
+  u.profile.memory = ["Struggles to sleep"];
+  stubFetch(reply(200, { reply: "Hi", remaining: 5, remember: "  Has hot flushes " }));
+  await Coach.send(u, TODAY, "I get hot flushes");
+  assert.deepEqual(Coach.chatFor(u, TODAY)[1], { role: "assistant", text: "Hi", remember: "Has hot flushes" });
+  stubFetch(reply(200, { reply: "Hi2", remaining: 4, remember: "struggles to sleep." }));
+  await Coach.send(u, TODAY, "sleep again");
+  assert.deepEqual(Coach.chatFor(u, TODAY)[3], { role: "assistant", text: "Hi2" });
+  stubFetch(reply(200, { reply: "Hi3", remaining: 3 }));
+  await Coach.send(u, TODAY, "ok");
+  assert.deepEqual(Coach.chatFor(u, TODAY)[5], { role: "assistant", text: "Hi3" });
+});
+
+test("send: the request carries memory inside summary.profile", async () => {
+  const u = fixture();
+  u.id = "mem2";
+  u.profile.memory = ["Allergic to nuts"];
+  let sent;
+  stubFetch(async (url, o) => { sent = JSON.parse(o.body); return { status: 200, json: async () => ({ reply: "r", remaining: 1 }) }; });
+  await Coach.send(u, TODAY, "hello");
+  assert.deepEqual(sent.summary.profile.memory, ["Allergic to nuts"]);
+});
+
+// "unavailable" sticks until the next init(), so this test re-inits when done and can sit anywhere.
 test("send: unavailable (old Worker) drops the just-sent question", async () => {
+  initCoach();
   const u = fixture();
   u.id = "other";
   stubFetch(reply(400, { error: "no_facts" }));
   await assert.rejects(Coach.send(u, TODAY, "Hello?"), e => e.kind === "unavailable");
   assert.deepEqual(Coach.chatFor(u, TODAY), []);
   assert.equal(Coach.available(), false);
+  initCoach();
+  assert.equal(Coach.available(), true);
 });
