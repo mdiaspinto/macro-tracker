@@ -16,7 +16,7 @@
      ====================================================================== */
   :root{
     color-scheme:light dark;
-    --bg:#F5F6F0; --panel:#FFFFFF; --panel-2:#EEF1E8; --line:#E1E5DB; --line-strong:#CBD2C4;
+    --bg:#F5F6F0; --panel:#FFFFFF; --panel-2:#EEF1E8; --line:#E1E5DB; --line-strong:#7F8A82;
     --text:#16201B; --muted:#55615A; --faint:#7C877F; --ink:#16201B;
     --accent:#FFC93C; --accent-ink:#2A1F00; --accent-text:#8A5A00; --accent-soft:rgba(255,201,60,.18);
     --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
@@ -33,7 +33,7 @@
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#111713; --panel:#18201B; --panel-2:#202A24; --line:#2A352E; --line-strong:#3A473F;
+      --bg:#111713; --panel:#18201B; --panel-2:#202A24; --line:#2A352E; --line-strong:#6A776F;
       --text:#EEF2EC; --muted:#A4AFA7; --faint:#77837B; --ink:#EEF2EC;
       --accent:#FFCF4D; --accent-ink:#2A1F00; --accent-text:#FFCF4D; --accent-soft:rgba(255,207,77,.14);
       --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
@@ -84,7 +84,7 @@
     background:var(--panel);color:var(--text);border:1.5px solid var(--line);
     border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;
   }
-  select.pill{appearance:none;-webkit-appearance:none;padding-right:32px;
+  select.pill{border-color:var(--line-strong);appearance:none;-webkit-appearance:none;padding-right:32px;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 12px center;}
   .icon-btn{
@@ -102,7 +102,7 @@
   .tab svg{width:18px;height:18px;flex:none}
   .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tab:hover{color:var(--text)}
-  .tab.active{background:var(--panel);color:var(--text);border-color:var(--line);font-weight:700}
+  .tab.active{background:var(--panel);color:var(--text);border-color:var(--line-strong);font-weight:700}
   @media(min-width:960px){ .tabs{max-width:520px} }
   @media(max-width:400px){ .tab{font-size:12.5px;padding:7px 2px 6px} }
 
@@ -119,7 +119,7 @@
   #prevDay{grid-area:prev} #dateInput{grid-area:date;width:100%;text-align:center} #nextDay{grid-area:next}
   .daterow .today{grid-area:today;justify-self:end;white-space:nowrap}
   .daterow input[type=date]{
-    background:var(--panel);color:var(--text);border:1.5px solid var(--line);
+    background:var(--panel);color:var(--text);border:1.5px solid var(--line-strong);
     border-radius:14px;padding:7px 10px;font-size:14px;font-weight:600;min-width:0;
   }
   .daterow .nav{background:var(--panel);color:var(--text);border:1.5px solid var(--line);
@@ -255,7 +255,7 @@
   .chat-status .err{color:var(--over)}
   .chat-status .btn{min-height:44px}
   .chat-form{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line);margin-top:8px}
-  .chat-form input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);
+  .chat-form input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line-strong);
     background:var(--panel);font-size:16px}
   .chat-form input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
   .chat-form .btn{min-height:48px;font-size:15px}
@@ -315,9 +315,9 @@
   .form-grid{display:grid;grid-template-columns:1fr;gap:14px}
   .field{display:flex;flex-direction:column;gap:6px;min-width:0}
   .field label,.group-label{font-size:12.5px;color:var(--muted);font-weight:600}
-  .field input,.field select,.field textarea{background:var(--panel);border:1.5px solid var(--line);color:var(--text);
+  .field input,.field select,.field textarea{background:var(--panel);border:1.5px solid var(--line-strong);color:var(--text);
     border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;transition:border-color .15s,box-shadow .15s}
-  .field input:hover{border-color:var(--line-strong)}
+  .field input:hover{border-color:var(--muted)}
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
   .macro-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
   .macro-inputs .field:nth-child(1) label{color:var(--protein)}
@@ -346,7 +346,7 @@
   .btn:disabled{background:var(--panel-2);color:var(--faint);border-color:var(--line);cursor:not-allowed;filter:none}
   .save-lib{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
   .save-lib input{width:16px;height:16px;accent-color:var(--accent)}
-  .unit-select{background-color:var(--panel);border:1.5px solid var(--line);color:var(--text);
+  .unit-select{background-color:var(--panel);border:1.5px solid var(--line-strong);color:var(--text);
     border-radius:var(--radius-sm);padding:11px 12px;font-size:15px;width:100%;appearance:none;-webkit-appearance:none;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23878d93' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
     background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
@@ -461,7 +461,7 @@
   .targets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px 12px;align-items:center;margin-top:8px}
   .targets-grid .h{font-size:12px;color:var(--muted);font-weight:600}
   .targets-grid label{font-weight:600;font-size:14px}
-  .targets-grid input{background:var(--panel);border:1.5px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:9px 11px;font-size:15px;width:100%}
+  .targets-grid input{background:var(--panel);border:1.5px solid var(--line-strong);color:var(--text);border-radius:var(--radius-sm);padding:9px 11px;font-size:15px;width:100%}
   .targets-grid input:focus{outline:none;border-color:var(--focus)}
   .user-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
   .user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius-sm);flex-wrap:wrap}
@@ -472,12 +472,12 @@
   .user-row .sw:hover,.account-bar .sw:hover{background:var(--panel-2)}
   .user-row .tgt{font-size:12px;color:var(--muted);white-space:nowrap}
   @media(max-width:480px){ .user-row > div:nth-child(2){flex-basis:calc(100% - 50px)!important} .user-row .rowlang{margin-left:44px} }
-  .rowlang{background:var(--panel);color:var(--text);border:1.5px solid var(--line);border-radius:10px;padding:6px 8px;font-size:12.5px;flex:none}
+  .rowlang{background:var(--panel);color:var(--text);border:1.5px solid var(--line-strong);border-radius:10px;padding:6px 8px;font-size:12.5px;flex:none}
   .addnew #newUserLang{flex:none;border-radius:var(--radius-sm)}
   .divider{height:1px;background:var(--line);margin:18px 0}
   .full{width:100%;justify-content:center}
   .addnew{display:flex;gap:8px}
-  .addnew input{flex:1;min-width:0;background:var(--panel);border:1.5px solid var(--line);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px}
+  .addnew input{flex:1;min-width:0;background:var(--panel);border:1.5px solid var(--line-strong);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px}
   .addnew input:focus{outline:none;border-color:var(--focus)}
 
   /* ---------- Suggestion modal ---------- */
@@ -581,7 +581,7 @@
   .quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .quiz-activity{grid-column:1/-1}
   .quiz .field label{font-size:12.5px;color:var(--muted);font-weight:600}
-  .quiz select,.quiz input{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;
+  .quiz select,.quiz input{background:var(--panel);border:1.5px solid var(--line-strong);border-radius:10px;
     color:var(--text);padding:9px 10px;font-size:13.5px;width:100%}
   .quiz-hgt,.quiz-wt{display:flex;gap:6px}
   .quiz-hgt input,.quiz-wt input{min-width:0}
