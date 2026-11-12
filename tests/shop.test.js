@@ -102,3 +102,27 @@ test("mergeShop: equal start → larger startPoints wins in both argument orders
   assert.equal(ab.startPoints, 5000);
   assert.equal(ba.startPoints, 5000);
 });
+
+test("resetShop: openings before the reset are ignored and the free box reopens", () => {
+  const u = { goal: "lean", weights: {}, shop: { start: "2026-11-02", startPoints: 100, pulls: {
+    a: { c: "kiki-3", at: 1000, free: true }, b: { c: "lulu-1", at: 2000 } } } };
+  assert.equal(Shop.freeAvailable(u), false);
+  Shop.resetShop(u, 5000);
+  assert.equal(u.shop.resetAt, 5000);
+  assert.deepEqual(Shop.owned(u), []);
+  assert.equal(Shop.freeAvailable(u), true);
+  assert.equal(Shop.balance(u, "2026-11-11", 600).spent, 0);
+  Shop.addPull(u, { id: "s01", dup: false }, true, 6000, () => 0.5);
+  assert.deepEqual(Shop.owned(u), ["s01"]);
+  assert.equal(Shop.freeAvailable(u), false);
+});
+test("mergeShop: newest resetAt wins in both argument orders and filters the union", () => {
+  const before = { start: "2026-11-02", startPoints: 100, pulls: { a: { c: "kiki-3", at: 1000, free: true } } };
+  const after = { start: "2026-11-02", startPoints: 100, resetAt: 5000, pulls: { c: { c: "s01", at: 6000, free: true } } };
+  for (const m of [Shop.mergeShop(before, after), Shop.mergeShop(after, before)]) {
+    assert.equal(m.resetAt, 5000);
+    assert.deepEqual(Shop.owned({ shop: m }), ["s01"]);
+  }
+  assert.equal(Shop.mergeShop(undefined, after).resetAt, 5000);
+  assert.equal("resetAt" in Shop.mergeShop(before, before), false);
+});

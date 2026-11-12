@@ -59,10 +59,11 @@ const Shop = (() => {
 
   const newShop = (today, lifetime) => ({ start: today, startPoints: lifetime, pulls: {} });
 
-  // All pulls as a list sorted by time. Tolerates missing shop / pulls.
+  // All pulls as a list sorted by time, ignoring any made at or before a collection reset.
+  // Tolerates missing shop / pulls.
   const pulls = user => {
-    const raw = (user.shop && user.shop.pulls) || {};
-    return Object.keys(raw).map(key => {
+    const raw = (user.shop && user.shop.pulls) || {}, resetAt = (user.shop && user.shop.resetAt) || 0;
+    return Object.keys(raw).filter(key => raw[key].at > resetAt).map(key => {
       const p = raw[key];
       const o = { key, c: p.c, at: p.at };
       if (p.free) o.free = true;
@@ -79,6 +80,10 @@ const Shop = (() => {
   };
 
   const freeAvailable = user => !!user.shop && !pulls(user).some(p => p.free);
+
+  // Empties the collection and reopens the free box. Old openings stay stored (so a device that
+  // still has them can't sync them back in) but are ignored from now on.
+  const resetShop = (user, now) => { if (user.shop) user.shop.resetAt = now; };
 
   const addPull = (user, result, free, now, rand) => {
     if (!user.shop) throw new Error("addPull: user.shop is missing");
@@ -139,16 +144,18 @@ const Shop = (() => {
   const secretsFound = user => owned(user).filter(id => { const c = byId(id); return !!c && c.tier === "secret"; });
 
   // Union of pulls by key; start/startPoints from the side with the earlier start
-  // (tie -> larger startPoints, so the result does not depend on argument order).
+  // (tie -> larger startPoints, so the result does not depend on argument order); newest resetAt wins.
   const mergeShop = (a, b) => {
     if (!a && !b) return undefined;
-    if (!a || !b) { const s = a || b; return { start: s.start, startPoints: s.startPoints, pulls: Object.assign({}, s.pulls) }; }
+    const withReset = (o, r) => { if (r) o.resetAt = r; return o; };
+    if (!a || !b) { const s = a || b; return withReset({ start: s.start, startPoints: s.startPoints, pulls: Object.assign({}, s.pulls) }, s.resetAt); }
     const first = b.start < a.start ? b
       : (b.start === a.start && (b.startPoints || 0) > (a.startPoints || 0)) ? b : a;
-    return { start: first.start, startPoints: first.startPoints, pulls: Object.assign({}, b.pulls, a.pulls) };
+    return withReset({ start: first.start, startPoints: first.startPoints, pulls: Object.assign({}, b.pulls, a.pulls) },
+      Math.max(a.resetAt || 0, b.resetAt || 0));
   };
 
   return { PRICE, REFUND, SECRET_P, DUP_P, COLLECTIONS, CHARACTERS, byId, draw,
-    newShop, pulls, owned, freeAvailable, addPull, weightPoints, balance, progress, secretsFound, mergeShop };
+    newShop, pulls, owned, freeAvailable, resetShop, addPull, weightPoints, balance, progress, secretsFound, mergeShop };
 })();
 if (typeof module !== "undefined") module.exports = Shop; else window.Shop = Shop;
