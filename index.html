@@ -609,6 +609,30 @@
   .account-bar .acc-who{font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .account-bar .acc-who b{color:var(--accent-text)}
 
+  /* ---------- First-time tour (tour.js): scrim with a cut-out + a floating bubble ---------- */
+  .tour-block{position:fixed;inset:0;z-index:90}
+  .tour-spot{position:fixed;z-index:91;border-radius:16px;pointer-events:none;
+    box-shadow:0 0 0 2px var(--accent),0 0 0 200vmax var(--scrim);transition:top .3s ease,left .3s ease,width .3s ease,height .3s ease}
+  .tour-spot.tour-none{box-shadow:0 0 0 200vmax var(--scrim)}
+  .tour-bubble{position:fixed;z-index:92;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;
+    background:var(--panel);color:var(--text);border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);padding:18px 20px 14px}
+  .tour-bubble.tour-in{animation:tour-in .22s ease both}
+  @keyframes tour-in{from{opacity:0;transform:translateY(6px)}}
+  .tour-media .logo{width:48px;height:48px;border-radius:12px;margin-bottom:12px}
+  @media (prefers-color-scheme: dark){ .tour-media .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
+  .tour-count{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 0 4px;font-variant-numeric:tabular-nums}
+  .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px}
+  .tour-body{font-size:14.5px;line-height:1.5;margin:0}
+  .tour-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px}
+  .tour-skip{margin-right:auto;min-height:44px;padding:0 6px;background:transparent;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:2px}
+  .tour-skip:hover{color:var(--text)}
+  .tour-btn{min-height:44px;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:700;border:1.5px solid transparent}
+  .tour-next{background:var(--accent);color:var(--accent-ink)}
+  .tour-next:hover{filter:brightness(1.04)}
+  .tour-back{background:transparent;color:var(--text);border-color:var(--line-strong)}
+  .tour-back:hover{background:var(--panel-2)}
+  @media (prefers-reduced-motion: reduce){ .tour-spot,.tour-bubble{transition:none;animation:none} }
+
   /* ---------- Toast ---------- */
   .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:80;
     display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
@@ -899,6 +923,7 @@
         <span><b data-i18n="insSetting">Weight-change breakdown</b><small data-i18n="insSettingHint">After each weigh-in, explain what you ate and why your weight moved.</small></span>
         <input type="checkbox" id="insightsToggle">
       </label>
+      <button class="btn btn-ghost full" id="replayTourBtn" style="margin-top:16px" data-i18n="tourReplay">Replay tour</button>
       <div class="divider"></div>
       <div class="pf" id="aboutMe"></div>
     </div>
@@ -1064,6 +1089,7 @@
 <script src="game.js"></script>
 <script src="coach.js"></script>
 <script src="shop.js"></script>
+<script src="tour.js"></script>
 <script>
 "use strict";
 const KEY = "macroTracker.v1";
@@ -1313,6 +1339,16 @@ const T = {
     mcFoodIntro:"What do you like to eat, and what do you stay away from?",
     mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
     mcSkip:"Skip", mcBack:"Back", mcNext:"Next", mcDone:"Done", mcDoneToast:"All set — your coach knows you a bit better!",
+    tourWelcomeT:"Welcome to Macro Tracker", tourWelcomeB:"Track what you eat, feed your brain, and collect characters along the way. This quick tour takes a minute.",
+    tourGoalT:"Your goal and day", tourGoalB:"Switch between Lean and Bulk targets, and move between days here.",
+    tourLogT:"Log a meal", tourLogB:"Type what you ate and how much. The app estimates the macros for you.",
+    tourTotalsT:"Your day at a glance", tourTotalsB:"Calories, protein, carbs and fat against your targets.",
+    tourBrainT:"Feed your brain", tourBrainB:"Brain-healthy foods and habits fill this bar each week and earn points.",
+    tourWeightT:"Weigh in", tourWeightB:"Log your weight here. Regular weigh-ins earn points too.",
+    tourLevelT:"Levels and badges", tourLevelB:"Your brain points grow your level and unlock badges.",
+    tourCollectT:"Your collection", tourCollectB:"Points buy mystery boxes with characters to collect. Your first box is free!",
+    tourEndT:"You're all set", tourEndB:"Replay this tour any time from here.",
+    tourNext:"Next", tourBack:"Back", tourSkip:"Skip", tourDone:"Done", tourCount:"{n} of {total}", tourReplay:"Replay tour",
     insByClaude:"Explanation written by an AI model from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
     authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
@@ -1477,6 +1513,16 @@ const T = {
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
     mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
+    tourWelcomeT:"Te damos la bienvenida a Macro Tracker", tourWelcomeB:"Registra lo que comes, cuida tu cerebro y colecciona personajes por el camino. Este tour rápido dura un minuto.",
+    tourGoalT:"Tu objetivo y tu día", tourGoalB:"Cambia entre los objetivos de Definición y Volumen, y pasa de un día a otro aquí.",
+    tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app calcula los macros por ti.",
+    tourTotalsT:"Tu día de un vistazo", tourTotalsB:"Calorías, proteínas, carbohidratos y grasas frente a tus objetivos.",
+    tourBrainT:"Alimenta tu cerebro", tourBrainB:"Los alimentos y hábitos buenos para el cerebro llenan esta barra cada semana y suman puntos.",
+    tourWeightT:"Pésate", tourWeightB:"Registra tu peso aquí. Pesarte con regularidad también suma puntos.",
+    tourLevelT:"Niveles e insignias", tourLevelB:"Tus puntos de cerebro suben tu nivel y desbloquean insignias.",
+    tourCollectT:"Tu colección", tourCollectB:"Con tus puntos compras cajas sorpresa con personajes para coleccionar. ¡La primera caja es gratis!",
+    tourEndT:"¡Todo listo!", tourEndB:"Repite este tour cuando quieras desde aquí.",
+    tourNext:"Siguiente", tourBack:"Atrás", tourSkip:"Saltar", tourDone:"Listo", tourCount:"{n} de {total}", tourReplay:"Repetir el tour",
     insByClaude:"Explicación redactada por un modelo de IA a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
     authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
@@ -2108,7 +2154,7 @@ let mcStep=0;
 function maybeShowMeetCoach(){
   const u=user();
   if(!session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
-  if(document.querySelector(".overlay.on")) return;
+  if(document.querySelector(".overlay.on") || Tour.active()) return;
   openMeetCoach();
 }
 function openMeetCoach(){ mcStep=0; renderMeetCoach(); document.getElementById("coachOverlay").classList.add("on"); }
@@ -2127,6 +2173,42 @@ function closeMeetCoach(done){
   user().coachIntroSeen=true; save();
   document.getElementById("coachOverlay").classList.remove("on");
   if(done) toast(t("mcDoneToast"));
+}
+
+/* ---------- First-time tour (engine in tour.js) ---------- */
+// key -> tourKeyT / tourKeyB copy. Steps without a tab stay on the tab the person was on.
+const TOUR_STEPS=[
+  {key:"Welcome", logo:true},
+  {key:"Goal",    tab:"tracker",    target:"#trackerView .daterow"},
+  // The whole Add food form where it fits beside the bubble, else just the food name field (phones).
+  {key:"Log",     tab:"tracker",    target:[()=>document.getElementById("fName").closest(".section"), ()=>document.getElementById("fName").closest(".field")]},
+  {key:"Totals",  tab:"tracker",    target:"#cards"},
+  {key:"Brain",   tab:"tracker",    target:"#brainCard"},
+  {key:"Weight",  tab:"metrics",    target:"#metricsView .weight-form"},
+  {key:"Level",   tab:"brain",      target:()=>document.getElementById("bvLevel").closest(".section")},
+  {key:"Collect", tab:"collection", target:"#collectionCard .shop-wallet"},
+  {key:"End",                       target:"#usersBtn"}
+];
+function startTour(){
+  if(Tour.active()) return;
+  const prevTab=curTab, logo=document.querySelector(".brand .logo").outerHTML;
+  Tour.start(TOUR_STEPS.map(s=>({target:s.target||null, tab:s.tab||prevTab, media:s.logo?logo:"",
+      title:t("tour"+s.key+"T"), body:t("tour"+s.key+"B")})), {
+    labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
+    switchTab:tab=>switchTab(tab,true),
+    inset:()=>document.getElementById("tabs").offsetHeight+16,   // the sticky tab bar (8px from the top) + 8px air
+    onEnd:()=>{
+      user().tourSeen=true; save();
+      switchTab(prevTab,true);
+      celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
+      maybeShowMeetCoach();
+    }
+  });
+}
+// Once per profile, when the app is fully up for them (after the first cloud pull when signed in) and nothing else is open.
+function maybeStartTour(){
+  if(Tour.active() || user().tourSeen || !celebrateReady || document.querySelector(".overlay.on")) return;
+  startTour();
 }
 function saveTargets(){
   const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
@@ -2613,7 +2695,7 @@ let celebrateReady=true;
 let shopReady=false;
 let celebrating=false;
 function celebrate(badgeList){
-  if(!celebrateReady || celebrating || document.getElementById("authOverlay").classList.contains("on")) return;
+  if(!celebrateReady || celebrating || Tour.active() || document.getElementById("authOverlay").classList.contains("on")) return;
   const u=user(), today=todayStr(), items=Game.newCelebrations(u,today,badgeList);
   if(!items.length) return;
   celebrating=true;
@@ -2642,10 +2724,11 @@ function renderTabs(){
   document.getElementById("collectionView").style.display = curTab==="collection" ? "" : "none";
 }
 const TABS=["tracker","metrics","brain","collection"];
-function switchTab(tab){
+// quiet: the tour passing through Metrics is not a real visit, so it does not ask the AI for a weight breakdown.
+function switchTab(tab, quiet){
   curTab = TABS.indexOf(tab)>=0 ? tab : "tracker"; // e.g. an old "fridge" tab falls back to the tracker
   renderTabs();
-  if(curTab==="metrics"){ renderMetrics(); if(!user().insight) requestAiInsight(); }
+  if(curTab==="metrics"){ renderMetrics(); if(!quiet && !user().insight) requestAiInsight(); }
   if(curTab==="brain") renderBrainView(Game.badges(user(), todayStr()));
   if(curTab==="collection") renderCollection();
 }
@@ -3397,7 +3480,7 @@ document.getElementById("goalSeg").addEventListener("click",e=>{
   user().goal=b.dataset.goal; save(); renderAll();
 });
 document.getElementById("userSelect").addEventListener("change",e=>{
-  state.activeId=e.target.value; save(); renderAll();
+  state.activeId=e.target.value; save(); renderAll(); maybeStartTour();
 });
 
 const dateInput=document.getElementById("dateInput");
@@ -3415,8 +3498,14 @@ document.getElementById("todayBtn").addEventListener("click",()=>{curDate=todayS
 
 document.getElementById("usersBtn").addEventListener("click",openUsers);
 document.getElementById("usersOverlay").addEventListener("click",e=>{
-  if(e.target.id==="usersOverlay"||e.target.hasAttribute("data-close"))
-    e.currentTarget.classList.remove("on");
+  if(e.target.id==="usersOverlay"||e.target.hasAttribute("data-close")){
+    e.currentTarget.classList.remove("on"); maybeStartTour(); // a profile switched to in here gets its first tour now
+  }
+});
+document.getElementById("replayTourBtn").addEventListener("click",()=>{
+  document.getElementById("usersOverlay").classList.remove("on");
+  document.getElementById("usersBtn").focus(); // where focus returns when the tour ends
+  startTour();
 });
 document.getElementById("userList").addEventListener("click",e=>{
   const sw=e.target.closest("[data-switch]"), del=e.target.closest("[data-userdel]");
@@ -3616,6 +3705,7 @@ function mergeUser(primary,secondary){
   return Object.assign({}, secondary, primary, {
     profile: pf.profile, profileAt: pf.profileAt,
     coachIntroSeen: !!(primary.coachIntroSeen || secondary.coachIntroSeen),
+    tourSeen: !!(primary.tourSeen || secondary.tourSeen),
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
     weights: unionWeights(primary.weights, secondary.weights),
@@ -3737,8 +3827,9 @@ function startApp(){
   shopReady=!(cloudEnabled() && session) || shopReady; // keep true after a successful login/create
   renderAll();
   updateAccountUI();
+  maybeStartTour();   // signed out: now; signed in: waits for the pull below (celebrateReady)
   if(cloudEnabled() && session){
-    pullRemote().then(maybeShowMeetCoach);   // after the pull, so an intro done on another device counts
+    pullRemote().then(()=>{ maybeStartTour(); maybeShowMeetCoach(); });   // after the pull, so an intro/tour done on another device counts
     if(!focusHooked){ window.addEventListener("focus", pullRemote); focusHooked=true; }
   }
 }
