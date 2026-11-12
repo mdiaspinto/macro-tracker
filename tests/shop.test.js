@@ -87,3 +87,9 @@ test("mergeShop: earliest start wins with its startPoints; missing sides", () =>
   assert.equal(Shop.mergeShop(undefined, undefined), undefined);
   assert.deepEqual(Shop.mergeShop(undefined, a), a);
 });
+test("weightPoints: pace means use every entry in the week, even before start; points do not", () => {
+  const w = { "2026-10-27": 100, "2026-11-02": 99.5, "2026-11-05": 99.9 };  // 11-02 is before start 11-04, inside the launch week
+  const u = U(w, "lean", { start: "2026-11-04", startPoints: 100, pulls: {} });
+  assert.equal(Shop.weightPoints(u, "2026-11-09").total, 10 + 40);   // launch-week mean 99.7 -> -0.3 % (old in-window-only mean 99.9 -> -0.1 %: no bonus)
+  assert.equal(Shop.weightPoints(u, "2026-11-09").thisWeek, 0);
+});

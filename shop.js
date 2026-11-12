@@ -111,10 +111,11 @@ const Shop = (() => {
     const range = PACE[user.goal];
     if (range) {
       const mean = ds => ds.reduce((sum, d) => sum + weights[d], 0) / ds.length;
-      for (const w of Object.keys(byWeek)) {
+      for (const w of Object.keys(allByWeek)) {
         const prev = allByWeek[addDays(w, -7)];
-        if (addDays(w, 6) >= today || !prev) continue; // week must be complete and have a previous-week entry
-        const delta = Math.round((mean(byWeek[w]) - mean(prev)) / mean(prev) * 100 * 10000) / 10000;
+        // W must start on/after the start's week, be complete, and have a previous-week entry. Means use every valid entry.
+        if (w < weekStart(start) || addDays(w, 6) >= today || !prev) continue;
+        const delta = Math.round((mean(allByWeek[w]) - mean(prev)) / mean(prev) * 100 * 10000) / 10000;
         if (delta >= range[0] && delta <= range[1]) total += 40;
       }
     }
