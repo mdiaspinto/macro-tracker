@@ -6,13 +6,15 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 # Firebase Web API key (public) — used to check the caller's ID token.
 FIREBASE_API_KEY = "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ"
-# Only these app usernames may spend the Anthropic key (sign-up is open to anyone).
+# Only these app usernames may use the AI (sign-up is open to anyone).
 ALLOWED_USERS = "mdiaspinto,leonor"
 # Pages allowed to call this Worker.
 ALLOWED_ORIGINS = "https://mdiaspinto.github.io,http://localhost:8765"
 EMAIL_DOMAIN = "macro-tracker-d8908.firebaseapp.com"
 
-# Secret, set with: npx wrangler secret put ANTHROPIC_API_KEY
+# Open-weight model on Workers AI (billed to this Cloudflare account; free daily allowance).
+[ai]
+binding = "AI"
 
 [[kv_namespaces]]
 binding = "COACH_LIMITS"

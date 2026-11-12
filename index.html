@@ -1299,7 +1299,7 @@ const T = {
     authLogin:"Log in", authCreate:"Create account", authContinueOffline:"Continue offline",
     authBadName:"Use 2–20 letters, numbers or _", authTaken:"That username is taken — log in instead.",
     dailyTotals:"Daily totals", pctTarget:"% of target",
-    insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, Claude writes the explanation from your food totals.",
+    insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, an AI model writes the explanation from your food totals.",
     insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach",
     coachNoteHead:"Your coach says", coachAsk:"Ask your coach 💬", chatTitle:"Your coach 💬", chatClose:"Close",
     chatEmpty:"Ask anything about your food, your week or your goals.", chatPh:"Type your question…", chatSend:"Send",
@@ -1335,7 +1335,7 @@ const T = {
     mcFoodIntro:"What do you like to eat, and what do you stay away from?",
     mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
     mcSkip:"Skip", mcBack:"Back", mcNext:"Next", mcDone:"Done", mcDoneToast:"All set — your coach knows you a bit better!",
-    insByClaude:"Explanation written by Claude from the numbers above.", insWriting:"Writing a detailed explanation…",
+    insByClaude:"Explanation written by an AI model from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
     authBadLogin:"Wrong username or password.", authShortPw:"Password must be at least 6 characters.",
     authTooMany:"Too many attempts — wait a few minutes and try again.",
@@ -1485,7 +1485,7 @@ const T = {
     authLogin:"Iniciar sesión", authCreate:"Crear cuenta", authContinueOffline:"Continuar sin conexión",
     authBadName:"Usa 2–20 letras, números o _", authTaken:"Ese usuario ya existe — inicia sesión.",
     dailyTotals:"Totales del día", pctTarget:"% del objetivo",
-    insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, Claude redacta la explicación a partir de tus totales.",
+    insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, un modelo de IA redacta la explicación a partir de tus totales.",
     insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach",
     coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach 💬", chatTitle:"Tu coach 💬", chatClose:"Cerrar",
     chatEmpty:"Pregunta lo que quieras sobre tu comida, tu semana o tus metas.", chatPh:"Escribe tu pregunta…", chatSend:"Enviar",
@@ -1521,7 +1521,7 @@ const T = {
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
     mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
-    insByClaude:"Explicación redactada por Claude a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
+    insByClaude:"Explicación redactada por un modelo de IA a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
     authBadLogin:"Usuario o contraseña incorrectos.", authShortPw:"La contraseña debe tener al menos 6 caracteres.",
     authTooMany:"Demasiados intentos — espera unos minutos e inténtalo de nuevo.",
@@ -2830,10 +2830,10 @@ function logWeight(){
 
 /* ========================================================================
    Weight-change breakdown. The arithmetic is done here (deterministic and
-   offline); when signed in, Claude turns these numbers into a written
-   explanation via the insights Worker (see /insights-worker).
+   offline); when signed in, an open-weight model turns these numbers into a
+   written explanation via the insights Worker (see worker/).
    ======================================================================== */
-// Cloudflare Worker that holds the Anthropic key. Empty = rule-based text only.
+// Cloudflare Worker that runs the AI model. Empty = rule-based text only.
 const INSIGHTS_URL = "https://macro-tracker-insights.macro-tracker-insights.workers.dev";
 const KCAL_PER_KG = 7700;
 let insightPending = null;

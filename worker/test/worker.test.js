@@ -5,7 +5,6 @@ import { handle } from "../src/index.js";
 const env = () => ({
   ALLOWED_ORIGINS: "https://x.test",
   ALLOWED_USERS: "mdiaspinto,leonor",
-  ANTHROPIC_API_KEY: "k",
   COACH_LIMITS: fakeKv(),
 });
 function fakeKv() {
@@ -14,15 +13,15 @@ function fakeKv() {
 }
 function fakeAi(textFor) {
   const calls = [];
-  const createMessage = async (params) => {
+  const generate = async (params) => {
     calls.push(params);
     const out = textFor ? textFor(params) : { headline: "h", summary: "s", points: ["a"], note: "n", tip: "t", reply: "r" };
-    return { stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(out) }] };
+    return { text: JSON.stringify(out), finish: "stop" };
   };
-  return { calls, createMessage };
+  return { calls, generate };
 }
 const deps = (ai, user = "mdiaspinto") => ({
-  createMessage: ai.createMessage,
+  generate: ai.generate,
   verifyToken: async (t) => (t === "good" ? user : null),
 });
 const req = (body, token = "good") =>
@@ -66,14 +65,43 @@ test("weight: profile used in place of bio", async () => {
   assert.deepEqual(c.profile, { age: 40 });
   assert.equal(c.bio, undefined);
 });
-test("model settings unchanged", async () => {
-  const ai = fakeAi();
-  await run({ kind: "note", lang: "en", summary: {} }, env(), ai);
-  const p = ai.calls[0];
-  assert.equal(p.model, "claude-haiku-5-5");
-  assert.deepEqual(p.thinking, { type: "disabled" });
-  assert.equal(p.output_config.effort, "low");
-  assert.equal(p.output_config.format.type, "json_schema");
+test("Workers AI request: Gemma 4, thinking off, strict JSON schema, system first", async () => {
+  const calls = [];
+  const e = { ...env(), AI: { run: async (model, input) => {
+    calls.push({ model, input });
+    return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ note: "n", tip: "t" }) } }] };
+  } } };
+  const r = await handle(req({ kind: "note", lang: "es", summary: {} }), e, { verifyToken: async () => "leonor" });
+  assert.deepEqual(await r.json(), { note: "n", tip: "t" });
+  const { model, input } = calls[0];
+  assert.equal(model, "@cf/google/gemma-4-26b-a4b-it");
+  assert.deepEqual(input.chat_template_kwargs, { enable_thinking: false });
+  assert.equal(input.response_format.type, "json_schema");
+  assert.equal(input.response_format.json_schema.strict, true);
+  assert.deepEqual(input.response_format.json_schema.schema.required, ["note", "tip"]);
+  assert.equal(input.max_completion_tokens, 400);
+  assert.equal(input.messages[0].role, "system");
+  assert.match(input.messages[0].content, /daily note/);
+  assert.equal(input.messages[1].role, "user");
+});
+test("truncated reply -> 502 truncated; model error -> 502 upstream; bad JSON -> 502 bad_model_output", async () => {
+  const body = { kind: "note", lang: "en", summary: {} };
+  const cases = [
+    [async () => ({ text: "{", finish: "length" }), "truncated"],
+    [async () => { throw new Error("4006: daily free allocation exceeded"); }, "upstream"],
+    [async () => ({ text: "not json", finish: "stop" }), "bad_model_output"],
+  ];
+  const errLog = console.error;
+  console.error = () => {};
+  try {
+    for (const [generate, error] of cases) {
+      const r = await handle(req(body), env(), { generate, verifyToken: async () => "leonor" });
+      assert.equal(r.status, 502);
+      assert.deepEqual(await r.json(), { error });
+    }
+  } finally {
+    console.error = errLog;
+  }
 });
 test("note returns {note, tip}; 4th same day -> 429", async () => {
   const e = env(), ai = fakeAi();
