@@ -7,13 +7,48 @@ const Coach = (() => {
   const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return fmtDate(d); };
   const eatenMeals = (user, date) => { const v = user && user.days && user.days[date]; return Array.isArray(v) ? v.filter(m => m && m.eaten === true) : []; };
   const langOf = user => (user && user.lang === "es" ? "es" : "en");
-  const NOTE_DAYS = 14, CHAT_SENT = 10;
+  const NOTE_DAYS = 14, CHAT_SENT = 10, MEMORY_MAX = 15, DECLINED_MAX = 30, FACT_LEN = 80;
+
+  // Remembered facts (profile.memory) and ones the person said no to (profile.memoryDeclined).
+  const list = v => (Array.isArray(v) ? v.filter(x => typeof x === "string" && x.trim()) : []);
+  const normFact = text => String(text == null ? "" : text).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/\s+/g, " ").trim().replace(/[\s.,;:!?…"'¡¿]+$/, "");
+  const cleanFact = text => String(text == null ? "" : text).replace(/\s+/g, " ").trim().slice(0, FACT_LEN).trim();
+  const has = (arr, text) => { const n = normFact(text); return arr.some(x => normFact(x) === n); };
+  function canSuggest(profile, text) {
+    const p = profile || {}, mem = list(p.memory);
+    return !!normFact(text) && mem.length < MEMORY_MAX && !has(mem, text) && !has(list(p.memoryDeclined), text);
+  }
+  function addMemory(profile, text) {
+    const mem = list((profile || {}).memory), fact = cleanFact(text);
+    return !fact || has(mem, fact) || mem.length >= MEMORY_MAX ? mem : mem.concat(fact);
+  }
+  function removeMemory(profile, which) {
+    const mem = list((profile || {}).memory);
+    if (typeof which === "number") return mem.filter((_, i) => i !== which);
+    const n = normFact(which);
+    return mem.filter(x => normFact(x) !== n);
+  }
+  function declineMemory(profile, text) {
+    const d = list((profile || {}).memoryDeclined), fact = cleanFact(text);
+    return !fact || has(d, fact) ? d : d.concat(fact).slice(-DECLINED_MAX);
+  }
+  // Index of the latest assistant message with a suggestion nobody has answered yet, else -1.
+  function pendingRemember(messages) {
+    const ms = Array.isArray(messages) ? messages : [];
+    for (let i = ms.length - 1; i >= 0; i--) {   // no findLastIndex: older iPhones
+      const m = ms[i];
+      if (m && m.role === "assistant" && m.remember && !m.rememberState) return i;
+    }
+    return -1;
+  }
 
   // prof defaults to user.profile; familyHistory (when false) and notes (when empty) are left out.
   function summary(user, today, prof) {
     const u = user || {}, p = Object.assign({}, prof || u.profile || {});
     if (!p.familyHistory) delete p.familyHistory;
     if (!String(p.notes || "").trim()) delete p.notes;
+    ["memory", "memoryDeclined"].forEach(k => { const l = list(p[k]); if (l.length) p[k] = l; else delete p[k]; });
     const ws = B.weekScore(u, today), lv = B.levelFor(B.lifetimePoints(u, today));
     const totals = d => {
       const ms = eatenMeals(u, d), sum = k => ms.reduce((a, m) => a + (Number(m[k]) || 0), 0);
@@ -149,7 +184,10 @@ const Coach = (() => {
       throw fail(res.status);
     }
     const remaining = typeof res.body.remaining === "number" ? res.body.remaining : null;
-    todayChat(fresh(user), today).messages.push({ role: "assistant", text: res.body.reply });
+    const msg = { role: "assistant", text: res.body.reply }, fu = fresh(user);
+    const fact = typeof res.body.remember === "string" ? cleanFact(res.body.remember) : "";
+    if (fact && canSuggest(profOf(fu) || fu.profile, fact)) msg.remember = fact;
+    todayChat(fu, today).messages.push(msg);
     left[keyOf(user, today)] = remaining;
     changed();
     return { reply: res.body.reply, remaining };
@@ -159,6 +197,6 @@ const Coach = (() => {
   const isCapped = (user, today) => capped.has(keyOf(user, today));
   const remainingFor = (user, today) => { const n = left[keyOf(user, today)]; return typeof n === "number" ? n : null; };
 
-  return { summary, mergeCoach, classify, init, noteFor, chatFor, ensureNote, send, available, isCapped, remainingFor };
+  return { summary, normFact, canSuggest, addMemory, removeMemory, declineMemory, pendingRemember, mergeCoach, classify, init, noteFor, chatFor, ensureNote, send, available, isCapped, remainingFor };
 })();
 if (typeof module !== "undefined") module.exports = Coach; else window.Coach = Coach;
