@@ -620,6 +620,7 @@
     background:var(--panel);color:var(--text);border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);padding:18px 20px 14px}
   .tour-bubble.tour-in{animation:tour-in .22s ease both}
   @keyframes tour-in{from{opacity:0;transform:translateY(6px)}}
+  .tour-media[hidden]{display:none}
   .tour-media .logo{width:48px;height:48px;border-radius:12px;margin-bottom:12px}
   @media (prefers-color-scheme: dark){ .tour-media .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
   .tour-count{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 0 4px;font-variant-numeric:tabular-nums}
@@ -1516,8 +1517,8 @@ const T = {
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
     mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
     tourWelcomeT:"Te damos la bienvenida a Macro Tracker", tourWelcomeB:"Registra lo que comes, cuida tu cerebro y colecciona personajes por el camino. Este tour rápido dura un minuto.",
-    tourGoalT:"Tu objetivo y tu día", tourGoalB:"Cambia entre los objetivos de Definición y Volumen, y pasa de un día a otro aquí.",
-    tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app calcula los macros por ti.",
+    tourGoalT:"Tu objetivo y tu día", tourGoalB:"Aquí cambias entre Definición y Volumen y pasas de un día a otro.",
+    tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app estima los macros por ti.",
     tourTotalsT:"Tu día de un vistazo", tourTotalsB:"Calorías, proteínas, carbohidratos y grasas frente a tus objetivos.",
     tourBrainT:"Alimenta tu cerebro", tourBrainB:"Los alimentos y hábitos buenos para el cerebro llenan esta barra cada semana y suman puntos.",
     tourWeightT:"Pésate", tourWeightB:"Registra tu peso aquí. Pesarte con regularidad también suma puntos.",
@@ -2198,7 +2199,8 @@ function startTour(){
       title:t("tour"+s.key+"T"), body:t("tour"+s.key+"B")})), {
     labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
     switchTab:tab=>switchTab(tab,true),
-    inset:()=>document.getElementById("tabs").offsetHeight+16,   // the sticky tab bar (8px from the top) + 8px air
+    inset:()=>{ const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // sticky tab bar + 8px air
+    fallbackFocus:()=>document.getElementById("usersBtn"),   // e.g. started from "Continue offline" or the settings modal
     onEnd:()=>{
       user().tourSeen=true; save();
       switchTab(prevTab,true);
@@ -2524,6 +2526,7 @@ function saveEdit(){
   document.getElementById("editOverlay").classList.remove("on");
   editCtx=null;
   toast(t("saved"));
+  maybeStartTour();
 }
 function deleteEdit(){
   if(!editCtx) return;
@@ -3188,7 +3191,7 @@ function openChat(){
   renderChat();
   setTimeout(()=>document.getElementById("chatInput").focus(),50);
 }
-function closeChat(){ document.getElementById("chatOverlay").classList.remove("on"); }
+function closeChat(){ document.getElementById("chatOverlay").classList.remove("on"); maybeStartTour(); }
 function renderChat(){
   if(!document.getElementById("chatOverlay").classList.contains("on")) return;
   const u=user(), today=todayStr(), msgs=Coach.chatFor(u,today), capped=Coach.isCapped(u,today), left=Coach.remainingFor(u,today);
@@ -3467,7 +3470,7 @@ document.getElementById("recentRow").addEventListener("click",e=>{
   const b=e.target.closest("[data-recent]"), m=b && recentList[+b.dataset.recent]; if(m) relogMeal(m);
 });
 document.getElementById("levelOverlay").addEventListener("click",e=>{
-  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk"){ e.currentTarget.classList.remove("on"); maybeShowMeetCoach(); }
+  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk"){ e.currentTarget.classList.remove("on"); maybeStartTour(); maybeShowMeetCoach(); }
 });
 document.getElementById("brainOverlay").addEventListener("click",e=>{
   if(e.target.id==="brainOverlay"||e.target.closest("[data-close-brain]")){ closeChipPicker(); return; }
@@ -3509,7 +3512,6 @@ document.getElementById("usersOverlay").addEventListener("click",e=>{
 });
 document.getElementById("replayTourBtn").addEventListener("click",()=>{
   document.getElementById("usersOverlay").classList.remove("on");
-  document.getElementById("usersBtn").focus(); // where focus returns when the tour ends
   startTour();
 });
 document.getElementById("userList").addEventListener("click",e=>{
@@ -3597,7 +3599,7 @@ document.getElementById("editSave").addEventListener("click",saveEdit);
 document.getElementById("editDelete").addEventListener("click",deleteEdit);
 document.getElementById("editOverlay").addEventListener("click",e=>{
   if(e.target.id==="editOverlay"||e.target.hasAttribute("data-close-edit")){
-    e.currentTarget.classList.remove("on"); editCtx=null;
+    e.currentTarget.classList.remove("on"); editCtx=null; maybeStartTour();
   }
 });
 

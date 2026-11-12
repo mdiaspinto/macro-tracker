@@ -23,7 +23,8 @@ const Tour = (() => {
   }
 
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  let st = null, raf = 0;
+  let st = null, raf = 0, ro = null;
+  const report = e => setTimeout(() => { throw e; }); // surface an app error without breaking the tour or its caller
 
   // A step's target is a selector, a function returning an element, or a list of those (largest first: the first one that
   // fits on screen beside the bubble wins, else the last). Missing or unrendered ones are skipped; none left -> centred card.
@@ -80,17 +81,18 @@ const Tour = (() => {
   function go(i) {
     const s = st.steps[i], o = st.opts, L = o.labels || {}, n = st.steps.length, last = i === n - 1;
     st.i = i; st.key = "";
-    if (s.tab && o.switchTab) o.switchTab(s.tab);
-    const b = st.bubble;
-    b.innerHTML = (s.media ? '<div class="tour-media">' + s.media + "</div>" : "") +
-      '<p class="tour-count">' + esc(L.count ? L.count(i + 1, n) : (i + 1) + " / " + n) + "</p>" +
-      '<h2 class="tour-title" id="tourTitle">' + esc(s.title) + "</h2>" +
-      '<p class="tour-body" id="tourBody">' + esc(s.body) + "</p>" +
-      '<div class="tour-actions">' +
+    if (s.tab && o.switchTab) { try { o.switchTab(s.tab); } catch (e) { report(e); } } // its target then just falls back
+    const b = st.bubble, q = c => b.querySelector(c);
+    q(".tour-media").innerHTML = s.media || "";
+    q(".tour-media").hidden = !s.media;
+    // The text sits in a live region that stays in place, so screen readers read each new step, not just "Next, button".
+    q(".tour-count").textContent = L.count ? L.count(i + 1, n) : (i + 1) + " / " + n;
+    q(".tour-title").textContent = s.title || "";
+    q(".tour-body").textContent = s.body || "";
+    q(".tour-actions").innerHTML =
       (last ? "" : '<button type="button" class="tour-skip" data-tour="skip">' + esc(L.skip || "Skip") + "</button>") +
       (i ? '<button type="button" class="tour-btn tour-back" data-tour="back">' + esc(L.back || "Back") + "</button>" : "") +
-      '<button type="button" class="tour-btn tour-next" data-tour="next">' + esc(last ? L.done || "Done" : L.next || "Next") + "</button>" +
-      "</div>";
+      '<button type="button" class="tour-btn tour-next" data-tour="next">' + esc(last ? L.done || "Done" : L.next || "Next") + "</button>";
     b.classList.remove("tour-in"); void b.offsetWidth; b.classList.add("tour-in"); // replay the entrance on every step
     layout(true, true);
     b.querySelector('[data-tour="next"]').focus({ preventScroll: true });
@@ -119,13 +121,16 @@ const Tour = (() => {
   }
 
   // steps: [{target: selector | () => Element | [those, largest first] | null, tab, title, body, media (trusted HTML)}]
-  // opts: {labels: {next, back, skip, done, count(n, total)}, switchTab(tab), onEnd(finished), inset() -> px a sticky header covers}
+  // opts: {labels: {next, back, skip, done, count(n, total)}, switchTab(tab), onEnd(finished), inset() -> px a sticky header covers,
+  //        fallbackFocus() -> element to focus at the end when the one focused at the start is gone or hidden}
   function start(steps, opts) {
     if (st || !steps || !steps.length) return false;
     const root = document.createElement("div");
     root.className = "tour";
     root.innerHTML = '<div class="tour-block"></div><div class="tour-spot"></div>' +
-      '<div class="tour-bubble" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody"></div>';
+      '<div class="tour-bubble" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">' +
+      '<div class="tour-media"></div><div class="tour-text" aria-live="polite" aria-atomic="true"><p class="tour-count"></p>' +
+      '<h2 class="tour-title" id="tourTitle"></h2><p class="tour-body" id="tourBody"></p></div><div class="tour-actions"></div></div>';
     document.body.appendChild(root);
     st = { steps, opts: opts || {}, i: 0, pick: 0, key: "", root, spot: root.children[1], bubble: root.children[2], prevFocus: document.activeElement };
     st.bubble.addEventListener("click", onClick);
@@ -135,7 +140,10 @@ const Tour = (() => {
     window.addEventListener("resize", onMove);
     window.addEventListener("orientationchange", onMove);
     window.addEventListener("scroll", onMove, true);
-    go(0);
+    // Content that grows or moves without a scroll/resize (a coach note arriving, webfonts loading) re-places the spotlight.
+    // ResizeObserver runs after layout and before paint, so re-placing right there keeps the cut-out on the target in the same frame.
+    if (typeof ResizeObserver === "function") { ro = new ResizeObserver(() => layout(false, false)); ro.observe(document.body); ro.observe(st.bubble); }
+    try { go(0); } catch (e) { report(e); end(false); return false; } // never leave a scrim without buttons
     return true;
   }
   function end(finished) {
@@ -148,10 +156,14 @@ const Tour = (() => {
     window.removeEventListener("resize", onMove);
     window.removeEventListener("orientationchange", onMove);
     window.removeEventListener("scroll", onMove, true);
+    if (ro) { ro.disconnect(); ro = null; }
     s.root.remove();
-    if (s.opts.onEnd) s.opts.onEnd(!!finished); // first, so a restored tab makes the old focus target visible again
-    const pf = s.prevFocus;
-    if (pf && pf !== document.body && pf.focus && document.contains(pf)) { try { pf.focus({ preventScroll: true }); } catch (e) {} }
+    // onEnd first, so a restored tab makes the old focus target visible again
+    if (s.opts.onEnd) { try { s.opts.onEnd(!!finished); } catch (e) { report(e); } }
+    let pf = s.prevFocus;
+    if (!pf || pf === document.body || !document.contains(pf) || pf.offsetParent === null) // e.g. a button in a now-closed dialog
+      pf = s.opts.fallbackFocus ? s.opts.fallbackFocus() : null;
+    if (pf && pf.focus) { try { pf.focus({ preventScroll: true }); } catch (e) {} }
   }
   function active() { return !!st; }
 
