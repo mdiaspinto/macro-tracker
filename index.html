@@ -385,6 +385,39 @@
   .lib-item .quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   @media(max-width:480px){ .lib-item{flex-wrap:wrap} .lib-item .lmac{order:5;width:100%;margin-left:0} }
 
+
+  /* ---------- Collection ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px}
+  .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .shop-wallet img{width:56px;height:56px;border-radius:12px;flex:none;object-fit:cover}
+  .shop-wallet .wtxt{flex:1;min-width:120px}
+  .shop-bal{font-size:24px;font-weight:800;font-stretch:87.5%}
+  .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .shop-short{margin-top:12px}
+  .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+  .shop-short .bar i{display:block;height:100%;background:var(--accent)}
+  .shop-short small{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
+  .shop-col{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .shop-col.done{border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
+  .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .shop-col .ch b{font-size:15px;font-weight:800}
+  .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:10px;overflow:hidden;background:var(--panel-2);padding:0;border:1px solid var(--line)}
+  .shop-grid button.tile{cursor:pointer}
+  .shop-grid .tile img{display:block;width:100%;height:100%;object-fit:cover}
+  .shop-grid .sil{filter:brightness(0);opacity:.12}
+  @media (prefers-color-scheme: dark){ .shop-grid .sil{filter:brightness(0) invert(1);opacity:.14} }
+  .shop-secrets{margin-top:16px}
+  .shop-secrets .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .shop-secrets .ch b{font-size:15px;font-weight:800}
+  .shop-secrets .ch span{font-size:13px;color:var(--muted)}
+  .shop-secrets .grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .shop-teaser{font-size:13.5px;color:var(--muted);text-align:center;padding:8px 0}
+  .shop-done{font-size:14px;font-weight:700;text-align:center;margin-top:12px}
+  .charview{text-align:center}
+  .charview img{width:100%;max-width:360px;border-radius:14px;display:block;margin:0 auto 12px}
+
   /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
@@ -735,6 +768,8 @@
   <!-- Metrics -->
   <div id="metricsView" style="display:none">
 
+    <div class="card" id="collectionCard"></div>
+
     <div class="section">
       <div class="head"><h2 data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
       <div class="body">
@@ -1006,6 +1041,14 @@
   </div>
 </div>
 
+<!-- Collection: large character view -->
+<div class="overlay" id="charOverlay">
+  <div class="modal charview" role="dialog" aria-modal="true" aria-labelledby="charName">
+    <div class="head"><h3 id="charName"></h3><button class="x" data-close-char aria-label="Close">×</button></div>
+    <div class="body"><img id="charImg" alt=""></div>
+  </div>
+</div>
+
 <!-- Level-up celebration -->
 <div class="overlay" id="levelOverlay">
   <div class="modal lvlup" role="dialog" aria-modal="true" aria-labelledby="lvlUpName">
@@ -1085,6 +1128,7 @@
 <script src="brain.js"></script>
 <script src="game.js"></script>
 <script src="coach.js"></script>
+<script src="shop.js"></script>
 <script>
 "use strict";
 const KEY = "macroTracker.v1";
@@ -1425,6 +1469,11 @@ const T = {
     why_mind:"Learning new things, puzzles and games that challenge you are linked to a sharper mind.",
     celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in 🧠 Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
+
+    shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
+    shopShort:"{n} more ⭐ for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
+    shopTeaser:"✨ Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"✨ Secret! ✨",
+    shopDup:"You already have {name}! +{r} ⭐ back", shopColDone:"Collection complete!", shopNice:"Nice!",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
@@ -1611,6 +1660,11 @@ const T = {
     why_mind:"Aprender cosas nuevas y hacer crucigramas o juegos que te reten está ligado a una mente más ágil.",
     celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en 🧠 Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
+
+    shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
+    shopShort:"Te faltan {n} ⭐ para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
+    shopTeaser:"✨ Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"✨ ¡Secreto! ✨",
+    shopDup:"¡Ya tienes a {name}! +{r} ⭐ de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
@@ -2747,7 +2801,105 @@ function macroSeries(){
 }
 
 /* ---- render metrics ---- */
+
+/* ---------- Collection (shop) ---------- */
+let boxBusy=false;
+function ensureShop(u){
+  if(!u.shop && celebrateReady===true){
+    const today=todayStr();
+    u.shop=Shop.newShop(today, Brain.lifetimePoints(u, today));
+    save();
+  }
+  return !!u.shop;
+}
+function shopChar(id){ return Shop.byId(id); }
+function shopName(c){ return lang()==="es" ? c.es : c.en; }
+function renderCollection(){
+  const el=document.getElementById("collectionCard"); if(!el) return;
+  const u=user(), today=todayStr();
+  const ready=ensureShop(u);
+  const owned=ready ? Shop.owned(u) : [];
+  let h='<div class="head"><h2 style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
+  // wallet
+  let bal=null, canOpen=false, free=false;
+  if(ready){
+    bal=Shop.balance(u, today, Brain.lifetimePoints(u, today));
+    free=Shop.freeAvailable(u);
+    canOpen=free || bal.balance>=Shop.PRICE;
+  }
+  h+='<div class="shop-wallet"><img src="img/box-1.webp" width="56" height="56" alt="" loading="lazy"><div class="wtxt">';
+  h+='<div class="shop-bal">'+(ready?escapeHtml(t("shopBalance",{n:bal.balance})):"…")+'</div>';
+  if(ready){
+    const b=Math.min(Brain.weekScore(u, Brain.weekStart(today)).points, bal.brain);
+    h+='<div class="shop-week">'+escapeHtml(t("shopWeek",{b:b, w:Shop.weightPoints(u, today).thisWeek}))+'</div>';
+  }
+  h+='</div><button class="btn btn-primary" data-shop-open'+((canOpen&&!boxBusy)?"":" disabled")+'>'+
+     escapeHtml(free?t("shopFree"):t("shopOpen",{p:Shop.PRICE}))+'</button></div>';
+  if(ready && !canOpen){
+    const need=Shop.PRICE-bal.balance, pct=Math.max(0,Math.min(100,Math.round(bal.balance/Shop.PRICE*100)));
+    h+='<div class="shop-short"><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+escapeHtml(t("shopShort",{n:need}))+'</small></div>';
+  }
+  // collections
+  const have={}; owned.forEach(id=>{have[id]=true;});
+  Shop.COLLECTIONS.forEach(col=>{
+    const pr=ready?Shop.progress(u, col.id):{have:0,total:6};
+    h+='<div class="shop-col'+(pr.have>=pr.total?" done":"")+'"><div class="ch"><b>'+escapeHtml(col.name)+'</b><span>'+
+       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div><div class="shop-grid">';
+    Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common").forEach(c=>{
+      if(have[c.id]) h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>';
+      else h+='<span class="tile"><img class="sil" src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="" aria-hidden="true"></span>';
+    });
+    h+='</div></div>';
+  });
+  // secrets: built only from found secrets
+  const found=ready?Shop.secretsFound(u):[];
+  h+='<div class="shop-secrets">';
+  if(found.length){
+    h+='<div class="ch"><b>'+escapeHtml(t("shopSecrets"))+'</b><span>'+escapeHtml(t("shopFound",{n:found.length}))+'</span></div><div class="grid4 shop-grid">';
+    found.forEach(id=>{ const c=shopChar(id); if(!c) return;
+      h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>'; });
+    h+='</div>';
+  } else h+='<div class="shop-teaser">'+escapeHtml(t("shopTeaser"))+'</div>';
+  h+='</div>';
+  if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
+  el.innerHTML=h;
+}
+function openBox(){
+  const u=user();
+  if(boxBusy || !ensureShop(u)) return;
+  const today=todayStr();
+  const free=Shop.freeAvailable(u);
+  if(!free && Shop.balance(u, today, Brain.lifetimePoints(u, today)).balance<Shop.PRICE){ renderCollection(); return; }
+  boxBusy=true;
+  const result=Shop.draw(Shop.owned(u), Math.random, {noDup:free});
+  Shop.addPull(u, result, free, Date.now(), Math.random);
+  save();
+  renderCollection();
+  showReveal(result, free);
+}
+/* STUB: Task 5 replaces showReveal with the box-opening reveal (and must reset boxBusy when it closes). */
+function showReveal(result, free){
+  const c=shopChar(result.id);
+  toast(c?shopName(c):"");
+  boxBusy=false;
+  renderCollection();
+}
+function openCharView(id){
+  const c=shopChar(id); if(!c || Shop.owned(user()).indexOf(id)<0) return;
+  document.getElementById("charName").textContent=shopName(c);
+  const im=document.getElementById("charImg"); im.src=c.img; im.alt=shopName(c);
+  document.getElementById("charOverlay").classList.add("on");
+}
+document.getElementById("collectionCard").addEventListener("click", e=>{
+  const o=e.target.closest("[data-shop-open]"); if(o){ if(!o.disabled) openBox(); return; }
+  const c=e.target.closest("[data-char]"); if(c) openCharView(c.dataset.char);
+});
+(function(){
+  const ov=document.getElementById("charOverlay");
+  ov.addEventListener("click", e=>{ if(e.target===ov || e.target.closest("[data-close-char]")) ov.classList.remove("on"); });
+})();
 function renderMetrics(){
+  renderCollection();
   document.getElementById("wUnit").value = weightUnit();
   if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
   renderCalChart();
@@ -3854,6 +4006,7 @@ function mergeUser(primary,secondary){
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen),
     celebrated: Object.assign({}, secondary.celebrated, primary.celebrated),
+    shop:    Shop.mergeShop(primary.shop, secondary.shop),
     coach:   Coach.mergeCoach(primary.coach, secondary.coach)
   });
 }
