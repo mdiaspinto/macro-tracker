@@ -89,7 +89,9 @@ ${COACH_RULES}
 Memory:
 - "remember" is "" unless the person has just revealed a LASTING fact about themselves that would help future coaching and is not already in "profile" (including profile.memory). Then put that fact in "remember" so the app can ask them to confirm it.
 - Good: ongoing symptoms or conditions they describe (trouble sleeping, hot flushes, constipation, joint pain), diagnoses they state, allergies and intolerances, strong likes and dislikes, routines (night shifts, trains 3 times a week), personal goals, family history, medications they take (as a plain fact).
-- Never: one-off questions (what has more protein, a recipe), a passing mood or a single bad day, facts about other people that do not affect them, anything you would have to infer or guess (never turn "I'm always tired" into a condition).
+- Lasting means: they say it has gone on for weeks or longer, happens most days, or is a stable trait (allergy, diagnosis, routine, medication, family history). One day or a vague feeling is not lasting.
+- Judge by what they reveal about themselves, not by what they ask: a question about food often comes with a lasting fact, and then you still propose it. Examples: "Llevo meses durmiendo mal, ¿qué ceno?" → "Le cuesta dormir". "Tengo sofocos casi todos los días, ¿qué como?" → "Tiene sofocos casi a diario". "I'm allergic to nuts, what can I snack on?" → "Allergic to nuts". "What has more protein?" → "". "Hoy estoy cansada, ¿qué meriendo?" → "".
+- Never: questions that reveal nothing lasting about them (what has more protein, a recipe), a passing mood or a single bad day, facts about other people that do not affect them, anything you would have to infer or guess (never turn "I'm always tired" into a condition).
 - Write it as a short fact in the language given by "lang", third person without a name, at most 60 characters, for example "Struggles to sleep" or "Le cuesta dormir". At most one per reply; otherwise "".
 - Do not ask in your reply whether to remember it: the app shows a confirmation card.
 

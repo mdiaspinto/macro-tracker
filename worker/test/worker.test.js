@@ -318,9 +318,10 @@ test("memory rules live in the chat prompt only", async () => {
   await run({ kind: "weight", lang: "en", facts: { a: 1 } }, env(), ai);
   const [note, chat, weight] = ai.calls;
   assert.match(chat.system, /remember/);
-  assert.match(chat.system, /one-off/);
+  assert.match(chat.system, /reveal nothing lasting/);
+  assert.match(chat.system, /not by what they ask/);
   assert.doesNotMatch(chat.system, /memoryDeclined|declined/i);
   assert.match(chat.system, /60 characters/);
-  assert.doesNotMatch(note.system, /one-off|memoryDeclined/);
-  assert.doesNotMatch(weight.system, /one-off|memoryDeclined/);
+  assert.doesNotMatch(note.system, /reveal nothing lasting|memoryDeclined/);
+  assert.doesNotMatch(weight.system, /reveal nothing lasting|memoryDeclined/);
 });
