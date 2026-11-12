@@ -221,9 +221,11 @@ test("pendingRemember: index of the latest unanswered suggestion only", () => {
     { role: "assistant", text: "a", remember: "One" },
     { role: "user", text: "q" },
     { role: "assistant", text: "b", remember: "Two" },
-    { role: "assistant", text: "c", remember: "Three", rememberState: "saved" },
   ];
   assert.equal(Coach.pendingRemember(ms), 2);
+  assert.equal(Coach.pendingRemember(ms.slice(0, 3)), 2);
+  // answering the latest must not revive an older unanswered one
+  assert.equal(Coach.pendingRemember([{ role: "assistant", remember: "Old" }, { role: "assistant", remember: "New", rememberState: "declined" }]), -1);
   assert.equal(Coach.pendingRemember([{ role: "assistant", text: "x" }]), -1);
   assert.equal(Coach.pendingRemember(undefined), -1);
 });

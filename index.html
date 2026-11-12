@@ -250,6 +250,13 @@
   .chat-msg.typing span:nth-child(2){animation-delay:.2s}
   .chat-msg.typing span:nth-child(3){animation-delay:.4s}
   @keyframes chatDot{0%,80%,100%{opacity:.3}40%{opacity:1}}
+  .mem-card{align-self:flex-start;width:min(100%,360px);margin-top:-2px;padding:12px;border-radius:16px;background:var(--panel);border:1px solid var(--line-strong)}
+  .mem-card p{margin:0 0 8px;font-size:14px;font-weight:700}
+  .mem-card input{width:100%;min-height:44px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line-strong);background:var(--panel);color:var(--text);font:inherit;font-size:16px}
+  .mem-card input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+  .mem-actions{display:flex;gap:8px;margin-top:10px}
+  .mem-actions .btn{flex:1;justify-content:center;min-height:44px}
+  .mem-note{align-self:flex-start;font-size:13px;color:var(--muted);padding:0 6px;margin-top:-4px}
   .chat-status{padding:0 16px;font-size:14.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .chat-status:empty{display:none}
   .chat-status .err{color:var(--over)}
@@ -556,6 +563,11 @@
   /* ---------- About me / Meet your coach ---------- */
   .pf-title{font-family:var(--font-display);font-size:17px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px}
   .pf-hint{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 4px}
+  .mem-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .mem-list li{display:flex;align-items:center;gap:8px;padding:2px 4px 2px 12px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);font-size:14.5px;line-height:1.4}
+  .mem-list li span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .mem-list button{flex:none;width:44px;height:44px;border-radius:12px;background:transparent;color:var(--muted);font-size:22px;line-height:1}
+  .mem-list button:hover{color:var(--text);background:var(--panel)}
   .pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
   .pf .field input,.pf .field select{min-height:44px}
   .pf .field textarea{resize:vertical;line-height:1.5;min-height:76px}
@@ -1241,6 +1253,7 @@ function ensureProfile(u){
   const p = Object.assign({age:null, sex:"", heightCm:null, activity:"", goals:[], likes:"", avoids:"",
     familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||""), coachOn:true}, u.profile);
   if(!Array.isArray(p.goals)) p.goals = Object.values(p.goals||{});
+  ["memory","memoryDeclined"].forEach(k=>{ if(!Array.isArray(p[k])) p[k] = Object.values(p[k]||{}); });   // Firebase drops empty arrays
   return u.profile = p;
 }
 function profile(u){ return ensureProfile(u||user()); }
@@ -1311,6 +1324,9 @@ const T = {
     coachNoteHead:"Your coach says", coachAsk:"Ask your coach 💬", chatTitle:"Your coach 💬", chatClose:"Close",
     chatEmpty:"Ask anything about your food, your week or your goals.", chatPh:"Type your question…", chatSend:"Send",
     chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow! 👋",
+    memAsk:"Remember this for next time?", memYes:"Remember", memNo:"No thanks", memSaved:"Saved to About me", memNotSaved:"Not saved",
+    memAdded:"Added to About me", memTitle:"What your coach remembers", memRemove:"Remove", memFact:"Fact to remember",
+    memEmpty:"Nothing yet — when something in a chat seems worth remembering, your coach will ask first.",
     chatError:"Your coach couldn't answer just now.", chatRetry:"Try again", insEmpty:"Log at least two weigh-ins to see what drove the change.",
     insGained:"You gained {kg} in {days} days", insLost:"You lost {kg} in {days} days", insSame:"Your weight held steady over {days} days",
     insStatAte:"Ate / day", insStatMaint:"Maintenance", insStatExpected:"Expected from food", insStatActual:"Actual change",
@@ -1485,6 +1501,9 @@ const T = {
     coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach 💬", chatTitle:"Tu coach 💬", chatClose:"Cerrar",
     chatEmpty:"Pregunta lo que quieras sobre tu comida, tu semana o tus metas.", chatPh:"Escribe tu pregunta…", chatSend:"Enviar",
     chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana! 👋",
+    memAsk:"¿Lo recuerdo para la próxima vez?", memYes:"Recordar", memNo:"No, gracias", memSaved:"Guardado en Sobre mí", memNotSaved:"No guardado",
+    memAdded:"Añadido a Sobre mí", memTitle:"Lo que tu coach recuerda", memRemove:"Quitar", memFact:"Dato para recordar",
+    memEmpty:"Todavía nada — cuando algo de un chat valga la pena recordar, tu coach te preguntará primero.",
     chatError:"Tu coach no pudo responder ahora.", chatRetry:"Intentar de nuevo", insEmpty:"Registra al menos dos pesajes para ver qué causó el cambio.",
     insGained:"Subiste {kg} en {days} días", insLost:"Bajaste {kg} en {days} días", insSame:"Tu peso se mantuvo estable en {days} días",
     insStatAte:"Comido / día", insStatMaint:"Mantenimiento", insStatExpected:"Esperado por comida", insStatActual:"Cambio real",
@@ -2112,8 +2131,22 @@ function renderProfileForm(){
   document.getElementById("aboutMe").innerHTML = `<h3 class="pf-title">${t("aboutMe")}</h3><p class="pf-hint">${t("aboutMeHint")}</p>
     <label class="setting-row"><span><b>${t("pfCoachOn")}</b><small>${t("pfCoachOnHint")}</small></span>
       <input type="checkbox" data-pf="coachOn" ${profile().coachOn!==false?"checked":""}></label>`
-    + ["basics","goals","food","more"].map(profileFields).join("");
+    + ["basics","goals","food","more"].map(profileFields).join("")
+    + `<h3 class="pf-title" style="margin-top:24px">${t("memTitle")}</h3><div id="pfMemory"></div>`;
+  renderMemoryList();
 }
+function renderMemoryList(){
+  const box=document.getElementById("pfMemory"); if(!box) return;
+  const mem=profile().memory;
+  box.innerHTML = mem.length
+    ? `<ul class="mem-list">${mem.map((f,i)=>`<li><span>${escapeHtml(f)}</span><button type="button" data-mem-del="${i}" aria-label="${escapeAttr(t("memRemove"))}">×</button></li>`).join("")}</ul>`
+    : `<p class="pf-hint">${t("memEmpty")}</p>`;
+}
+document.getElementById("aboutMe").addEventListener("click",e=>{
+  const b=e.target.closest("[data-mem-del]"); if(!b) return;
+  saveProfile({memory:Coach.removeMemory(profile(), Number(b.dataset.memDel))}, true);
+  renderMemoryList();
+});
 // Save one field at a time (like the old bio box); one "Saved" toast per burst of edits.
 // A change to a field the weight breakdown uses drops the saved one; the next Metrics visit / weigh-in redoes it.
 let profileTimer;
@@ -3196,8 +3229,10 @@ function renderChat(){
   if(!document.getElementById("chatOverlay").classList.contains("on")) return;
   const u=user(), today=todayStr(), msgs=Coach.chatFor(u,today), capped=Coach.isCapped(u,today), left=Coach.remainingFor(u,today);
   const log=document.getElementById("chatLog");
+  const old=document.getElementById("memInput"), kept=old ? old.value : null;   // keep a half-edited fact across re-renders
+  const pending=Coach.pendingRemember(msgs);
   log.innerHTML = (msgs.length ? "" : `<p class="chat-empty">${t("chatEmpty")}</p>`)
-    + msgs.map(m=>`<div class="chat-msg ${m.role==="assistant" ? "bot" : "me"}">${escapeHtml(m.text)}</div>`).join("")
+    + msgs.map((m,i)=>`<div class="chat-msg ${m.role==="assistant" ? "bot" : "me"}">${escapeHtml(m.text)}</div>`+memoryCard(m,i,pending,kept)).join("")
     + (chatWaiting ? `<div class="chat-msg bot typing" role="status" aria-label="${escapeAttr(t("chatTyping"))}"><span></span><span></span><span></span></div>` : "");
   log.scrollTop=log.scrollHeight;
   document.getElementById("chatStatus").innerHTML = capped ? `<span>${t("chatCapped")}</span>`
@@ -3205,6 +3240,24 @@ function renderChat(){
     : left!=null && left<=5 ? `<span>${t("chatLeft",{n:left})}</span>` : "";
   document.getElementById("chatInput").disabled=capped;
   document.getElementById("chatSend").disabled=capped || chatWaiting;
+}
+// "Remember this?" card under the latest unanswered suggestion; answered ones collapse to a one-line note.
+function memoryCard(m,i,pending,kept){
+  if(m.role!=="assistant" || !m.remember) return "";
+  if(m.rememberState) return `<div class="mem-note">${t(m.rememberState==="saved" ? "memSaved" : "memNotSaved")}</div>`;
+  if(i!==pending || !Coach.canSuggest(profile(), m.remember)) return "";
+  return `<div class="mem-card"><p>${t("memAsk")}</p>
+    <input id="memInput" maxlength="80" autocomplete="off" aria-label="${escapeAttr(t("memFact"))}" value="${escapeAttr(kept!=null ? kept : m.remember)}">
+    <div class="mem-actions"><button class="btn btn-primary" data-mem-yes="${i}">${t("memYes")}</button><button class="btn btn-ghost" data-mem-no="${i}">${t("memNo")}</button></div></div>`;
+}
+function answerMemory(i, yes){
+  const u=user(), msg=Coach.chatFor(u,todayStr())[i]; if(!msg || msg.rememberState) return;
+  const p=profile(u), inp=document.getElementById("memInput"), fact=(inp && inp.value.trim()) || msg.remember;
+  if(yes) saveProfile({memory:Coach.addMemory(p,fact)}, true);
+  else saveProfile({memoryDeclined:Coach.declineMemory(p,msg.remember)}, true);
+  msg.rememberState = yes ? "saved" : "declined";
+  save(); renderChat(); renderMemoryList();
+  if(yes) toast(t("memAdded"));
 }
 // text = new question; no text = retry the unanswered history.
 async function sendChat(text){
@@ -3223,6 +3276,8 @@ document.getElementById("chatForm").addEventListener("submit",e=>{
 document.getElementById("chatOverlay").addEventListener("click",e=>{
   if(e.target.id==="chatOverlay"||e.target.closest("[data-close-chat]")){ closeChat(); return; }
   if(e.target.closest("[data-chat-retry]")) sendChat();
+  const y=e.target.closest("[data-mem-yes]"), n=e.target.closest("[data-mem-no]");
+  if(y) answerMemory(Number(y.dataset.memYes), true); else if(n) answerMemory(Number(n.dataset.memNo), false);
 });
 
 /* ---- the chart renderer ---- */

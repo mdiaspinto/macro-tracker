@@ -33,12 +33,12 @@ const Coach = (() => {
     const d = list((profile || {}).memoryDeclined), fact = cleanFact(text);
     return !fact || has(d, fact) ? d : d.concat(fact).slice(-DECLINED_MAX);
   }
-  // Index of the latest assistant message with a suggestion nobody has answered yet, else -1.
+  // Index of the latest suggestion if nobody has answered it yet, else -1 (older suggestions are never revived).
   function pendingRemember(messages) {
     const ms = Array.isArray(messages) ? messages : [];
     for (let i = ms.length - 1; i >= 0; i--) {   // no findLastIndex: older iPhones
       const m = ms[i];
-      if (m && m.role === "assistant" && m.remember && !m.rememberState) return i;
+      if (m && m.role === "assistant" && m.remember) return m.rememberState ? -1 : i;
     }
     return -1;
   }
