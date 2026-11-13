@@ -41,9 +41,9 @@ const Game = (() => {
   }
 
   const BADGES = [
-    ["firstLog", "🌟"], ["streak7", "🔥"], ["streak30", "🏅"], ["fishWeek", "🐟"], ["fullBrain", "🧠"], ["cleanWeek", "🧼"],
-    ["strongWeek", "🏋️"], ["berryLover", "🫐"], ["greenMachine", "🥬"], ["socialButterfly", "🦋"], ["macroMaster", "🎯"],
-  ].map(([id, emoji]) => ({ id, emoji })).concat(B.LEVELS.slice(1).map(l => ({ id: "level:" + l.id, emoji: l.emoji })));
+    ["firstLog", "star"], ["streak7", "flame"], ["streak30", "flame"], ["fishWeek", "fish"], ["fullBrain", "brain-circuit"], ["cleanWeek", "shield-check"],
+    ["strongWeek", "dumbbell"], ["berryLover", "cherry"], ["greenMachine", "salad"], ["socialButterfly", "heart-handshake"], ["macroMaster", "target"],
+  ].map(([id, icon]) => ({ id, icon })).concat(B.LEVELS.slice(1).map(l => ({ id: "level:" + l.id, icon: l.icon })));
 
   // Mon-Sun weekScores from the first week with any data through today's week (computed once per call).
   function weekScores(user, today) {

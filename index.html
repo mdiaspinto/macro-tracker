@@ -180,6 +180,9 @@
   .br-sub{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4}
   .br-level{flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 9px;border-radius:999px;
     border:2px solid var(--brain);background:color-mix(in srgb,var(--brain) 14%,var(--panel));font-size:14px;font-weight:800}
+  .ic{width:1em;height:1em;display:inline-block;vertical-align:-.125em;flex:none}
+  .streak{gap:4px}
+  .br-ask .ic{margin-right:6px}
   .br-level .em{font-size:18px;line-height:1}
   .br-meter{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
   .br-bar{flex:1;height:24px;border:2px solid var(--ink);border-radius:999px;background:var(--panel-2);overflow:hidden}
@@ -989,7 +992,7 @@
 <!-- Coach chat (bottom sheet) -->
 <div class="overlay sheet" id="chatOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
-    <div class="head"><h3 id="chatTitle" data-i18n="chatTitle">Your coach 💬</h3><button class="x" data-close-chat data-i18n-title="chatClose">×</button></div>
+    <div class="head"><h3 id="chatTitle" data-i18n="chatTitle">Your coach</h3><button class="x" data-close-chat data-i18n-title="chatClose">×</button></div>
     <div class="chat-log" id="chatLog" aria-live="polite"></div>
     <div class="chat-status" id="chatStatus"></div>
     <form class="chat-form" id="chatForm">
@@ -1002,7 +1005,7 @@
 <!-- Meet your coach (one-time, 3 steps) -->
 <div class="overlay" id="coachOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
-    <div class="head"><h3 id="mcTitle" data-i18n="mcTitle">Meet your coach 👋</h3></div>
+    <div class="head"><h3 id="mcTitle" data-i18n="mcTitle">Meet your coach</h3></div>
     <div class="body pf" id="mcBody"></div>
   </div>
 </div>
@@ -1028,7 +1031,7 @@
 <div class="overlay" id="levelOverlay">
   <div class="modal lvlup" role="dialog" aria-modal="true" aria-labelledby="lvlUpName">
     <div class="body">
-      <div class="lvlup-em" id="lvlUpEmoji" aria-hidden="true"></div>
+      <div class="lvlup-em" id="lvlUpIcon" aria-hidden="true"></div>
       <p class="lvlup-kicker" data-i18n="lvlUpTitle">Level up!</p>
       <h3 id="lvlUpName"></h3>
       <p class="lvlup-msg" data-i18n="lvlUpMsg"></p>
@@ -1100,6 +1103,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="icons.js"></script>
 <script src="brain.js"></script>
 <script src="game.js"></script>
 <script src="coach.js"></script>
@@ -1107,6 +1111,7 @@
 <script src="tour.js"></script>
 <script>
 "use strict";
+document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
 const KEY = "macroTracker.v1";
 const CAL = (p,c,f)=> p*4 + c*4 + f*9;
 const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
@@ -1296,7 +1301,7 @@ const T = {
     suggestIntro:"Built from your foods plus common foods, to fill what's left today. Pick what to add.",
     noFoodsToSuggest:"You don't have any saved foods yet. Log a few foods and they'll show up here as suggestions.",
     addSomeFoods:"Add a food",
-    targetsMet:"You've already hit today's targets 🎉",
+    targetsMet:"You've already hit today's targets",
     noGoodSuggestion:"Your saved foods can't get closer to today's targets right now.",
     planAdds:"This plan adds", stillLeft:"Still left after", addAllWhatif:"Add all as what-if",
     addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added",
@@ -1321,9 +1326,9 @@ const T = {
     dailyTotals:"Daily totals", pctTarget:"% of target",
     insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, an AI model writes the explanation from your food totals.",
     insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach",
-    coachNoteHead:"Your coach says", coachAsk:"Ask your coach 💬", chatTitle:"Your coach 💬", chatClose:"Close",
+    coachNoteHead:"Your coach says", coachAsk:"Ask your coach", chatTitle:"Your coach", chatClose:"Close",
     chatEmpty:"Ask anything about your food, your week or your goals.", chatPh:"Type your question…", chatSend:"Send",
-    chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow! 👋",
+    chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow!",
     memAsk:"Remember this for next time?", memYes:"Remember", memNo:"No thanks", memSaved:"Saved to About me", memNotSaved:"Not saved",
     memAdded:"Added to About me", memDup:"Already in About me", memFull:"About me is full (15) — remove one first", memTitle:"What your coach remembers", memRemove:"Remove", memFact:"Fact to remember",
     memEmpty:"Nothing yet — when something in a chat seems worth remembering, your coach will ask first.",
@@ -1353,7 +1358,7 @@ const T = {
     pfCoachOn:"AI coach", pfCoachOnHint:"Daily tip and chat. Your profile is shared with the coach only when this is on.",
     pfNotes:"Anything else your coach should know", pfNotesPh:"e.g. menopausal, walk every morning, night shifts",
     profileSaved:"Saved ✓",
-    mcTitle:"Meet your coach 👋", mcStep:"Step {n} of 3",
+    mcTitle:"Meet your coach", mcStep:"Step {n} of 3",
     mcIntro:"Your coach gives you a short tip each day and answers your questions about food and habits linked to a healthier brain. Three quick questions so it gets to know you.",
     mcFoodIntro:"What do you like to eat, and what do you stay away from?",
     mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
@@ -1388,8 +1393,8 @@ const T = {
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
     statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
     targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
-    brainTitle:"🧠 Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
-    brainNext:"{n} more {emoji} this week", brainFull:"Every brain goal met this week! 🎉",
+    brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
+    brainNext:"{name}: {n} more this week", brainFull:"Every brain goal met this week!",
     brainHabits:"Habits · {day}", brainIconLabel:"{name}: {n} of {target} this week",
     brainEditFor:"Brain foods in {name}", brainNone:"none yet",
     brainPickHint:"Tap to add or remove. Changes save right away.", brainLimitHead:"Go easy on", brainDone:"Done",
@@ -1401,9 +1406,9 @@ const T = {
     hab_strength:"Strength", hab_walk:"Walk", hab_sleep:"Sleep 7h", hab_social:"People", hab_mind:"Mind",
     tag_sweets:"sweets", tag_fried:"fried", tag_redMeat:"red meat", tag_butter:"butter", tag_cheese:"cheese",
     tabBrain:"Brain", streakDays:"{n}-day streak", streakDay1:"1-day streak",
-    brainStar:"⭐ Macro star · {day}: calories and protein on target",
-    bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {emoji} {level}", bvTop:"You reached the top level! 🏆",
-    bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a 🔥 streak.",
+    brainStar:"Macro star · {day}: calories and protein on target",
+    bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {level}", bvTop:"You reached the top level!",
+    bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a streak.",
     bvWeeksHead:"Last 8 weeks", bvWeeksHint:"How full your brain bar got", bvWeekLabel:"Week of {date}: {pct}%",
     bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned", bvEarned:"Earned {date}", bvEarnedWeek:"Week of {date}",
     bvWhyHead:"Why it matters", bvWhyNote:"These are links found in research, not promises, and not medical advice.",
@@ -1411,11 +1416,11 @@ const T = {
     badge_cleanWeek:"Clean week", badge_strongWeek:"Strong week", badge_berryLover:"Berry lover", badge_greenMachine:"Green machine",
     badge_socialButterfly:"Social butterfly", badge_macroMaster:"Macro master",
     badgeHint_firstLog:"Log your first meal", badgeHint_streak7:"Log meals 7 days in a row", badgeHint_streak30:"Log meals 30 days in a row",
-    badgeHint_fishWeek:"Hit your 🐟 target in a week", badgeHint_fullBrain:"Fill your brain bar to 100% in a week",
+    badgeHint_fishWeek:"Hit your fish target in a week", badgeHint_fullBrain:"Fill your brain bar to 100% in a week",
     badgeHint_cleanWeek:"Log 7+ meals in a week and go easy on sweets, fried food, red meat, butter and cheese",
-    badgeHint_strongWeek:"Do strength training twice in a week", badgeHint_berryLover:"Hit your 🫐 target in 4 weeks",
-    badgeHint_greenMachine:"Hit your 🥬 target in 4 weeks", badgeHint_socialButterfly:"Hit your 👥 target in 4 weeks",
-    badgeHint_macroMaster:"Earn a ⭐ macro star 7 days in a row", badgeHint_level:"Reach {n} brain points",
+    badgeHint_strongWeek:"Do strength training twice in a week", badgeHint_berryLover:"Hit your berries target in 4 weeks",
+    badgeHint_greenMachine:"Hit your greens target in 4 weeks", badgeHint_socialButterfly:"Hit your social target in 4 weeks",
+    badgeHint_macroMaster:"Earn a macro star 7 days in a row", badgeHint_level:"Reach {n} brain points",
     why_greens:"Leafy greens are linked to slower memory decline as we age.",
     why_veg:"Eating plenty of vegetables is linked to a healthier brain over the years.",
     why_berries:"Berries are linked to better memory.",
@@ -1429,7 +1434,7 @@ const T = {
     why_sleep:"Sleeping 7 hours or more is linked to better memory.",
     why_social:"Time with friends and family is linked to a sharper mind as we age.",
     why_mind:"Learning new things, puzzles and games that challenge you are linked to a sharper mind.",
-    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in 🧠 Brain",
+    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
 
     shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
@@ -1473,7 +1478,7 @@ const T = {
     suggestIntro:"Con tus alimentos y alimentos comunes, para completar lo que falta hoy. Elige qué agregar.",
     noFoodsToSuggest:"Todavía no tienes alimentos guardados. Registra algunos y aparecerán aquí como sugerencias.",
     addSomeFoods:"Agregar un alimento",
-    targetsMet:"¡Ya alcanzaste los objetivos de hoy! 🎉",
+    targetsMet:"¡Ya alcanzaste los objetivos de hoy!",
     noGoodSuggestion:"Tus alimentos guardados no pueden acercarse más a los objetivos de hoy por ahora.",
     planAdds:"Este plan agrega", stillLeft:"Todavía falta", addAllWhatif:"Agregar todo como simulación",
     addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada",
@@ -1498,9 +1503,9 @@ const T = {
     dailyTotals:"Totales del día", pctTarget:"% del objetivo",
     insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, un modelo de IA redacta la explicación a partir de tus totales.",
     insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach",
-    coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach 💬", chatTitle:"Tu coach 💬", chatClose:"Cerrar",
+    coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach", chatTitle:"Tu coach", chatClose:"Cerrar",
     chatEmpty:"Pregunta lo que quieras sobre tu comida, tu semana o tus metas.", chatPh:"Escribe tu pregunta…", chatSend:"Enviar",
-    chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana! 👋",
+    chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana!",
     memAsk:"¿Lo recuerdo para la próxima vez?", memYes:"Recordar", memNo:"No, gracias", memSaved:"Guardado en Sobre mí", memNotSaved:"No guardado",
     memAdded:"Añadido a Sobre mí", memDup:"Ya está en Sobre mí", memFull:"Sobre mí está lleno (15): quita uno primero", memTitle:"Lo que tu coach recuerda", memRemove:"Quitar", memFact:"Dato para recordar",
     memEmpty:"Todavía nada — cuando algo de un chat valga la pena recordar, tu coach te preguntará primero.",
@@ -1530,7 +1535,7 @@ const T = {
     pfCoachOn:"Coach con IA", pfCoachOnHint:"Consejo diario y chat. Tu perfil solo se comparte con el coach cuando esto está activado.",
     pfNotes:"Algo más que tu coach deba saber", pfNotesPh:"p. ej. menopausia, camino cada mañana, turnos de noche",
     profileSaved:"Guardado ✓",
-    mcTitle:"Conoce a tu coach 👋", mcStep:"Paso {n} de 3",
+    mcTitle:"Conoce a tu coach", mcStep:"Paso {n} de 3",
     mcIntro:"Tu coach te da un consejo corto cada día y responde tus preguntas sobre comida y hábitos ligados a un cerebro más sano. Tres preguntas rápidas para que te conozca.",
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
@@ -1565,8 +1570,8 @@ const T = {
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
     statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
     targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
-    brainTitle:"🧠 Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
-    brainNext:"Te faltan {n} {emoji} esta semana", brainFull:"¡Cumpliste todas las metas de la semana! 🎉",
+    brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
+    brainNext:"{name}: {n} más esta semana", brainFull:"¡Cumpliste todas las metas de la semana!",
     brainHabits:"Hábitos · {day}", brainIconLabel:"{name}: {n} de {target} esta semana",
     brainEditFor:"Comida para el cerebro en {name}", brainNone:"nada todavía",
     brainPickHint:"Toca para agregar o quitar. Se guarda al instante.", brainLimitHead:"Con moderación", brainDone:"Listo",
@@ -1578,9 +1583,9 @@ const T = {
     hab_strength:"Fuerza", hab_walk:"Caminar", hab_sleep:"Dormir 7h", hab_social:"Gente", hab_mind:"Mente",
     tag_sweets:"dulces", tag_fried:"fritos", tag_redMeat:"carne roja", tag_butter:"mantequilla", tag_cheese:"queso",
     tabBrain:"Cerebro", streakDays:"Racha de {n} días", streakDay1:"Racha de 1 día",
-    brainStar:"⭐ Estrella de macros · {day}: calorías y proteína en su punto",
-    bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"Te faltan {n} puntos para {emoji} {level}", bvTop:"¡Llegaste al nivel más alto! 🏆",
-    bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu 🔥 racha.",
+    brainStar:"Estrella de macros · {day}: calorías y proteína en su punto",
+    bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"{n} puntos para {level}", bvTop:"¡Llegaste al nivel más alto!",
+    bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu racha.",
     bvWeeksHead:"Últimas 8 semanas", bvWeeksHint:"Cuánto llenaste tu barra del cerebro", bvWeekLabel:"Semana del {date}: {pct}%",
     bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas", bvEarned:"Conseguida el {date}", bvEarnedWeek:"Semana del {date}",
     bvWhyHead:"Por qué importa", bvWhyNote:"Son relaciones que ha encontrado la investigación, no promesas ni consejo médico.",
@@ -1588,11 +1593,11 @@ const T = {
     badge_cleanWeek:"Semana limpia", badge_strongWeek:"Semana fuerte", badge_berryLover:"Amor por los frutos rojos", badge_greenMachine:"Máquina verde",
     badge_socialButterfly:"Mariposa social", badge_macroMaster:"Maestría en macros",
     badgeHint_firstLog:"Registra tu primera comida", badgeHint_streak7:"Registra comidas 7 días seguidos", badgeHint_streak30:"Registra comidas 30 días seguidos",
-    badgeHint_fishWeek:"Cumple tu meta de 🐟 en una semana", badgeHint_fullBrain:"Llena tu barra del cerebro al 100% en una semana",
+    badgeHint_fishWeek:"Cumple tu meta de pescado en una semana", badgeHint_fullBrain:"Llena tu barra del cerebro al 100% en una semana",
     badgeHint_cleanWeek:"Registra 7+ comidas en una semana con poco dulce, frito, carne roja, mantequilla y queso",
-    badgeHint_strongWeek:"Haz ejercicio de fuerza 2 veces en una semana", badgeHint_berryLover:"Cumple tu meta de 🫐 en 4 semanas",
-    badgeHint_greenMachine:"Cumple tu meta de 🥬 en 4 semanas", badgeHint_socialButterfly:"Cumple tu meta de 👥 en 4 semanas",
-    badgeHint_macroMaster:"Consigue una ⭐ estrella de macros 7 días seguidos", badgeHint_level:"Llega a {n} puntos de cerebro",
+    badgeHint_strongWeek:"Haz ejercicio de fuerza 2 veces en una semana", badgeHint_berryLover:"Cumple tu meta de frutos rojos en 4 semanas",
+    badgeHint_greenMachine:"Cumple tu meta de hojas verdes en 4 semanas", badgeHint_socialButterfly:"Cumple tu meta de gente en 4 semanas",
+    badgeHint_macroMaster:"Consigue una estrella de macros 7 días seguidos", badgeHint_level:"Llega a {n} puntos de cerebro",
     why_greens:"Las hojas verdes están ligadas a una pérdida de memoria más lenta con la edad.",
     why_veg:"Comer muchas verduras está ligado a un cerebro más sano con los años.",
     why_berries:"Los frutos rojos están ligados a una mejor memoria.",
@@ -1606,7 +1611,7 @@ const T = {
     why_sleep:"Dormir 7 horas o más está ligado a una mejor memoria.",
     why_social:"Pasar tiempo con amigos y familia está ligado a una mente más ágil con la edad.",
     why_mind:"Aprender cosas nuevas y hacer crucigramas o juegos que te reten está ligado a una mente más ágil.",
-    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en 🧠 Cerebro",
+    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
 
     shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
@@ -1956,8 +1961,8 @@ function setMealBrain(mealId,tags){
 /* ---------- Brain card, meal chips, Recent row ---------- */
 const BRAIN_FOODS = Brain.CATEGORIES.filter(c=>c.kind==="food").map(c=>c.id).concat("oilyFish");
 const LIMITS = Object.keys(Brain.LIMIT_TAGS);
-const brainEmoji = id => id==="oilyFish" ? "🐟" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).emoji || "";
-const foodEmojis = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>c.emoji).join("");
+const catIcon = id => Icons.svg(id==="oilyFish" ? "fish" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).icon);
+const foodIcons = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>Icons.svg(c.icon)).join("");
 let lastBrainBar = 0;
 function renderBrainCard(){
   const u=user(), ws=Brain.weekScore(u,curDate), lv=Brain.levelFor(Brain.lifetimePoints(u,todayStr())).level;
@@ -1966,17 +1971,17 @@ function renderBrainCard(){
     const f=ws.fill[c.id], fp=Math.round(f*100);
     const lab=escapeAttr(t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target}));
     return `<span class="br-ic${f===1?" full":""}" role="img" aria-label="${lab}" title="${lab}"
-      style="background:linear-gradient(to top,color-mix(in srgb,var(--brain) 30%,transparent) ${fp}%,transparent ${fp}%)"><span aria-hidden="true" style="opacity:${(.35+.65*f).toFixed(2)}">${c.emoji}</span></span>`;
+      style="background:linear-gradient(to top,color-mix(in srgb,var(--brain) 30%,transparent) ${fp}%,transparent ${fp}%)"><span aria-hidden="true" style="opacity:${(.35+.65*f).toFixed(2)}">${Icons.svg(c.icon)}</span></span>`;
   }).join("");
   const habits=Brain.CATEGORIES.filter(c=>c.kind==="habit").map(c=>
-    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(t("cat_"+c.id))}"><span class="em" aria-hidden="true">${c.emoji}</span>${t("hab_"+c.id)}</button>`).join("");
-  const next = ws.nextHint ? t("brainNext",{n:ws.nextHint.remaining, emoji:brainEmoji(ws.nextHint.id)}) : t("brainFull");
-  const star = Game.dayStar(u,curDate) ? `<p class="br-star">${t("brainStar",{day:prettyDate(curDate)})}</p>` : "";
+    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(t("cat_"+c.id))}"><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span>${t("hab_"+c.id)}</button>`).join("");
+  const next = ws.nextHint ? t("brainNext",{name:t("cat_"+ws.nextHint.id), n:ws.nextHint.remaining}) : t("brainFull");
+  const star = Game.dayStar(u,curDate) ? `<p class="br-star">${Icons.svg("star")} ${t("brainStar",{day:prettyDate(curDate)})}</p>` : "";
   const el=document.getElementById("brainCard");
   el.innerHTML = `
     <div class="br-head">
       <div><h2 class="br-title">${t("brainTitle")}</h2><div class="br-sub">${t("brainSub")}</div></div>
-      <span class="br-level"><span class="em" aria-hidden="true">${lv.emoji}</span>${t("lvl_"+lv.id)}</span>
+      <span class="br-level"><span class="em" aria-hidden="true">${Icons.svg(lv.icon)}</span>${t("lvl_"+lv.id)}</span>
     </div>
     <div class="br-meter">
       <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("brainTitle"))}"><span style="width:${lastBrainBar}%"></span></div>
@@ -1990,11 +1995,11 @@ function renderBrainCard(){
   const bar=el.querySelector(".br-bar > span"); void bar.offsetWidth; bar.style.width=pct+"%"; lastBrainBar=pct;
 }
 function mealChips(m){
-  const tags=Brain.mealTags(m), em=foodEmojis(tags), lim=LIMITS.filter(x=>tags.includes(x));
+  const tags=Brain.mealTags(m), em=foodIcons(tags), lim=LIMITS.filter(x=>tags.includes(x));
   const names=BRAIN_FOODS.concat(LIMITS).filter(x=>tags.includes(x)).map(x=>t((LIMITS.includes(x)?"tag_":"cat_")+x)).join(", ");
   const label=t("brainEditFor",{name:m.name})+": "+(names||t("brainNone"));
   const inner=(em?`<span>${em}</span>`:"")+lim.map(x=>`<span class="lt">${t("tag_"+x)}</span>`).join("");
-  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||"<span>＋🧠</span>"}</button>`;
+  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`<span>＋${Icons.svg("brain")}</span>`}</button>`;
 }
 let pickerMealId = null;
 function openChipPicker(mealId){
@@ -2005,8 +2010,8 @@ function closeChipPicker(){ pickerMealId=null; document.getElementById("brainOve
 function renderChipPicker(){
   const m=dayMeals().find(x=>x.id===pickerMealId); if(!m){ closeChipPicker(); return; }
   const tags=Brain.mealTags(m);
-  const chip=(id,key,cls)=>`<button class="bp-chip${cls}" data-tag="${id}" aria-pressed="${tags.includes(id)}">${cls?"":`<span class="em" aria-hidden="true">${brainEmoji(id)}</span>`}${t(key+id)}</button>`;
-  document.getElementById("brainPickTitle").textContent="🧠 "+m.name;
+  const chip=(id,key,cls)=>`<button class="bp-chip${cls}" data-tag="${id}" aria-pressed="${tags.includes(id)}">${cls?"":`<span class="em" aria-hidden="true">${catIcon(id)}</span>`}${t(key+id)}</button>`;
+  document.getElementById("brainPickTitle").textContent=m.name;
   document.getElementById("brainPickBody").innerHTML = `
     <p class="bp-hint">${t("brainPickHint")}</p>
     <div class="bp-grid">${BRAIN_FOODS.map(id=>chip(id,"cat_","")).join("")}</div>
@@ -2041,7 +2046,7 @@ function renderRecent(){
   recentList=recentMeals(user(),8);
   document.getElementById("recentSec").hidden=!recentList.length;
   document.getElementById("recentRow").innerHTML=recentList.map((m,i)=>{
-    const em=foodEmojis(Brain.mealTags(m));
+    const em=foodIcons(Brain.mealTags(m));
     return `<button class="rc" data-recent="${i}" aria-label="${escapeAttr(t("recentLog",{name:m.name}))}"><span class="plus" aria-hidden="true">+</span><span class="nm">${escapeHtml(m.name)}</span>${em?`<span class="em" aria-hidden="true">${em}</span>`:""}</button>`;
   }).join("");
 }
@@ -2646,7 +2651,7 @@ const streakText = n => t(n===1?"streakDay1":"streakDays",{n});
 function renderStreak(){
   const n=Game.streak(user(),todayStr()), el=document.getElementById("streakPill");
   el.hidden=!n;
-  el.textContent=n?"🔥 "+n:"";
+  el.innerHTML=n?Icons.svg("flame")+escapeHtml(String(n)):"";
   el.setAttribute("aria-label",n?streakText(n):""); el.title=n?streakText(n):"";
 }
 function addDaysStr(s,n){
@@ -2655,7 +2660,7 @@ function addDaysStr(s,n){
 }
 // The Monday of each of the last n weeks, oldest first, ending with today's week.
 const lastWeekStarts = (today,n) => Array.from({length:n},(_,i)=>addDaysStr(Brain.weekStart(today),-7*(n-1-i)));
-const badgeEmoji = id => (Game.BADGES.find(b=>b.id===id)||{}).emoji || "";
+
 const badgeName = id => id.startsWith("level:") ? t("lvl_"+id.slice(6)) : t("badge_"+id);
 function badgeHint(id){
   if(!id.startsWith("level:")) return t("badgeHint_"+id);
@@ -2676,11 +2681,11 @@ function renderBrainView(badgeList){
   const pts=Brain.lifetimePoints(u,today), L=Brain.levelFor(pts), lv=L.level, n=Game.streak(u,today);
   const prog=L.next ? Math.round(100*(pts-lv.min)/(L.next.min-lv.min)) : 100;
   document.getElementById("bvLevel").innerHTML = `
-    <div class="bv-level"><span class="em" aria-hidden="true">${lv.emoji}</span>
+    <div class="bv-level"><span class="em" aria-hidden="true">${Icons.svg(lv.icon)}</span>
       <div><div class="bv-lvname">${t("lvl_"+lv.id)}</div><div class="bv-pts">${t("bvPoints",{n:pts.toLocaleString(loc)})}</div></div></div>
     <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="${escapeAttr(t("bvProgress"))}"><span style="width:${prog}%"></span></div>
-    <p class="bv-next">${L.next ? t("bvToNext",{n:L.toNext.toLocaleString(loc), emoji:L.next.emoji, level:t("lvl_"+L.next.id)}) : t("bvTop")}</p>
-    <p class="bv-sub">${n ? "🔥 "+streakText(n) : t("bvStreakStart")}</p>
+    <p class="bv-next">${L.next ? t("bvToNext",{n:L.toNext.toLocaleString(loc), level:t("lvl_"+L.next.id)}) : t("bvTop")}</p>
+    <p class="bv-sub">${n ? Icons.svg("flame")+" "+escapeHtml(streakText(n)) : t("bvStreakStart")}</p>
     <p class="bv-sub">${t("bvPointsHow")}</p>`;
   const cur=Brain.weekStart(today);
   document.getElementById("bvWeeks").innerHTML = `<div class="bv-weeks">${lastWeekStarts(today,8).map(w=>{
@@ -2691,10 +2696,10 @@ function renderBrainView(badgeList){
   const shelf=shelfBadges(badgeList,u.celebrated);
   document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:shelf.filter(b=>b.earned).length, total:shelf.length});
   document.getElementById("bvBadges").innerHTML = shelf.map(b=>
-    `<div class="bv-badge${b.earned?"":" locked"}"><span class="em" aria-hidden="true">${badgeEmoji(b.id)}</span>
+    `<div class="bv-badge${b.earned?"":" locked"}"><span class="em" aria-hidden="true">${Icons.svg((Game.BADGES.find(x=>x.id===b.id)||{}).icon)}</span>
       <div><b>${escapeHtml(badgeName(b.id))}</b><small>${escapeHtml(b.earned ? t(b.weekly?"bvEarnedWeek":"bvEarned",{date:fmtAxisDate(b.date)}) : badgeHint(b.id))}</small></div></div>`).join("");
   document.getElementById("bvWhy").innerHTML = Brain.CATEGORIES.map(c=>
-    `<li><span class="em" aria-hidden="true">${c.emoji}</span><span>${t("why_"+c.id)}</span></li>`).join("");
+    `<li><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span><span>${t("why_"+c.id)}</span></li>`).join("");
 }
 function confetti(){
   const box=document.createElement("div"), colors=["--brain","--accent","--protein","--carbs","--cal","--streak"];
@@ -2705,7 +2710,7 @@ function confetti(){
 }
 function openLevelUp(id,extra){
   const l=Brain.LEVELS.find(x=>x.id===id);
-  document.getElementById("lvlUpEmoji").textContent=l.emoji;
+  document.getElementById("lvlUpIcon").innerHTML=Icons.svg(l.icon);
   document.getElementById("lvlUpName").textContent=t("lvl_"+id);
   const ex=document.getElementById("lvlUpExtra"); ex.textContent=extra||""; ex.hidden=!extra;
   document.getElementById("levelOverlay").classList.add("on");
@@ -2740,7 +2745,7 @@ function celebrate(badgeList){
   try{
     const {show,more}=pickCelebrations(items,badgeList,3), lv=show.find(c=>c.type==="level");
     const msgs=show.filter(c=>c.type==="fullWeek").map(()=>t("brainFull"));
-    const bs=show.filter(c=>c.type==="badge").map(c=>badgeEmoji(c.id)+" "+badgeName(c.id));
+    const bs=show.filter(c=>c.type==="badge").map(c=>badgeName(c.id));
     if(bs.length) msgs.push(t(bs.length>1?"celebBadges":"celebBadge",{list:bs.join(", ")}));
     if(show.some(c=>c.type!=="badge") && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
     if(more>0) msgs.push(t("celebMore",{n:more}));
@@ -3209,8 +3214,8 @@ function coachBlock(u){
   if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
-  const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
-  return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${t("coachAsk")}</button>` : "");
+  const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">${Icons.svg("lightbulb")} ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
+  return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${Icons.svg("message-circle")}${t("coachAsk")}</button>` : "");
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
 function requestCoachNote(){
