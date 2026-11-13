@@ -120,6 +120,20 @@
   }
   @media(max-width:400px){ .tab{font-size:12.5px;padding:7px 2px 6px} }
 
+  /* ---------- Demo banner ---------- */
+  .demo-bar{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1.5px solid var(--line);border-radius:14px;
+    padding:6px 8px 6px 14px;margin-bottom:10px;font-size:13px;font-weight:600}
+  .demo-bar[hidden]{display:none}
+  .demo-bar .demo-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .demo-bar button{flex:none;white-space:nowrap;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700}
+  .demo-bar #demoBarCreate{background:var(--text);color:var(--bg)}
+  .demo-bar #demoBarExit{background:transparent;color:var(--muted);text-decoration:underline;padding:6px 4px}
+  .demo-bar #demoBarExit:hover{color:var(--text)}
+  @media(min-width:960px){ .demo-bar{grid-column:1/-1;grid-row:2;margin:14px 0 0} }
+  body.demo #accountBar,body.demo .addnew,body.demo #quizBox,body.demo [data-userdel]{display:none!important}
+  #demoExitBtn{display:none;margin-top:8px}
+  body.demo #demoExitBtn{display:block}
+
   /* ---------- Goal toggle + date row ---------- */
   .seg{display:inline-flex;background:var(--panel-2);border:1.5px solid var(--line);border-radius:14px;padding:3px}
   .seg button{background:transparent;color:var(--muted);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600}
@@ -899,6 +913,12 @@
     </div>
   </div>
 
+  <div class="demo-bar" id="demoBar" hidden>
+    <span class="demo-label" data-i18n="demoBanner">Demo · sample data</span>
+    <button type="button" id="demoBarCreate" data-i18n="demoBannerCreate">Create account</button>
+    <button type="button" id="demoBarExit" data-i18n="demoExit">Exit demo</button>
+  </div>
+
   <!-- Tabs (only shown when logged into an account) -->
   <div class="tabs" id="tabs" style="display:none">
     <button class="tab active" data-tab="tracker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18"/><path d="M3 11a9 9 0 0 0 18 0"/><path d="M7.5 11c-.5-3.5 1.5-6 5-7"/><path d="M12 11c.5-3 2.5-5 6-5.5"/></svg><span data-i18n="tabTracker">Tracker</span></button>
@@ -1153,6 +1173,7 @@
         <input type="checkbox" id="insightsToggle">
       </label>
       <button class="btn btn-ghost full" id="replayTourBtn" style="margin-top:16px" data-i18n="tourReplay">Replay tour</button>
+      <button class="btn btn-ghost full" id="demoExitBtn" data-i18n="demoExit">Exit demo</button>
       <div class="divider"></div>
       <div class="pf" id="aboutMe"></div>
     </div>
@@ -1982,8 +2003,12 @@ function targets(){ return user().targets[user().goal]; }
 function dayMeals(){ const u=user(); if(!u.days[curDate]) u.days[curDate]=[]; return u.days[curDate]; }
 
 /* ---------- Rendering ---------- */
+function renderDemoBar(){
+  document.getElementById("demoBar").hidden = !(demoMode && !Tour.active());
+}
 function renderAll(){
   applyI18n();
+  renderDemoBar();
   renderUserSelect();
   renderGoal();
   renderCards();
@@ -4086,8 +4111,14 @@ document.getElementById("usersOverlay").addEventListener("click",e=>{
 });
 document.getElementById("replayTourBtn").addEventListener("click",()=>{
   document.getElementById("usersOverlay").classList.remove("on");
-  startTour();
+  if(demoMode) startDemoTour(); else startTour();
 });
+document.getElementById("demoExitBtn").addEventListener("click",()=>{
+  document.getElementById("usersOverlay").classList.remove("on");
+  exitDemo();
+});
+document.getElementById("demoBarCreate").addEventListener("click",()=>openDemoAuth());
+document.getElementById("demoBarExit").addEventListener("click",()=>exitDemo());
 document.getElementById("userList").addEventListener("click",e=>{
   const sw=e.target.closest("[data-switch]"), del=e.target.closest("[data-userdel]");
   if(sw){ state.activeId=sw.dataset.switch; save(); renderAll(); renderUserList(); renderTargets(); }
