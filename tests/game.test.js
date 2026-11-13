@@ -72,7 +72,7 @@ test("BADGES: family keys in order, then levels", () => {
   assert.deepEqual(Game.BADGES.slice(0, 5).map(b => [b.family, b.tier]), [["firstLog", 0], ["streak", 1], ["streak", 2], ["streak", 3], ["stars", 1]]);
   assert.deepEqual(Game.BADGES[28], { id: "level:growing", family: "level", tier: 0, icon: Game.BADGES[28].icon });
   assert.deepEqual(Game.FAMILIES.map(f => f.id), ["firstLog", "streak", "stars", "fullBrain", "clean", "fish", "strength", "berries", "greens", "social"]);
-  assert.equal(Game.LEGACY_KEYS.length, 11);
+  assert.deepEqual(Game.LEGACY_KEYS, ["firstLog","streak7","streak30","fishWeek","fullBrain","cleanWeek","strongWeek","berryLover","greenMachine","socialButterfly","macroMaster"]);
 });
 test("badge firstLog", () => {
   const u = mk(["2026-11-05", "2026-11-03"]); u.days["2026-11-01"] = [meal({ eaten: false })];
@@ -283,4 +283,13 @@ test("seedNewTiers without a list seeds like with one; no burst afterwards", () 
 test("familyStatus without a badge list still reports earned tiers", () => {
   const u = empty(); mondays.forEach(m => addMeals(u, m, 2, ["fish"]));
   assert.equal(Game.familyStatus(u, "2026-11-11").find(f => f.id === "fish").tier, 2);
+});
+
+test("mergeCelebrated: tiers:v1 survives only when both sides hold it", () => {
+  const seededEmpty = { "tiers:v1": "2026-11-13" }, real = { firstLog: "2026-10-01" }, both = { "tiers:v1": "2026-11-01", streak7: "2026-11-01" };
+  assert.deepEqual(Game.mergeCelebrated(seededEmpty, real), { firstLog: "2026-10-01" });
+  assert.deepEqual(Game.mergeCelebrated(real, seededEmpty), { firstLog: "2026-10-01" });
+  assert.deepEqual(Game.mergeCelebrated(both, seededEmpty), { "tiers:v1": "2026-11-01", streak7: "2026-11-01" });
+  assert.deepEqual(Game.mergeCelebrated(undefined, real), { firstLog: "2026-10-01" });
+  assert.deepEqual(Game.mergeCelebrated(undefined, undefined), {});
 });

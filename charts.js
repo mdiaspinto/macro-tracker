@@ -18,10 +18,12 @@ const Charts = (() => {
   function rollingMean(points, window = 7, minCount = 3) {
     if (!points.length) return [];
     const out = [], last = points[points.length - 1].date;
+    let lo = 0, hi = 0, sum = 0; // window is points[lo..hi)
     for (let day = points[0].date; day <= last; day = addDays(day, 1)) {
       const from = addDays(day, -(window - 1));
-      const inWin = points.filter(p => p.date >= from && p.date <= day);
-      if (inWin.length >= minCount) out.push({ date: day, value: inWin.reduce((s, p) => s + p.value, 0) / inWin.length });
+      while (hi < points.length && points[hi].date <= day) sum += points[hi++].value;
+      while (lo < hi && points[lo].date < from) sum -= points[lo++].value;
+      if (hi - lo >= minCount) out.push({ date: day, value: sum / (hi - lo) });
     }
     return out;
   }

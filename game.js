@@ -135,6 +135,13 @@ const Game = (() => {
     return true;
   }
 
+  // Union of two celebrated maps. The seed marker survives only if both sides hold it, so merged data is re-seeded silently.
+  function mergeCelebrated(primary, secondary) {
+    const out = Object.assign({}, secondary, primary);
+    if (!(primary && primary["tiers:v1"] && secondary && secondary["tiers:v1"])) delete out["tiers:v1"];
+    return out;
+  }
+
   const celebrationKey = c => c.type === "level" ? "level:" + c.id : c.type === "fullWeek" ? "week:" + c.id : c.id;
 
   // Earned badges / reached levels / the current week's full bar that aren't yet in user.celebrated.
@@ -146,6 +153,6 @@ const Game = (() => {
     return out.filter(c => !done[celebrationKey(c)]);
   }
 
-  return { streak, streakHistory, dayStar, FAMILIES, LEGACY_KEYS, BADGES, badges, familyStatus, seedNewTiers, newCelebrations, celebrationKey };
+  return { streak, streakHistory, dayStar, FAMILIES, LEGACY_KEYS, BADGES, badges, familyStatus, seedNewTiers, mergeCelebrated, newCelebrations, celebrationKey };
 })();
 if (typeof module !== "undefined") module.exports = Game; else window.Game = Game;

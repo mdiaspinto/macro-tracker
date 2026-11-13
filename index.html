@@ -569,7 +569,8 @@
   .stat:first-child{border-left:none}
   .stat .stat-lab{font-size:12px;color:var(--muted);font-weight:600}
   .stat .stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
-  @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px}
+  @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px} }
+  @media(max-width:480px){
     .chart-stats.four{display:grid;grid-template-columns:1fr 1fr}
     .chart-stats.four .stat{min-width:0;border-left:none}
     .chart-stats.four .stat:nth-child(even){border-left:1px solid var(--line)}
@@ -1175,13 +1176,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js"></script>
-<script src="charts.js"></script>
-<script src="brain.js"></script>
-<script src="game.js"></script>
-<script src="coach.js"></script>
-<script src="shop.js"></script>
-<script src="tour.js"></script>
+<script src="icons.js?v=20261113"></script>
+<script src="charts.js?v=20261113"></script>
+<script src="brain.js?v=20261113"></script>
+<script src="game.js?v=20261113"></script>
+<script src="coach.js?v=20261113"></script>
+<script src="shop.js?v=20261113"></script>
+<script src="tour.js?v=20261113"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -1463,11 +1464,12 @@ const T = {
     macroCaption:"{name} · avg {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"No calories logged yet. Add eaten foods on the Tracker tab and they'll show up here.",
-    noWeightData:"No weight logged yet. Add your first entry above.",
+    noWeightData:"No weight logged yet. Tap Log weight to add your first entry.",
+    noRangeData:"No entries in this range",
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
     range7:"7D", range30:"30D", range90:"90D", rangeAll:"All", statAvg7:"7-day average", statOnTarget:"Days on target",
-    statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
-    targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
+    statLatest:"Latest", statAvg:"Average", statChange:"Change", statEntries:"Entries",
+    kcalUnit:"kcal", recentEntries:"Recent entries",
     brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
     brainNext:"{name}: {n} more this week", brainFull:"Every brain goal met this week!",
     brainHabits:"Habits · {day}", brainIconLabel:"{name}: {n} of {target} this week",
@@ -1639,11 +1641,12 @@ const T = {
     macroCaption:"{name} · media {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"Aún no hay calorías registradas. Agrega alimentos comidos en la pestaña Registro y aparecerán aquí.",
-    noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
+    noWeightData:"Aún no has registrado tu peso. Toca Registrar peso para añadir el primero.",
+    noRangeData:"No hay datos en este rango",
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
     range7:"7 d", range30:"30 d", range90:"90 d", rangeAll:"Todo", statAvg7:"Media 7 días", statOnTarget:"Días en objetivo",
-    statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
-    targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
+    statLatest:"Último", statAvg:"Promedio", statChange:"Cambio", statEntries:"Entradas",
+    kcalUnit:"kcal", recentEntries:"Entradas recientes",
     brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
     brainNext:"{name}: {n} más esta semana", brainFull:"¡Cumpliste todas las metas de la semana!",
     brainHabits:"Hábitos · {day}", brainIconLabel:"{name}: {n} de {target} esta semana",
@@ -2935,9 +2938,9 @@ function macroSeries(){
   const dates=Object.keys(days).filter(d=> dayEatenCalories(days[d])>0).sort((a,b)=> a<b ? -1 : 1);
   const build=key=> dates.map(d=>{ let s=0; days[d].forEach(m=>{ if(m.eaten) s+=m[key]; }); return {date:d, value:s}; });
   return [
-    {key:"p", label:t("protein"), short:"P", color:cssVar("--protein"), points:build("ap")},
-    {key:"c", label:t("carbs"),   short:"C", color:cssVar("--carbs"), points:build("ac")},
-    {key:"f", label:t("fat"),     short:(lang()==="es"?"G":"F"), color:cssVar("--fat"), points:build("af")},
+    {key:"p", label:t("protein"), color:cssVar("--protein"), points:build("ap")},
+    {key:"c", label:t("carbs"),   color:cssVar("--carbs"), points:build("ac")},
+    {key:"f", label:t("fat"),     color:cssVar("--fat"), points:build("af")},
   ];
 }
 
@@ -3157,6 +3160,11 @@ function renderMacroChart(){
   const today=todayStr(), range=metricsRange();
   const host=document.getElementById("macroCharts");
   host.innerHTML = series.map(s=>`<div class="macro-block"><div class="macro-cap" id="macroCap_${s.key}"></div><div class="chart-wrap" id="macroChart_${s.key}"></div></div>`).join("");
+  if(series.every(s=>!Charts.filterRange(s.points, range, today).length)){
+    const hasAny=series.some(s=>s.points.length);
+    host.innerHTML=`<div class="chart-empty">${escapeHtml(t(hasAny?"noRangeData":"noCalData"))}</div>`;
+    return;
+  }
   series.forEach(s=>{
     const inRange=Charts.filterRange(s.points, range, today);
     const target=tg[s.key];
@@ -3164,7 +3172,7 @@ function renderMacroChart(){
     const cap=document.getElementById("macroCap_"+s.key);
     const avg=inRange.length ? round(inRange.reduce((a,p)=>a+p.value,0)/inRange.length) : "–";
     cap.textContent=t("macroCaption",{name:s.label, avg, target:round(target)});
-    if(!inRange.length){ drawTrendChart(el, [], {from:today, to:today, color:s.color, unit:"g", height:130, empty:t("noCalData")}); return; }
+    if(!inRange.length){ drawTrendChart(el, [], {from:today, to:today, color:s.color, unit:"g", height:130, empty:t(s.points.length?"noRangeData":"noCalData")}); return; }
     const from=Charts.rangeStart(today, range) || s.points[0].date;
     drawTrendChart(el, inRange, {from, to:today, color:s.color, target, unit:"g", height:130, empty:t("noCalData"), mean:Charts.rollingMean(s.points)});
   });
@@ -3175,7 +3183,7 @@ function renderCalChart(){
   const el=document.getElementById("calChart");
   const today=todayStr(), range=metricsRange();
   const inRange=Charts.filterRange(all, range, today);
-  if(!inRange.length){ stats.innerHTML=""; drawTrendChart(el, [], {from:today, to:today, color:cssVar("--cal"), unit:t("kcalUnit"), empty:t("noCalData")}); return; }
+  if(!inRange.length){ stats.innerHTML=""; drawTrendChart(el, [], {from:today, to:today, color:cssVar("--cal"), unit:t("kcalUnit"), empty:t(all.length?"noRangeData":"noCalData")}); return; }
   const from=Charts.rangeStart(today, range) || all[0].date;
   const mean=Charts.rollingMean(all);
   const lastAvg=mean.filter(p=>p.date>=from).pop();
@@ -3189,11 +3197,12 @@ function renderCalChart(){
   drawTrendChart(el, inRange, {from, to:today, color:cssVar("--cal"), target, unit:t("kcalUnit"), empty:t("noCalData"), mean});
 }
 function renderWeightChart(){
-  const pts=Charts.filterRange(weightSeries(), metricsRange(), todayStr());
+  const allW=weightSeries();
+  const pts=Charts.filterRange(allW, metricsRange(), todayStr());
   const stats=document.getElementById("wStats");
   const el=document.getElementById("wChart");
   const u=weightUnit();
-  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noWeightData")}); return; }
+  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t(allW.length?"noRangeData":"noWeightData")}); return; }
   const latest=pts[pts.length-1].value, first=pts[0].value, change=latest-first;
   const sign=change>0?"+":"";
   stats.innerHTML =
@@ -3488,10 +3497,12 @@ function niceTicks(min,max,n){
   const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
 }
 // SVG text for calendar-date x ticks; xOf maps a time (ms) to x
-function xTickLabels(dates, xOf, H){
-  return dates.map((d,i)=>{
-    const anchor = i===0 ? "start" : i===dates.length-1 && dates.length>1 ? "end" : "middle";
-    return `<text x="${xOf(dateToNum(d)).toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
+function xTickLabels(dates, xOf, H, from, to, W){
+  return dates.map(d=>{
+    const anchor = d===from && d!==to ? "start" : d===to && d!==from ? "end" : "middle";
+    let x=xOf(dateToNum(d));
+    if(anchor==="middle") x=Math.max(22, Math.min(W-22, x));
+    return `<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
   }).join("");
 }
 
@@ -3535,12 +3546,11 @@ function drawLineChart(container, points, opts){
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
   // x labels: even calendar ticks
-  g+=xTickLabels(Charts.dateTicks(points[0].date, points[points.length-1].date), xOf, H);
+  g+=xTickLabels(Charts.dateTicks(points[0].date, points[points.length-1].date), xOf, H, points[0].date, points[points.length-1].date, W);
   // reference line
   if(opts.refLine!=null){
     const y=yOf(opts.refLine);
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
-    if(opts.refLabel) g+=`<text x="${W-padR}" y="${(y-6).toFixed(1)}" text-anchor="end" style="fill:var(--muted);font-size:10px">${escapeHtml(opts.refLabel)}</text>`;
   }
   // area + line
   const coords=points.map((p,i)=>[xOf(times[i]), yOf(p.value)]);
@@ -3616,7 +3626,7 @@ function drawTrendChart(container, daily, opts){
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${round(v)}</text>`;
   });
-  g+=xTickLabels(Charts.dateTicks(opts.from, opts.to), xOf, H);
+  g+=xTickLabels(Charts.dateTicks(opts.from, opts.to), xOf, H, opts.from, opts.to, W);
   if(opts.target!=null){
     const y1=yOf(opts.target*1.1), y2=yOf(opts.target*0.9), y=yOf(opts.target);
     g+=`<rect x="${padL}" y="${y1.toFixed(1)}" width="${plotW}" height="${(y2-y1).toFixed(1)}" fill="${color}" fill-opacity=".1"/>`;
@@ -3974,7 +3984,7 @@ function mergeUser(primary,secondary){
     habitsAt: Brain.unionHabitsAt(primary.habitsAt, secondary.habitsAt),
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen),
-    celebrated: Object.assign({}, secondary.celebrated, primary.celebrated),
+    celebrated: Game.mergeCelebrated(primary.celebrated, secondary.celebrated),
     shop:    Shop.mergeShop(primary.shop, secondary.shop),
     coach:   Coach.mergeCoach(primary.coach, secondary.coach)
   });
