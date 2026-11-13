@@ -1941,6 +1941,7 @@ function applyI18n(){
 }
 
 /* ---------- State ---------- */
+let demoLeaving = false;   // true while leaveDemoState()/sign-up ends a running demo tour: its onEnd then skips the post-tour actions
 let demoMode = false;   // guest demo: state lives under Demo.KEY, no cloud, no real data
 let state = load();
 let curDate = todayStr();
@@ -2601,7 +2602,7 @@ function startDemoTour(){
     return {};
   }, (prevTab, finished, actionId)=>{
     user().demoTourDone=true; save();   // also when leaveDemoState() or the sign-up ended the tour: it saves to the demo key they remove
-    if(!demoMode) return;
+    if(demoLeaving) return;
     switchTab(prevTab,true);
     renderDemoBar();
     if(actionId==="create") openDemoAuth();
@@ -4443,8 +4444,12 @@ function resumeDemo(){
   enterDemoApp();
   return true;
 }
+function endTourLeavingDemo(){
+  demoLeaving=true;
+  try{ if(Tour.active()) Tour.end(false); } finally { demoLeaving=false; }
+}
 function leaveDemoState(){
-  if(Tour.active()) Tour.end(false);
+  endTourLeavingDemo();
   try{ localStorage.removeItem(Demo.KEY); }catch(e){}
   demoMode=false; document.body.classList.remove("demo");
   state=load();
@@ -4488,7 +4493,7 @@ async function doCreate(){
     const session0=await authCall("signUp", f.u, f.pw);
     if(demoMode){   // the demo never merges: the account starts fresh with the demo name and character
       saveSession(session0);
-      if(Tour.active()) Tour.end(false);
+      endTourLeavingDemo();
       try{ localStorage.removeItem(Demo.KEY); }catch(e){}
       demoMode=false; document.body.classList.remove("demo");
       state=acc; localStorage.setItem(KEY, JSON.stringify(state));
