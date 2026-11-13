@@ -73,6 +73,8 @@
   input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
   .num,.big,.stat-val,.rw-val{font-variant-numeric:tabular-nums}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+  /* iOS Safari zooms the page in when a field with text under 16px gets focus, and the page stays zoomed (cramped layout, misplaced tour spotlight) */
+  @media (hover:none) and (pointer:coarse){ input,select,textarea{font-size:16px!important} }
 
   /* ---------- Top bar ---------- */
   .appbar{display:contents}
