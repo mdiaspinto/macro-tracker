@@ -122,3 +122,23 @@ test("hasRealData", () => {
   assert.equal(Demo.hasRealData(st(Object.assign(empty(), { shop: { pulls: { a: { c: "lulu-1", at: 1 } } } }))), true);
   assert.equal(Demo.hasRealData(null), false); assert.equal(Demo.hasRealData({}), false); assert.equal(Demo.hasRealData({ users: [] }), false);
 });
+
+test("sampleUser: records the day the demo started; refresh keeps it", () => {
+  const u = Demo.sampleUser("Ana", "en", TODAY, makeUser);
+  assert.equal(u.demoStarted, TODAY);
+  assert.equal(Demo.refresh(u, "2026-11-20", makeUser).demoStarted, TODAY);
+});
+test("expired: a demo is deleted 30 days after it started", () => {
+  const u = Demo.sampleUser("Ana", "en", TODAY, makeUser);
+  assert.equal(Demo.MAX_DAYS, 30);
+  assert.equal(Demo.expired(u, TODAY), false);
+  assert.equal(Demo.expired(u, "2026-12-12"), false);   // day 29
+  assert.equal(Demo.expired(u, "2026-12-13"), true);    // day 30
+  assert.equal(Demo.expired(u, "2027-03-01"), true);
+});
+test("expired: an older demo without demoStarted counts from demoBuilt; with neither it is expired", () => {
+  assert.equal(Demo.expired({ demoBuilt: TODAY }, "2026-11-20"), false);
+  assert.equal(Demo.expired({ demoBuilt: TODAY }, "2026-12-13"), true);
+  assert.equal(Demo.expired({}, TODAY), true);
+  assert.equal(Demo.expired(null, TODAY), true);
+});
