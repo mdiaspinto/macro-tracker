@@ -145,6 +145,47 @@ const Shop = (() => {
 
   // Union of pulls by key; start/startPoints from the side with the earlier start
   // (tie -> larger startPoints, so the result does not depend on argument order); newest resetAt wins.
+  const MILESTONES = [6, 12, 18, 24];
+  const BACKDROPS = [
+    { id: "plain", en: "Plain", es: "Liso", kind: "always", n: 0 },
+    { id: "confetti", en: "Confetti", es: "Confeti", kind: "commons", n: 6 },
+    { id: "stripes", en: "Candy stripes", es: "Rayas dulces", kind: "commons", n: 12 },
+    { id: "ocean", en: "Ocean", es: "Océano", kind: "commons", n: 18 },
+    { id: "rainbow", en: "Rainbow", es: "Arcoíris", kind: "commons", n: 24 },
+    { id: "gold", en: "Gold", es: "Oro", kind: "secrets", n: 5 },
+    { id: "night", en: "Night sky", es: "Cielo nocturno", kind: "secrets", n: 10 },
+    { id: "globe", en: "World", es: "Mundo", kind: "secrets", n: 15 }
+  ];
+  const countTier = (ids, tier) => {
+    const seen = {};
+    let k = 0;
+    (ids || []).forEach(id => { const c = byId(id); if (c && c.tier === tier && !seen[id]) { seen[id] = true; k++; } });
+    return k;
+  };
+  const commonsCount = ids => countTier(ids, "common");
+  const secretsCount = ids => countTier(ids, "secret");
+  const isUnlocked = (b, cc, sc) => b.kind === "always" || (b.kind === "commons" ? cc : sc) >= b.n;
+  const unlockedBackdrops = ids => {
+    const cc = commonsCount(ids), sc = secretsCount(ids);
+    return BACKDROPS.filter(b => isUnlocked(b, cc, sc)).map(b => b.id);
+  };
+  const pickerBackdrops = ids => {
+    const cc = commonsCount(ids), sc = secretsCount(ids);
+    return BACKDROPS.filter(b => b.kind !== "secrets" || isUnlocked(b, cc, sc))
+      .map(b => ({ id: b.id, unlocked: isUnlocked(b, cc, sc), n: b.n }));
+  };
+  const nextMilestone = ids => {
+    const have = commonsCount(ids);
+    const need = MILESTONES.find(m => m > have);
+    if (need === undefined) return null;
+    return { have, need, backdrop: BACKDROPS.find(b => b.kind === "commons" && b.n === need).id };
+  };
+  const newUnlocks = (prevIds, nextIds) => {
+    const before = unlockedBackdrops(prevIds);
+    return unlockedBackdrops(nextIds).filter(id => before.indexOf(id) < 0);
+  };
+  const backdropFor = (ids, chosen) => unlockedBackdrops(ids).indexOf(chosen) >= 0 ? chosen : "plain";
+
   const mergeShop = (a, b) => {
     if (!a && !b) return undefined;
     const withReset = (o, r) => { if (r) o.resetAt = r; return o; };
@@ -156,6 +197,7 @@ const Shop = (() => {
   };
 
   return { PRICE, REFUND, SECRET_P, DUP_P, COLLECTIONS, CHARACTERS, byId, draw,
-    newShop, pulls, owned, freeAvailable, resetShop, addPull, weightPoints, balance, progress, secretsFound, mergeShop };
+    newShop, pulls, owned, freeAvailable, resetShop, addPull, weightPoints, balance, progress, secretsFound, mergeShop,
+    MILESTONES, BACKDROPS, commonsCount, secretsCount, unlockedBackdrops, pickerBackdrops, nextMilestone, newUnlocks, backdropFor };
 })();
 if (typeof module !== "undefined") module.exports = Shop; else window.Shop = Shop;

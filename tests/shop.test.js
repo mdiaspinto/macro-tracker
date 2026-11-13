@@ -126,3 +126,55 @@ test("mergeShop: newest resetAt wins in both argument orders and filters the uni
   assert.equal(Shop.mergeShop(undefined, after).resetAt, 5000);
   assert.equal("resetAt" in Shop.mergeShop(before, before), false);
 });
+
+const lulu = commons.slice(0, 6);
+const first = n => commons.slice(0, n);
+const s5 = secrets.slice(0, 5);
+
+test("BACKDROPS: ids and unlocks in order", () => {
+  assert.deepEqual(Shop.BACKDROPS.map(b => b.id), ["plain", "confetti", "stripes", "ocean", "rainbow", "gold", "night", "globe"]);
+  const by = id => Shop.BACKDROPS.find(b => b.id === id);
+  assert.equal(by("confetti").kind, "commons"); assert.equal(by("confetti").n, 6);
+  assert.equal(by("globe").kind, "secrets"); assert.equal(by("globe").n, 15);
+});
+
+test("unlockedBackdrops: commons and secrets thresholds", () => {
+  assert.deepEqual(Shop.unlockedBackdrops([]), ["plain"]);
+  const a = Shop.unlockedBackdrops(lulu);
+  assert.ok(a.includes("confetti")); assert.ok(!a.includes("stripes"));
+  const b = Shop.unlockedBackdrops(s5);
+  assert.ok(b.includes("gold")); assert.ok(!b.includes("confetti"));
+});
+
+test("unlockedBackdrops: secrets never count toward commons milestones", () => {
+  assert.ok(!Shop.unlockedBackdrops(secrets).includes("confetti"));
+});
+
+test("pickerBackdrops: locked secret backdrops are not listed", () => {
+  assert.deepEqual(Shop.pickerBackdrops(secrets.slice(0, 4)).map(b => b.id), ["plain", "confetti", "stripes", "ocean", "rainbow"]);
+  const g = Shop.pickerBackdrops(s5).find(b => b.id === "gold");
+  assert.ok(g); assert.equal(g.unlocked, true);
+});
+
+test("nextMilestone: next step and end", () => {
+  assert.deepEqual(Shop.nextMilestone(first(4).concat(secrets.slice(0, 7))), { have: 4, need: 6, backdrop: "confetti" });
+  assert.deepEqual(Shop.nextMilestone(first(12)), { have: 12, need: 18, backdrop: "ocean" });
+  assert.equal(Shop.nextMilestone(commons), null);
+});
+
+test("newUnlocks: crossing a threshold", () => {
+  assert.deepEqual(Shop.newUnlocks(first(5), first(6)), ["confetti"]);
+  assert.deepEqual(Shop.newUnlocks(secrets.slice(0, 4), s5), ["gold"]);
+});
+
+test("newUnlocks: duplicate adds nothing", () => {
+  assert.deepEqual(Shop.newUnlocks(lulu, lulu.concat([lulu[0]])), []);
+});
+
+test("backdropFor: falls back to plain when locked", () => {
+  assert.equal(Shop.backdropFor([], "ocean"), "plain");
+  const ids = first(18);
+  assert.equal(Shop.backdropFor(ids, "ocean"), "ocean");
+  assert.equal(Shop.backdropFor(ids, undefined), "plain");
+  assert.equal(Shop.backdropFor(ids, "nope"), "plain");
+});
