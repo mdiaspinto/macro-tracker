@@ -22,6 +22,7 @@
     --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
     --brain:#7A4FD6; --streak:#D9480F;
+    --tier1:#A8642B; --tier2:#7E878C; --tier3:#B98A12;
     --grid:rgba(22,32,27,.08); --cross:rgba(22,32,27,.3);
     --focus:#2F6FD6;
     --radius:22px; --radius-sm:14px;
@@ -39,6 +40,7 @@
       --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
       --brain:#B79CFF; --streak:#FF8A4C;
+      --tier1:#D08B4E; --tier2:#C3CBD0; --tier3:#F2C14E;
       --grid:rgba(238,242,236,.07); --cross:rgba(238,242,236,.3);
       --focus:#7DB8FF;
       --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
@@ -189,15 +191,26 @@
   .br-bar > span{display:block;height:100%;background:var(--brain);border-radius:999px;transition:width .5s ease}
   .br-pct{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
   .br-next{font-size:15px;font-weight:700;margin:0 0 12px}
-  .br-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px}
-  .br-ic{aspect-ratio:1;display:grid;place-items:center;border:2px solid var(--line);border-radius:14px;font-size:21px;line-height:1}
-  .br-ic.full{border-color:var(--brain)}
+  /* Ring tiles: 4 columns on phones and in the 360 px desktop side column, 8 when the card is full width. */
+  .br-rings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:14px}
+  @media(min-width:560px) and (max-width:959px){ .br-rings{grid-template-columns:repeat(8,minmax(0,1fr))} }
+  .br-ring{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:6px 0 5px;border-radius:12px;background:transparent}
+  .br-ring:hover{background:var(--panel-2)}
+  .rg{position:relative;flex:none;width:44px;height:44px;display:grid;place-items:center}
+  .rg-ring{position:absolute;inset:0;width:100%;height:100%}
+  .rg .ic{position:relative;font-size:20px;color:var(--text)}
+  .rg.zero .ic{color:var(--faint)}
+  .rg.big{width:72px;height:72px}
+  .rg.big .ic{font-size:32px}
+  .rg-n{font-size:12px;font-weight:700;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums}
+  .br-ring.full .rg-n{color:var(--brain)}
   .br-hab-lab{font-size:14px;font-weight:800;margin-bottom:8px}
   .br-habits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
   .br-hab{position:relative;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     padding:6px 1px;border-radius:14px;border:2px solid var(--line-strong);background:var(--panel);
     font-size:12.5px;font-weight:700;font-stretch:87.5%;line-height:1.15;text-align:center}
   .br-hab .em{font-size:24px;line-height:1}
+  .br-hab .hn{font-size:11.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
   .br-hab:hover{border-color:var(--ink)}
   .br-hab[aria-pressed="true"]{border-color:var(--brain);background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
   .br-hab[aria-pressed="true"]::after{content:"✓";position:absolute;top:3px;right:6px;font-size:12px;font-weight:900;color:var(--brain)}
@@ -274,8 +287,21 @@
 
   /* ---------- Brain tab: level, weekly history, badges, why it matters ---------- */
   @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #brainView > .section.wide{grid-column:1 / -1} #brainView > .section{display:flex;flex-direction:column} #brainView > .section > .body{flex:1} }
-  .bv-level{display:flex;align-items:center;gap:16px;margin-bottom:14px}
-  .bv-level .em{font-size:56px;line-height:1;flex:none}
+  /* Level path: six nodes on a line; the line fills up to the current level. */
+  .lv-path{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));list-style:none;margin:0 0 16px;padding:0}
+  .lv-path::before,.lv-path::after{content:"";position:absolute;top:19px;left:calc(100% / 12);height:2px}
+  .lv-path::before{right:calc(100% / 12);background:var(--line)}
+  .lv-path::after{width:calc(100% * 5 / 6 * var(--lv, 0));background:var(--brain)}
+  .lv-path li{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .lv-dot{width:40px;height:40px;display:grid;place-items:center}
+  .lv-dot > span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:16px;
+    border:2px solid var(--line);background:var(--panel);color:var(--faint)}
+  .lv-path .done .lv-dot > span{border-color:color-mix(in srgb,var(--brain) 45%,var(--panel));background:color-mix(in srgb,var(--brain) 14%,var(--panel));color:var(--brain)}
+  .lv-path .cur .lv-dot > span{width:40px;height:40px;font-size:20px;border-color:var(--brain);background:color-mix(in srgb,var(--brain) 18%,var(--panel));color:var(--brain)}
+  .lv-nm{font-size:11px;font-weight:600;font-stretch:87.5%;line-height:1.2;text-align:center;white-space:nowrap;color:var(--faint)}
+  @media(max-width:359px){ .lv-nm{font-stretch:75%} }
+  .lv-path .done .lv-nm{color:var(--muted)}
+  .lv-path .cur .lv-nm{color:var(--text);font-weight:800}
   .bv-lvname{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
   .bv-pts{font-size:15px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
   .bv-next{font-size:15px;font-weight:700;margin:10px 0 0}
@@ -288,15 +314,38 @@
   .bv-wk .dt{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
   .bv-wk.cur .col{border-color:var(--ink)}
   .bv-wk.cur .dt{color:var(--text);font-weight:800}
-  .bv-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-  .bv-badge{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;border:2px solid var(--brain);
-    background:color-mix(in srgb,var(--brain) 12%,var(--panel))}
-  .bv-badge .em{font-size:28px;line-height:1;flex:none}
-  .bv-badge b{display:block;font-size:14px;line-height:1.25}
-  .bv-badge small{display:block;font-size:13px;color:var(--muted);line-height:1.35;margin-top:3px}
-  .bv-badge.locked{border-color:var(--line);background:var(--panel-2)}
-  .bv-badge.locked .em{filter:grayscale(1);opacity:.4}
-  .bv-badge.locked b{color:var(--muted)}
+  /* Medals: 2 columns of row cards on phones, 5 columns (2 full rows) from 560 px. */
+  .bv-medals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bv-medal{display:flex;align-items:center;gap:8px;min-width:0;padding:10px 8px;border-radius:14px;border:1.5px solid var(--line);background:var(--panel);text-align:left}
+  .bv-medal:hover{border-color:var(--line-strong)}
+  .bv-medal > span:last-child{min-width:0;overflow-wrap:break-word}
+  .bv-medal b{display:block;font-size:13.5px;line-height:1.25}
+  .bv-medal small{display:block;font-size:12px;line-height:1.3;color:var(--muted);margin-top:2px}
+  .bv-medal .nw{white-space:nowrap}
+  /* Phone row cards are ~150 px wide: a 44 px medal leaves room for the text. */
+  @media(max-width:559px){ .bv-medal .md{width:44px;height:44px} .bv-medal .md .ic{font-size:21px} }
+  @media(min-width:560px){
+    .bv-medals{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+    .bv-medal{flex-direction:column;justify-content:flex-start;gap:8px;padding:14px 8px 12px;text-align:center}
+    .bv-medal b{font-size:14px}
+    .bv-medal small{font-size:12.5px}
+  }
+  .md{position:relative;flex:none;width:56px;height:56px;display:grid;place-items:center;color:var(--brain)}
+  .md-ring{position:absolute;inset:0;width:100%;height:100%}
+  .md .ic{position:relative;font-size:26px}
+  .md.off .ic{color:var(--faint)}
+  .md.big{width:80px;height:80px}
+  .md.big .ic{font-size:36px}
+  /* Info sheet (ring tile or medal detail) */
+  .info-modal{max-width:400px}
+  .info-hero{display:flex;justify-content:center;margin:0 0 14px}
+  .info-text{margin:0 0 10px;font-size:15px;line-height:1.5}
+  .info-text.lead{font-weight:700}
+  .info-tiers{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+  .info-tiers li{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  .info-tiers .pip{flex:none;width:12px;height:12px;border-radius:50%;border:2px solid}
+  .info-tiers b{flex:1;min-width:0}
+  .info-tiers .st{font-size:13.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
   .bv-why{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
   .bv-why li{display:flex;align-items:flex-start;gap:12px;font-size:15px;line-height:1.45}
   .bv-why .em{flex:none;width:28px;font-size:22px;line-height:1.2;text-align:center}
@@ -843,7 +892,7 @@
     </div>
     <div class="section wide">
       <div class="head"><h2 data-mk="brain" data-i18n="bvBadgesHead">Badges</h2><span class="hint" id="bvBadgesCount"></span></div>
-      <div class="body"><div class="bv-badges" id="bvBadges"></div></div>
+      <div class="body"><div class="bv-medals" id="bvBadges"></div></div>
     </div>
     <div class="section wide">
       <div class="head"><h2 data-mk="brain" data-i18n="bvWhyHead">Why it matters</h2></div>
@@ -1001,6 +1050,14 @@
       </div>
       <button class="btn btn-primary" id="wLogBtn" type="button" data-i18n="logWeightBtn">Log weight</button>
     </div>
+  </div>
+</div>
+
+<!-- Info sheet: a ring tile or a medal -->
+<div class="overlay" id="infoOverlay">
+  <div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="head"><h3 id="infoTitle"></h3><button class="x" type="button" data-close-info><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button></div>
+    <div class="body"><div class="info-hero" id="infoIcon" aria-hidden="true"></div><div id="infoBody"></div></div>
   </div>
 </div>
 
@@ -1428,17 +1485,14 @@ const T = {
     bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {level}", bvTop:"You reached the top level!",
     bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a streak.",
     bvWeeksHead:"Last 8 weeks", bvWeeksHint:"How full your brain bar got", bvWeekLabel:"Week of {date}: {pct}%",
-    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned", bvEarned:"Earned {date}", bvEarnedWeek:"Week of {date}",
+    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned",
     bvWhyHead:"Why it matters", bvWhyNote:"These are links found in research, not promises, and not medical advice.",
-    badge_firstLog:"First log", badge_streak7:"7-day streak", badge_streak30:"30-day streak", badge_fishWeek:"Fish week", badge_fullBrain:"Full brain",
-    badge_cleanWeek:"Clean week", badge_strongWeek:"Strong week", badge_berryLover:"Berry lover", badge_greenMachine:"Green machine",
-    badge_socialButterfly:"Social butterfly", badge_macroMaster:"Macro master",
-    badgeHint_firstLog:"Log your first meal", badgeHint_streak7:"Log meals 7 days in a row", badgeHint_streak30:"Log meals 30 days in a row",
-    badgeHint_fishWeek:"Hit your fish target in a week", badgeHint_fullBrain:"Fill your brain bar to 100% in a week",
-    badgeHint_cleanWeek:"Log 7+ meals in a week and go easy on sweets, fried food, red meat, butter and cheese",
-    badgeHint_strongWeek:"Do strength training twice in a week", badgeHint_berryLover:"Hit your berries target in 4 weeks",
-    badgeHint_greenMachine:"Hit your greens target in 4 weeks", badgeHint_socialButterfly:"Hit your social target in 4 weeks",
-    badgeHint_macroMaster:"Earn a macro star 7 days in a row", badgeHint_level:"Reach {n} brain points",
+    tier1:"Bronze", tier2:"Silver", tier3:"Gold",
+    fam_firstLog:"First log", fam_streak:"Streak", fam_stars:"Macro stars", fam_fullBrain:"Full brain", fam_clean:"Clean weeks",
+    fam_fish:"Fish", fam_strength:"Strength", fam_berries:"Berries", fam_greens:"Greens", fam_social:"Social",
+    famHint_firstLog:"Log your first eaten meal", famHint_streak:"Days in a row with a logged meal", famHint_stars:"Days in a row with a macro star",
+    famHint_weeks:"Weeks you hit your {name} target", famHint_fullBrain:"Weeks you fill your brain bar to 100%", famHint_clean:"Weeks you stay under every limit",
+    unitDays:"{n} days", unitWeeks:"{n} weeks", unitWeek1:"1 week", famProgress:"{have} of {need}", famEarned:"Earned {date}",
     why_greens:"Leafy greens are linked to slower memory decline as we age.",
     why_veg:"Eating plenty of vegetables is linked to a healthier brain over the years.",
     why_berries:"Berries are linked to better memory.",
@@ -1607,17 +1661,14 @@ const T = {
     bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"{n} puntos para {level}", bvTop:"¡Llegaste al nivel más alto!",
     bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu racha.",
     bvWeeksHead:"Últimas 8 semanas", bvWeeksHint:"Cuánto llenaste tu barra del cerebro", bvWeekLabel:"Semana del {date}: {pct}%",
-    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas", bvEarned:"Conseguida el {date}", bvEarnedWeek:"Semana del {date}",
+    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas",
     bvWhyHead:"Por qué importa", bvWhyNote:"Son relaciones que ha encontrado la investigación, no promesas ni consejo médico.",
-    badge_firstLog:"Primer registro", badge_streak7:"Racha de 7 días", badge_streak30:"Racha de 30 días", badge_fishWeek:"Semana de pescado", badge_fullBrain:"Cerebro completo",
-    badge_cleanWeek:"Semana limpia", badge_strongWeek:"Semana fuerte", badge_berryLover:"Amor por los frutos rojos", badge_greenMachine:"Máquina verde",
-    badge_socialButterfly:"Mariposa social", badge_macroMaster:"Maestría en macros",
-    badgeHint_firstLog:"Registra tu primera comida", badgeHint_streak7:"Registra comidas 7 días seguidos", badgeHint_streak30:"Registra comidas 30 días seguidos",
-    badgeHint_fishWeek:"Cumple tu meta de pescado en una semana", badgeHint_fullBrain:"Llena tu barra del cerebro al 100% en una semana",
-    badgeHint_cleanWeek:"Registra 7+ comidas en una semana con poco dulce, frito, carne roja, mantequilla y queso",
-    badgeHint_strongWeek:"Haz ejercicio de fuerza 2 veces en una semana", badgeHint_berryLover:"Cumple tu meta de frutos rojos en 4 semanas",
-    badgeHint_greenMachine:"Cumple tu meta de hojas verdes en 4 semanas", badgeHint_socialButterfly:"Cumple tu meta de gente en 4 semanas",
-    badgeHint_macroMaster:"Consigue una estrella de macros 7 días seguidos", badgeHint_level:"Llega a {n} puntos de cerebro",
+    tier1:"Bronce", tier2:"Plata", tier3:"Oro",
+    fam_firstLog:"Primer registro", fam_streak:"Racha", fam_stars:"Estrellas de macros", fam_fullBrain:"Cerebro lleno", fam_clean:"Semanas limpias",
+    fam_fish:"Pescado", fam_strength:"Fuerza", fam_berries:"Frutos rojos", fam_greens:"Hojas verdes", fam_social:"Social",
+    famHint_firstLog:"Registra tu primera comida", famHint_streak:"Días seguidos con una comida registrada", famHint_stars:"Días seguidos con estrella de macros",
+    famHint_weeks:"Semanas en que cumples tu objetivo de {name}", famHint_fullBrain:"Semanas con la barra del cerebro al 100%", famHint_clean:"Semanas por debajo de todos los límites",
+    unitDays:"{n} días", unitWeeks:"{n} semanas", unitWeek1:"1 semana", famProgress:"{have} de {need}", famEarned:"Conseguida el {date}",
     why_greens:"Las hojas verdes están ligadas a una pérdida de memoria más lenta con la edad.",
     why_veg:"Comer muchas verduras está ligado a un cerebro más sano con los años.",
     why_berries:"Los frutos rojos están ligados a una mejor memoria.",
@@ -1984,17 +2035,31 @@ const LIMITS = Object.keys(Brain.LIMIT_TAGS);
 const catIcon = id => Icons.svg(id==="oilyFish" ? "fish" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).icon);
 const foodIcons = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>Icons.svg(c.icon)).join("");
 let lastBrainBar = 0;
+// SVG progress ring centred at (c,c): grey track, then a --brain arc for frac (0..1) from 12 o'clock.
+function ringArcs(c,r,frac){
+  const len=2*Math.PI*r, base=`cx="${c}" cy="${c}" r="${r}" stroke-width="3"`;
+  return `<circle ${base} style="fill:none;stroke:var(--line)"/>` + (frac>0 ?
+    `<circle ${base} stroke-linecap="round" stroke-dasharray="${(frac*len).toFixed(2)} ${len.toFixed(2)}" transform="rotate(-90 ${c} ${c})" style="fill:none;stroke:var(--brain)"/>` : "");
+}
+// A food category's ring (44 px; "big" for the info sheet). A full category gets a 22 % --brain fill.
+function catRing(c,ws,big){
+  const f=ws.fill[c.id];
+  return `<span class="rg${big?" big":""}${ws.counts[c.id]?"":" zero"}"><svg class="rg-ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">${f>=1?`<circle cx="22" cy="22" r="19" fill-opacity=".22" style="fill:var(--brain)"/>`:""}${ringArcs(22,19,f)}</svg>${Icons.svg(c.icon)}</span>`;
+}
+const catLabel = (c,ws) => t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target});
+function openCatInfo(id){
+  const c=Brain.CATEGORIES.find(x=>x.id===id); if(!c) return;
+  const ws=Brain.weekScore(user(),curDate);
+  openInfo({icon:catRing(c,ws,true), title:t("cat_"+id),
+    html:`<p class="info-text lead">${escapeHtml(catLabel(c,ws))}</p><p class="info-text">${escapeHtml(t("why_"+id))}</p>`});
+}
 function renderBrainCard(){
   const u=user(), ws=Brain.weekScore(u,curDate), lv=Brain.levelFor(Brain.lifetimePoints(u,todayStr())).level;
   const day=(u.habits||{})[curDate]||{}, pct=Math.round(ws.bar*100);
-  const icons=Brain.CATEGORIES.map(c=>{
-    const f=ws.fill[c.id], fp=Math.round(f*100);
-    const lab=escapeAttr(t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target}));
-    return `<span class="br-ic${f===1?" full":""}" role="img" aria-label="${lab}" title="${lab}"
-      style="background:linear-gradient(to top,color-mix(in srgb,var(--brain) 30%,transparent) ${fp}%,transparent ${fp}%)"><span aria-hidden="true" style="opacity:${(.35+.65*f).toFixed(2)}">${Icons.svg(c.icon)}</span></span>`;
-  }).join("");
+  const rings=Brain.CATEGORIES.filter(c=>c.kind==="food").map(c=>
+    `<button class="br-ring${ws.fill[c.id]>=1?" full":""}" type="button" data-cat="${c.id}" aria-label="${escapeAttr(catLabel(c,ws))}">${catRing(c,ws)}<span class="rg-n" aria-hidden="true">${ws.counts[c.id]}/${c.target}</span></button>`).join("");
   const habits=Brain.CATEGORIES.filter(c=>c.kind==="habit").map(c=>
-    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(t("cat_"+c.id))}"><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span>${t("hab_"+c.id)}</button>`).join("");
+    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(catLabel(c,ws))}"><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span>${t("hab_"+c.id)}<span class="hn" aria-hidden="true">${ws.counts[c.id]}/${c.target}</span></button>`).join("");
   const next = ws.nextHint ? t("brainNext",{name:t("cat_"+ws.nextHint.id), n:ws.nextHint.remaining}) : t("brainFull");
   const star = Game.dayStar(u,curDate) ? `<p class="br-star">${Icons.svg("star")} ${t("brainStar",{day:prettyDate(curDate)})}</p>` : "";
   const el=document.getElementById("brainCard");
@@ -2008,7 +2073,7 @@ function renderBrainCard(){
       <span class="br-pct">${pct}%</span>
     </div>
     <p class="br-next">${next}</p>${star}${coachBlock(u)}
-    <div class="br-icons">${icons}</div>
+    <div class="br-rings">${rings}</div>
     <div class="br-hab-lab">${t("brainHabits",{day:prettyDate(curDate)})}</div>
     <div class="br-habits">${habits}</div>`;
   // Grow the bar from its previous width so a tap visibly moves it.
@@ -2681,28 +2746,68 @@ function addDaysStr(s,n){
 // The Monday of each of the last n weeks, oldest first, ending with today's week.
 const lastWeekStarts = (today,n) => Array.from({length:n},(_,i)=>addDaysStr(Brain.weekStart(today),-7*(n-1-i)));
 
-const badgeName = id => id.startsWith("level:") ? t("lvl_"+id.slice(6)) : t("badge_"+id);
-function badgeHint(id){
-  if(!id.startsWith("level:")) return t("badgeHint_"+id);
-  const l=Brain.LEVELS.find(x=>x.id===id.slice(6));
-  return t("badgeHint_level",{n:l.min.toLocaleString(lang()==="es"?"es-ES":"en-US")});
+// Toast and level-up name of a badge key: "Streak · Silver", "First log", or a level name.
+function badgeName(id){
+  if(id.startsWith("level:")) return t("lvl_"+id.slice(6));
+  const b=Game.BADGES.find(x=>x.id===id); if(!b) return id;
+  return b.tier ? `${t("fam_"+b.family)} · ${t("tier"+b.tier)}` : t("fam_"+b.family);
 }
-const WEEK_BADGES=["fishWeek","fullBrain","cleanWeek","strongWeek","berryLover","greenMachine","socialButterfly"];
-// Badges stay earned once celebrated, even if the derived grade later drops (goal switch, deleted meal). Week-based/level dates are a week's Monday.
-function shelfBadges(list,celebrated){
-  return list.map(b=>{
-    const day=(celebrated||{})[Game.celebrationKey(b.id.startsWith("level:") ? {type:"level",id:b.id.slice(6)} : {type:"badge",id:b.id})];
-    const e=b.earned || !!day, date=b.earned ? b.date : day;
-    return {id:b.id, earned:e, date, weekly:b.earned && (b.id.startsWith("level:") || WEEK_BADGES.includes(b.id))};
-  });
+const famUnit = (f,n) => f.kind==="once" ? String(n) : f.kind==="weeks" ? (n===1 ? t("unitWeek1") : t("unitWeeks",{n})) : t("unitDays",{n});
+const famHint = f => f.kind==="weeks" && Brain.CATEGORIES.some(c=>c.id===f.id) ? t("famHint_weeks",{name:t("cat_"+f.id).toLowerCase()}) : t("famHint_"+f.id);
+// A tier earned only through `celebrated` has no derived date: show the celebration day.
+const tierDate = (tr,celebrated) => tr.date || (celebrated||{})[tr.key] || "";
+const famEarned = d => d ? t("famEarned",{date:fmtAxisDate(d).replace(/ /g,"\u00a0")}) : "";  // the date never breaks across lines
+// Medal colour: the highest tier earned; a one-tier family ("once") is complete, so it is gold.
+const medalTier = (f,fs) => fs.tier ? (f.kind==="once" ? 3 : fs.tier) : 0;
+// 56 px medal (80 px when big): tier-coloured ring, or a grey track with a --brain arc to tier 1.
+function medalHtml(f,fs,big){
+  const mt=medalTier(f,fs);
+  const ring = mt ? `<circle cx="28" cy="28" r="26.5" stroke-width="3" fill-opacity=".12" style="fill:var(--tier${mt});stroke:var(--tier${mt})"/>`
+    : ringArcs(28,26.5,Math.min(1,fs.have/fs.need));
+  return `<span class="md${mt?"":" off"}${big?" big":""}"><svg class="md-ring" viewBox="0 0 56 56" aria-hidden="true" focusable="false">${ring}</svg>${Icons.svg(f.icon)}</span>`;
+}
+// Caption parts under a medal: ["Silver", "30 days"] when earned, else progress to the next tier (["2 of 4 weeks"]).
+function medalCaption(f,fs,celebrated){
+  if(f.kind==="once") return [fs.tier ? famEarned(tierDate(fs.tiers[0],celebrated)) : t("famHint_firstLog")];
+  if(fs.tier) return [t("tier"+fs.tier), famUnit(f,f.tiers[fs.tier-1])];
+  return [t("famProgress",{have:fs.have, need:famUnit(f,fs.need)})];
+}
+let famStatus=[];
+function openFamInfo(id){
+  const f=Game.FAMILIES.find(x=>x.id===id), fs=famStatus.find(x=>x.id===id); if(!f || !fs) return;
+  const cel=user().celebrated, once=f.kind==="once";
+  const rows=fs.tiers.map((tr,i)=>{
+    const col=once ? 3 : i+1, lab=once ? t("fam_"+f.id) : `${t("tier"+col)} · ${famUnit(f,tr.need)}`;
+    const st=tr.earned ? famEarned(tierDate(tr,cel)) : t("famProgress",{have:fs.have, need:famUnit(f,tr.need)});
+    return `<li><span class="pip" style="border-color:var(--tier${col})${tr.earned?`;background:var(--tier${col})`:""}"></span><b>${escapeHtml(lab)}</b><span class="st">${escapeHtml(st)}</span></li>`;
+  }).join("");
+  openInfo({icon:medalHtml(f,fs,true), title:t("fam_"+f.id), html:`<p class="info-text">${escapeHtml(famHint(f))}</p><ul class="info-tiers">${rows}</ul>`});
+}
+let infoOpener=null;
+// icon: trusted markup built here (ring or medal); title: plain text; html: markup whose values are already escaped.
+function openInfo({icon,title,html}){
+  infoOpener=document.activeElement;
+  document.getElementById("infoIcon").innerHTML=icon;
+  document.getElementById("infoTitle").textContent=title;
+  document.getElementById("infoBody").innerHTML=html;
+  const x=document.querySelector("[data-close-info]"); x.setAttribute("aria-label",t("chatClose"));
+  document.getElementById("infoOverlay").classList.add("on");
+  x.focus();
+}
+function closeInfo(){
+  document.getElementById("infoOverlay").classList.remove("on");
+  if(infoOpener && infoOpener.isConnected) infoOpener.focus();
+  infoOpener=null;
 }
 function renderBrainView(badgeList){
   const u=user(), today=todayStr(), loc=lang()==="es"?"es-ES":"en-US";
   const pts=Brain.lifetimePoints(u,today), L=Brain.levelFor(pts), lv=L.level, n=Game.streak(u,today);
   const prog=L.next ? Math.round(100*(pts-lv.min)/(L.next.min-lv.min)) : 100;
+  const li=Brain.LEVELS.indexOf(lv);
   document.getElementById("bvLevel").innerHTML = `
-    <div class="bv-level"><span class="em" aria-hidden="true">${Icons.svg(lv.icon)}</span>
-      <div><div class="bv-lvname">${t("lvl_"+lv.id)}</div><div class="bv-pts">${t("bvPoints",{n:pts.toLocaleString(loc)})}</div></div></div>
+    <ol class="lv-path" style="--lv:${(li/(Brain.LEVELS.length-1)).toFixed(3)}">${Brain.LEVELS.map((l,i)=>
+      `<li class="${i<li?"done":i===li?"cur":""}"${i===li?' aria-current="step"':""}><span class="lv-dot" aria-hidden="true"><span>${Icons.svg(l.icon)}</span></span><span class="lv-nm">${t("lvl_"+l.id)}</span></li>`).join("")}</ol>
+    <div class="bv-lvname">${t("lvl_"+lv.id)}</div><div class="bv-pts">${t("bvPoints",{n:pts.toLocaleString(loc)})}</div>
     <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="${escapeAttr(t("bvProgress"))}"><span style="width:${prog}%"></span></div>
     <p class="bv-next">${L.next ? t("bvToNext",{n:L.toNext.toLocaleString(loc), level:t("lvl_"+L.next.id)}) : t("bvTop")}</p>
     <p class="bv-sub">${n ? Icons.svg("flame")+" "+escapeHtml(streakText(n)) : t("bvStreakStart")}</p>
@@ -2713,11 +2818,15 @@ function renderBrainView(badgeList){
     return `<div class="bv-wk${w===cur?" cur":""}" role="img" aria-label="${escapeAttr(t("bvWeekLabel",{date:d, pct:p}))}">
       <span class="pc" aria-hidden="true">${p}%</span><span class="col" aria-hidden="true"><span style="height:${p}%"></span></span><span class="dt" aria-hidden="true">${escapeHtml(d)}</span></div>`;
   }).join("")}</div>`;
-  const shelf=shelfBadges(badgeList,u.celebrated);
-  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:shelf.filter(b=>b.earned).length, total:shelf.length});
-  document.getElementById("bvBadges").innerHTML = shelf.map(b=>
-    `<div class="bv-badge${b.earned?"":" locked"}"><span class="em" aria-hidden="true">${Icons.svg((Game.BADGES.find(x=>x.id===b.id)||{}).icon)}</span>
-      <div><b>${escapeHtml(badgeName(b.id))}</b><small>${escapeHtml(b.earned ? t(b.weekly?"bvEarnedWeek":"bvEarned",{date:fmtAxisDate(b.date)}) : badgeHint(b.id))}</small></div></div>`).join("");
+  famStatus=Game.familyStatus(u,today,badgeList,u.celebrated);
+  const tiers=[].concat(...famStatus.map(fs=>fs.tiers));
+  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:tiers.filter(x=>x.earned).length, total:tiers.length});
+  document.getElementById("bvBadges").innerHTML = famStatus.map(fs=>{
+    const f=Game.FAMILIES.find(x=>x.id===fs.id), name=t("fam_"+f.id), cap=medalCaption(f,fs,u.celebrated);
+    // A two-part caption breaks only at the dot, so "1 week" stays on one line.
+    const capHtml = cap.length>1 ? cap.map(p=>`<span class="nw">${escapeHtml(p)}</span>`).join(" · ") : escapeHtml(cap[0]);
+    return `<button class="bv-medal" type="button" data-fam="${f.id}" aria-label="${escapeAttr(name+", "+cap.join(" · "))}">${medalHtml(f,fs)}<span><b>${escapeHtml(name)}</b><small>${capHtml}</small></span></button>`;
+  }).join("");
   document.getElementById("bvWhy").innerHTML = Brain.CATEGORIES.map(c=>
     `<li><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span><span>${t("why_"+c.id)}</span></li>`).join("");
 }
@@ -2759,7 +2868,9 @@ let shopReady=false;
 let celebrating=false;
 function celebrate(badgeList){
   if(!celebrateReady || celebrating || Tour.active() || document.getElementById("authOverlay").classList.contains("on")) return;
-  const u=user(), today=todayStr(), items=Game.newCelebrations(u,today,badgeList);
+  const u=user(), today=todayStr();
+  if(Game.seedNewTiers(u,today,badgeList)) save();
+  const items=Game.newCelebrations(u,today,badgeList);
   if(!items.length) return;
   celebrating=true;
   try{
@@ -3560,6 +3671,13 @@ document.getElementById("weightOverlay").addEventListener("click",e=>{
 });
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape" && document.getElementById("weightOverlay").classList.contains("on")) closeWeightSheet();
+  if(e.key==="Escape" && document.getElementById("infoOverlay").classList.contains("on")) closeInfo();
+});
+document.getElementById("infoOverlay").addEventListener("click",e=>{
+  if(e.target.id==="infoOverlay"||e.target.closest("[data-close-info]")) closeInfo();
+});
+document.getElementById("bvBadges").addEventListener("click",e=>{
+  const m=e.target.closest("[data-fam]"); if(m) openFamInfo(m.dataset.fam);
 });
 document.getElementById("wUnitSeg").addEventListener("click",e=>{
   const b=e.target.closest("[data-unit]"); if(!b) return;
@@ -3598,6 +3716,7 @@ document.getElementById("mealsBody").addEventListener("click",e=>{
 });
 document.getElementById("brainCard").addEventListener("click",e=>{
   const h=e.target.closest("[data-habit]"); if(h) toggleHabit(h.dataset.habit);
+  const r=e.target.closest("[data-cat]"); if(r) openCatInfo(r.dataset.cat);
   if(e.target.closest("[data-coach-chat]")) openChat();
   if(e.target.closest("[data-coach-login]")) openAuth();
 });
