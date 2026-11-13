@@ -273,7 +273,7 @@
   .overlay.sheet .head .x{width:44px;height:44px}
 
   /* ---------- Brain tab: level, weekly history, badges, why it matters ---------- */
-  @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #brainView > .section.wide{grid-column:1 / -1} }
+  @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #brainView > .section.wide{grid-column:1 / -1} #brainView > .section{display:flex;flex-direction:column} #brainView > .section > .body{flex:1} }
   .bv-level{display:flex;align-items:center;gap:16px;margin-bottom:14px}
   .bv-level .em{font-size:56px;line-height:1;flex:none}
   .bv-lvname{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
@@ -520,7 +520,11 @@
   .stat:first-child{border-left:none}
   .stat .stat-lab{font-size:12px;color:var(--muted);font-weight:600}
   .stat .stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
-  @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px} }
+  @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px}
+    .chart-stats.four{display:grid;grid-template-columns:1fr 1fr}
+    .chart-stats.four .stat{min-width:0;border-left:none}
+    .chart-stats.four .stat:nth-child(even){border-left:1px solid var(--line)}
+    .chart-stats.four .stat:nth-child(n+3){border-top:1px solid var(--line)} }
   .chart-wrap{position:relative;width:100%;margin-top:2px}
   .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
   .m-range{margin-bottom:14px}
@@ -539,7 +543,7 @@
   .w-log-open{margin-left:auto;padding:7px 14px;font-size:13px;align-self:center}
   .macro-block + .macro-block{margin-top:16px}
   .macro-cap{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;font-variant-numeric:tabular-nums}
-  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} }
+  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} #metricsView > .section{display:flex;flex-direction:column} #metricsView > .section > .body{flex:1} }
   .recent-weights{margin-top:16px}
   .rw-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
   .rw-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
@@ -551,7 +555,7 @@
 
   /* ---------- Weight-change breakdown ---------- */
   .insight:empty{display:none}
-  .insight{margin-top:18px;padding-top:16px;border-top:4px solid var(--ink)}
+  .insight{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .ins-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .ins-head h3{font-size:17px;font-weight:800}
   .ins-range{font-size:12.5px;color:var(--muted)}
@@ -3242,7 +3246,7 @@ function renderInsight(){
   el.innerHTML = `
     <div class="ins-head"><h3>${t("insTitle")}</h3><span class="ins-range">${escapeHtml(fmtAxisDate(f.fromDate))} – ${escapeHtml(fmtAxisDate(f.toDate))}</span></div>
     <p class="ins-headline">${escapeHtml(saved ? saved.headline : ruleHeadline(f))}</p>
-    ${stats ? `<div class="chart-stats">${stats}</div>` : ""}
+    ${stats ? `<div class="chart-stats four">${stats}</div>` : ""}
     ${saved ? `<p class="ins-summary">${escapeHtml(saved.summary)}</p>` : ""}
     <ul class="ins-points">${(saved ? saved.points : rulePoints(f)).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
     ${foot ? `<p class="ins-foot">${foot}</p>` : ""}
