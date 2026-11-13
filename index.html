@@ -832,6 +832,8 @@
   .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
   .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
   .auth-offline:hover{color:var(--text)}
+  #authOverlay:not(.from-demo) #authCarry,#authOverlay:not(.from-demo) #authBackDemo{display:none}
+  #authOverlay.from-demo #authDemoBtn,#authOverlay.from-demo #authOfflineBtn{display:none}
   #demoSheet[hidden],#authMain[hidden]{display:none}
   .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
   .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:14px}
@@ -1164,6 +1166,7 @@
       <div id="authMain">
       <div class="auth-brand"><div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div><h3 data-i18n="authTitle">Log in to sync</h3></div>
       <p class="auth-intro" data-i18n="authIntro">Sign in to sync your logs across your devices.</p>
+      <p class="auth-intro" id="authCarry" data-i18n="demoCarry">Your demo name and character come with you.</p>
       <div class="field">
         <label data-i18n="authUsername">Username</label>
         <input id="authInput" autocomplete="username" autocapitalize="none" spellcheck="false" data-i18n-ph="authUsernamePh" placeholder="e.g. martin">
@@ -1180,6 +1183,7 @@
       </div>
       <button class="btn btn-ghost full" id="authDemoBtn" style="margin-top:10px" data-i18n="demoTry">Try the demo</button>
       <button class="auth-offline" id="authOfflineBtn" data-i18n="authContinueOffline">Continue offline</button>
+      <button class="auth-offline" id="authBackDemo" data-i18n="demoBackToDemo">Back to the demo</button>
       </div>
       <div id="demoSheet" hidden>
         <div class="auth-brand"><h3 data-i18n="demoNameTitle">Try Macro Tracker</h3></div>
@@ -4337,11 +4341,12 @@ async function pullRemote(){
 
 /* ---- auth UI ---- */
 function authEl(id){ return document.getElementById(id); }
-function openAuth(){
+function openAuth(fromDemo){
   showDemoSheet(false);
+  authEl("authOverlay").classList.toggle("from-demo", !!fromDemo);
   authEl("authError").textContent=""; authEl("authPassword").value="";
   authEl("authUpgrade").style.display = legacyUser ? "block" : "none";
-  if(legacyUser && !authEl("authInput").value) authEl("authInput").value=legacyUser;
+  if(legacyUser && !fromDemo && !authEl("authInput").value) authEl("authInput").value=legacyUser;
   authEl("authOverlay").classList.add("on");
   setTimeout(()=>authEl(authEl("authInput").value ? "authPassword" : "authInput").focus(),50);
 }
@@ -4385,6 +4390,10 @@ function leaveDemoState(){
   demoMode=false; document.body.classList.remove("demo");
   state=load();
 }
+function openDemoAuth(){
+  authEl("authInput").value=Demo.usernameFrom(user().name);
+  openAuth(true);
+}
 function exitDemo(){ leaveDemoState(); renderAll(); openAuth(); }
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
@@ -4402,7 +4411,24 @@ async function doCreate(){
   const f=authForm(); if(!f) return;
   authBusy(true);
   try{
-    saveSession(await authCall("signUp", f.u, f.pw));
+    const session0=await authCall("signUp", f.u, f.pw);
+    if(demoMode){   // the demo never merges: the account starts fresh with the demo name and character
+      saveSession(session0);
+      try{ // data safety: keep a copy of real device data before the account state replaces it
+        const raw=localStorage.getItem(KEY);
+        if(raw && Demo.hasRealData(JSON.parse(raw))) localStorage.setItem(Demo.BACKUP_KEY, raw);
+      }catch(e){}
+      const acc=Demo.accountState(user(), todayStr(), TOUR_VERSION, makeUser);
+      if(Tour.active()) Tour.end(false);
+      try{ localStorage.removeItem(Demo.KEY); }catch(e){}
+      demoMode=false; document.body.classList.remove("demo");
+      state=acc; localStorage.setItem(KEY, JSON.stringify(state));
+      await cloudPut(payloadOf()).catch(()=>{});
+      shopReady=true;
+      authBusy(false); authEl("authOverlay").classList.remove("from-demo"); startApp(); toast(t("authCreated",{name:f.u}));
+      return;
+    }
+    saveSession(session0);
     const legacy=await legacyGet(f.u);
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
@@ -4418,6 +4444,7 @@ async function doLogin(){
   authBusy(true);
   try{
     saveSession(await authCall("signInWithPassword", f.u, f.pw));
+    if(demoMode) leaveDemoState();   // real state is loaded; nothing from the demo can reach the account
     const remote=await cloudGet();
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
@@ -4463,6 +4490,7 @@ function boot(){
 
 authEl("authLoginBtn").addEventListener("click", doLogin);
 authEl("authCreateBtn").addEventListener("click", doCreate);
+authEl("authBackDemo").addEventListener("click", ()=>{ closeAuth(); authEl("authOverlay").classList.remove("from-demo"); renderAll(); });
 authEl("authOfflineBtn").addEventListener("click", authOffline);
 authEl("authDemoBtn").addEventListener("click", ()=>{ setDemoLang(demoLangPick); showDemoSheet(true); });
 authEl("demoBackBtn").addEventListener("click", ()=>{ showDemoSheet(false); authEl("authDemoBtn").focus(); });
