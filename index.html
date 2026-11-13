@@ -2562,25 +2562,52 @@ const TOUR_STEPS=[
 // Raise this to show the tour once more to every profile (for example after a big redesign).
 const TOUR_VERSION=2;
 const guideImg = n => `<img class="tour-guide" src="img/guide/${n}.webp" width="96" height="96" alt="" aria-hidden="true">`;
-function startTour(){
+// Shared by the real tour and the demo tour. `edit(step, i)` may return the step fields to change.
+function runTour(edit, onEnd){
   if(Tour.active()) return;
   const prevTab=curTab, name=user().name||"";
   [1,2,3,4].forEach(n=>{ new Image().src="img/guide/"+n+".webp"; });   // no blank frame while a pose loads
-  Tour.start(TOUR_STEPS.map(s=>({target:s.target||null, tab:s.tab||prevTab, media:guideImg(s.guide),
-      title:t("tour"+s.key+"T",{name}), body:t("tour"+s.key+"B",{name})})), {
+  Tour.start(TOUR_STEPS.map(s=>{
+    const st={target:s.target||null, tab:s.tab||prevTab, media:guideImg(s.guide),
+      title:t("tour"+s.key+"T",{name}), body:t("tour"+s.key+"B",{name})};
+    return edit ? Object.assign(st, edit(s)) : st;
+  }), {
     labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
     switchTab:tab=>switchTab(tab,true),
     inset:()=>{ const ab=document.querySelector(".appbar");
       if(getComputedStyle(ab).display!=="contents") return ab.offsetHeight+8;   // desktop: sticky header + 8px air
       const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // phone: sticky tab bar + 8px air
     fallbackFocus:()=>document.getElementById("usersBtn"),   // e.g. started from "Continue offline" or the settings modal
-    onEnd:()=>{
-      const u=user(); u.tourSeen=true; u.tourSeenV=TOUR_VERSION; save();
-      switchTab(prevTab,true);
-      celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
-      maybeShowMeetCoach();
-    }
+    onEnd:(finished, actionId)=>onEnd(prevTab, finished, actionId)
   });
+}
+function startTour(){
+  runTour(null, prevTab=>{
+    const u=user(); u.tourSeen=true; u.tourSeenV=TOUR_VERSION; save();
+    switchTab(prevTab,true);
+    celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
+    maybeShowMeetCoach();
+  });
+}
+// The demo tour: demo welcome, the free box opened inside the tour (only while it is unused), an end card with sign-up.
+function startDemoTour(){
+  if(Tour.active()) return;
+  const freeBox=Shop.freeAvailable(user());
+  runTour(s=>{
+    if(s.key==="Welcome") return {title:t("tourDemoWelcomeT",{name:user().name||""}), body:t("tourDemoWelcomeB")};
+    if(s.key==="Collect" && freeBox) return {body:t("tourDemoCollectB"), target:"#collectionCard [data-shop-open]", wait:true};
+    if(s.key==="End") return {title:t("tourDemoEndT",{name:user().name||""}), body:t("tourDemoEndB"), target:null,
+      actions:[{id:"create", label:t("demoCreate"), primary:true}, {id:"keep", label:t("demoKeep")}]};
+    return {};
+  }, (prevTab, finished, actionId)=>{
+    user().demoTourDone=true; save();   // also when leaveDemoState() or the sign-up ended the tour: it saves to the demo key they remove
+    if(!demoMode) return;
+    switchTab(prevTab,true);
+    renderDemoBar();
+    if(actionId==="create") openDemoAuth();
+    else celebrate(Game.badges(user(), todayStr()));
+  });
+  renderDemoBar();
 }
 // Once per profile, when the app is fully up for them (after the first cloud pull when signed in) and nothing else is open.
 function maybeStartTour(){
@@ -3340,6 +3367,7 @@ const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-mot
 let rvTimers=[], rvState=null; // rvState: {result, phase:"anim"|"done"}
 function rvLater(fn,ms){ rvTimers.push(setTimeout(fn,ms)); }
 function showReveal(result, free, prevOwned){
+  Tour.suspend();   // a demo tour step that waits for the box: hide the tour while the reveal runs
   const ov=document.getElementById("revealOverlay"), box=document.getElementById("rvBox");
   const rv=ov.querySelector(".rv"), ch=document.getElementById("rvChar"), cap=document.getElementById("rvCap"), ok=document.getElementById("rvOk");
   const reduced=reducedMotion(), c=shopChar(result.id);
@@ -3436,6 +3464,7 @@ function closeReveal(){
       toast(t("shopColDone")+" "+(col?col.name:""), null, 4500);
     }
   }
+  Tour.signal();   // a demo tour step that waited for the box goes on
 }
 (function(){
   const ov=document.getElementById("revealOverlay");
@@ -4397,7 +4426,6 @@ function startDemo(name, lang){
   save();
   enterDemoApp();
 }
-function startDemoTour(){}   // Task 6 replaces this
 function enterDemoApp(){
   closeAuth();
   celebrateReady=true; shopReady=true;
