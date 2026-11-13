@@ -80,7 +80,7 @@ const Tour = (() => {
     }
     const rect = el ? padded(el) : null, p = place(rect, size, vp), wait = !!st.steps[st.i].wait;
     st.waitEl = wait ? el : null;
-    const key = JSON.stringify([rect, p, wait]);
+    const key = JSON.stringify([rect, p, wait, vp]);
     if (key === st.key) return; // e.g. the scroll event our own scrollIntoView fires
     st.key = key;
     const r = rect || { top: vp.h / 2, left: vp.w / 2, width: 0, height: 0 }, sp = st.spot.style;
@@ -136,7 +136,7 @@ const Tour = (() => {
     if (e.key !== "Tab") return;
     const f = buttons(); if (!f.length) { e.preventDefault(); return; } // e.g. a lone wait step: no button to trap on
     const first = f[0], lastB = f[f.length - 1], a = document.activeElement;
-    if (st.waitEl && st.waitEl.contains(a)) return; // let Tab move on from the target; focusin brings it back to the bubble
+    if (st.waitEl && st.waitEl.contains(a)) return; // let Tab move on from the target; focusin then moves focus to the bubble button, or back to the target if no button is left
     if (!inside(a)) { e.preventDefault(); (e.shiftKey ? lastB : first).focus(); }
     else if (e.shiftKey && a === first) { e.preventDefault(); lastB.focus(); }
     else if (!e.shiftKey && a === lastB) { e.preventDefault(); first.focus(); }
@@ -204,7 +204,7 @@ const Tour = (() => {
   function signal() {
     if (!st) return false;
     st.suspended = false; st.root.hidden = false; st.key = "";
-    if (st.steps[st.i].wait) { if (st.i === st.steps.length - 1) end(true); else go(st.i + 1); }
+    if (st.steps[st.i].wait) { st.steps[st.i].wait = false; if (st.i === st.steps.length - 1) end(true); else go(st.i + 1); }
     else { layout(false, false); focusEntry(); }
     return true;
   }

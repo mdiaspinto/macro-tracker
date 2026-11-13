@@ -1402,6 +1402,7 @@
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
 const KEY = "macroTracker.v1";
+const DEMO_KEY = "macroTracker.demo.v1";   // same value as Demo.KEY; load() must not depend on the demo.js global
 const CAL = (p,c,f)=> p*4 + c*4 + f*9;
 const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
 const todayStr = ()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
@@ -1987,7 +1988,7 @@ function load(){
         // One-time: the free-text bio becomes the coach profile's notes.
         if(!s.migrations.profileFromBio) migrateProfiles(s);
         // A demo reload runs this before boot(): migrate in memory only, so the real key stays untouched.
-        if(!localStorage.getItem(Demo.KEY)) localStorage.setItem(KEY, JSON.stringify(s));
+        if(!localStorage.getItem(DEMO_KEY)) localStorage.setItem(KEY, JSON.stringify(s));
         return s;
       }
     }
@@ -2523,7 +2524,7 @@ let mcStep=0;
 // (auth, level-up, chat…). Called after the first pull, when a note arrives, and when the level-up closes.
 function maybeShowMeetCoach(){
   const u=user();
-  if(!session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
+  if(demoMode || !session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
   if(document.querySelector(".overlay.on") || Tour.active()) return;
   openMeetCoach();
 }
@@ -3772,7 +3773,7 @@ function coachBlock(u){
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
 function requestCoachNote(){
-  if(curTab==="tracker" && celebrateReady && cloudEnabled() && session && profile().coachOn!==false) Coach.ensureNote(user(), todayStr());
+  if(!demoMode && curTab==="tracker" && celebrateReady && cloudEnabled() && session && profile().coachOn!==false) Coach.ensureNote(user(), todayStr());
 }
 let chatWaiting=false, chatError=false;
 function openChat(){
@@ -4390,6 +4391,7 @@ async function pullRemote(){
   if(demoMode || !cloudEnabled() || !session) return;
   try{
     const remote=await cloudGet();
+    if(demoMode || !session) return;   // the guest started the demo while this pull was in flight
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -4458,11 +4460,11 @@ function openDemoAuth(){
   authEl("authInput").value=Demo.usernameFrom(user().name);
   openAuth(true);
 }
-function exitDemo(){ leaveDemoState(); renderAll(); openAuth(); }
+function exitDemo(){ leaveDemoState(); switchTab("tracker", true); renderAll(); openAuth(); }   // the demo tab must not render the real shop
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
 function authBusy(on){
-  ["authLoginBtn","authCreateBtn","authInput","authPassword"].forEach(id=>authEl(id).disabled=on);
+  ["authLoginBtn","authCreateBtn","authInput","authPassword","authBackDemo"].forEach(id=>authEl(id).disabled=on);
   authEl("authLoginBtn").textContent = on ? t("checking") : t("authLogin");
 }
 function authForm(){
@@ -4473,10 +4475,11 @@ function authForm(){
 }
 async function doCreate(){
   const f=authForm(); if(!f) return;
+  const fromDemo=demoMode;
   authBusy(true);
   try{
     let acc=null;
-    if(demoMode){   // data safety first: confirm a copy of real device data exists BEFORE any network call
+    if(fromDemo){   // data safety first: confirm a copy of real device data exists BEFORE any network call
       try{
         const raw=localStorage.getItem(KEY);
         if(raw){
@@ -4491,7 +4494,7 @@ async function doCreate(){
       }catch(e){ authError(t("demoBackupErr")); authBusy(false); return; }
     }
     const session0=await authCall("signUp", f.u, f.pw);
-    if(demoMode){   // the demo never merges: the account starts fresh with the demo name and character
+    if(fromDemo){   // the demo never merges: the account starts fresh with the demo name and character
       saveSession(session0);
       endTourLeavingDemo();
       try{ localStorage.removeItem(Demo.KEY); }catch(e){}
@@ -4506,28 +4509,29 @@ async function doCreate(){
     const legacy=await legacyGet(f.u);
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
-      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
+      if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());   // current device data seeds the new account
     shopReady=true;
     authBusy(false); startApp(); toast(t("authCreated",{name:f.u}));
-  }catch(e){ authError(authMsg(e)); authBusy(false); }
+  }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 async function doLogin(){
   const f=authForm(); if(!f) return;
+  const fromDemo=demoMode;
   authBusy(true);
   try{
     saveSession(await authCall("signInWithPassword", f.u, f.pw));
-    if(demoMode) leaveDemoState();   // real state is loaded; nothing from the demo can reach the account
+    if(fromDemo) leaveDemoState();   // real state is loaded; nothing from the demo can reach the account
     const remote=await cloudGet();
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
-      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
+      if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());        // push merged back so the account gains local logs
     shopReady=true;
     authBusy(false); startApp(); toast(t("authWelcome",{name:f.u}));
-  }catch(e){ authError(authMsg(e)); authBusy(false); }
+  }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 function doLogout(){
   session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
