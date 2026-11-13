@@ -1960,7 +1960,8 @@ function load(){
         }
         // One-time: the free-text bio becomes the coach profile's notes.
         if(!s.migrations.profileFromBio) migrateProfiles(s);
-        localStorage.setItem(KEY, JSON.stringify(s));
+        // A demo reload runs this before boot(): migrate in memory only, so the real key stays untouched.
+        if(!localStorage.getItem(Demo.KEY)) localStorage.setItem(KEY, JSON.stringify(s));
         return s;
       }
     }
