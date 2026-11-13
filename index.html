@@ -22,6 +22,7 @@
     --protein:#2F6FD6; --carbs:#1C8A4E; --fat:#B87503; --cal:#D1326B; --weight:#A86A00;
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
     --brain:#7A4FD6; --streak:#D9480F;
+    --tier1:#A8642B; --tier2:#7E878C; --tier3:#B98A12;
     --grid:rgba(22,32,27,.08); --cross:rgba(22,32,27,.3);
     --focus:#2F6FD6;
     --radius:22px; --radius-sm:14px;
@@ -39,6 +40,7 @@
       --protein:#7DB8FF; --carbs:#4ADE80; --fat:#FBBF24; --cal:#F472B6; --weight:#F5C451;
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
       --brain:#B79CFF; --streak:#FF8A4C;
+      --tier1:#D08B4E; --tier2:#C3CBD0; --tier3:#F2C14E;
       --grid:rgba(238,242,236,.07); --cross:rgba(238,242,236,.3);
       --focus:#7DB8FF;
       --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
@@ -180,21 +182,35 @@
   .br-sub{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4}
   .br-level{flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 9px;border-radius:999px;
     border:2px solid var(--brain);background:color-mix(in srgb,var(--brain) 14%,var(--panel));font-size:14px;font-weight:800}
+  .ic{width:1em;height:1em;display:inline-block;vertical-align:-.125em;flex:none}
+  .streak{gap:4px}
+  .br-ask .ic{margin-right:6px}
   .br-level .em{font-size:18px;line-height:1}
   .br-meter{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
   .br-bar{flex:1;height:24px;border:2px solid var(--ink);border-radius:999px;background:var(--panel-2);overflow:hidden}
   .br-bar > span{display:block;height:100%;background:var(--brain);border-radius:999px;transition:width .5s ease}
   .br-pct{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
   .br-next{font-size:15px;font-weight:700;margin:0 0 12px}
-  .br-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px}
-  .br-ic{aspect-ratio:1;display:grid;place-items:center;border:2px solid var(--line);border-radius:14px;font-size:21px;line-height:1}
-  .br-ic.full{border-color:var(--brain)}
+  /* Ring tiles: 4 columns on phones and in the 360 px desktop side column, 8 when the card is full width. */
+  .br-rings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:14px}
+  @media(min-width:560px) and (max-width:959px){ .br-rings{grid-template-columns:repeat(8,minmax(0,1fr))} }
+  .br-ring{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:6px 0 5px;border-radius:12px;background:transparent}
+  .br-ring:hover{background:var(--panel-2)}
+  .rg{position:relative;flex:none;width:44px;height:44px;display:grid;place-items:center}
+  .rg-ring{position:absolute;inset:0;width:100%;height:100%}
+  .rg .ic{position:relative;font-size:20px;color:var(--text)}
+  .rg.zero .ic{color:var(--faint)}
+  .rg.big{width:72px;height:72px}
+  .rg.big .ic{font-size:32px}
+  .rg-n{font-size:12px;font-weight:700;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums}
+  .br-ring.full .rg-n{color:var(--brain)}
   .br-hab-lab{font-size:14px;font-weight:800;margin-bottom:8px}
   .br-habits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
   .br-hab{position:relative;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     padding:6px 1px;border-radius:14px;border:2px solid var(--line-strong);background:var(--panel);
     font-size:12.5px;font-weight:700;font-stretch:87.5%;line-height:1.15;text-align:center}
   .br-hab .em{font-size:24px;line-height:1}
+  .br-hab .hn{font-size:11.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
   .br-hab:hover{border-color:var(--ink)}
   .br-hab[aria-pressed="true"]{border-color:var(--brain);background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
   .br-hab[aria-pressed="true"]::after{content:"✓";position:absolute;top:3px;right:6px;font-size:12px;font-weight:900;color:var(--brain)}
@@ -270,9 +286,22 @@
   .overlay.sheet .head .x{width:44px;height:44px}
 
   /* ---------- Brain tab: level, weekly history, badges, why it matters ---------- */
-  @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #brainView > .section.wide{grid-column:1 / -1} }
-  .bv-level{display:flex;align-items:center;gap:16px;margin-bottom:14px}
-  .bv-level .em{font-size:56px;line-height:1;flex:none}
+  @media(min-width:960px){ #brainView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #brainView > .section.wide{grid-column:1 / -1} #brainView > .section{display:flex;flex-direction:column} #brainView > .section > .body{flex:1} }
+  /* Level path: six nodes on a line; the line fills up to the current level. */
+  .lv-path{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));list-style:none;margin:0 0 16px;padding:0}
+  .lv-path::before,.lv-path::after{content:"";position:absolute;top:19px;left:calc(100% / 12);height:2px}
+  .lv-path::before{right:calc(100% / 12);background:var(--line)}
+  .lv-path::after{width:calc(100% * 5 / 6 * var(--lv, 0));background:var(--brain)}
+  .lv-path li{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .lv-dot{width:40px;height:40px;display:grid;place-items:center}
+  .lv-dot > span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:16px;
+    border:2px solid var(--line);background:var(--panel);color:var(--faint)}
+  .lv-path .done .lv-dot > span{border-color:color-mix(in srgb,var(--brain) 45%,var(--panel));background:color-mix(in srgb,var(--brain) 14%,var(--panel));color:var(--brain)}
+  .lv-path .cur .lv-dot > span{width:40px;height:40px;font-size:20px;border-color:var(--brain);background:color-mix(in srgb,var(--brain) 18%,var(--panel));color:var(--brain)}
+  .lv-nm{font-size:11px;font-weight:600;font-stretch:87.5%;line-height:1.2;text-align:center;white-space:nowrap;color:var(--faint)}
+  @media(max-width:359px){ .lv-nm{font-stretch:75%} }
+  .lv-path .done .lv-nm{color:var(--muted)}
+  .lv-path .cur .lv-nm{color:var(--text);font-weight:800}
   .bv-lvname{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
   .bv-pts{font-size:15px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
   .bv-next{font-size:15px;font-weight:700;margin:10px 0 0}
@@ -285,15 +314,38 @@
   .bv-wk .dt{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
   .bv-wk.cur .col{border-color:var(--ink)}
   .bv-wk.cur .dt{color:var(--text);font-weight:800}
-  .bv-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-  .bv-badge{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;border:2px solid var(--brain);
-    background:color-mix(in srgb,var(--brain) 12%,var(--panel))}
-  .bv-badge .em{font-size:28px;line-height:1;flex:none}
-  .bv-badge b{display:block;font-size:14px;line-height:1.25}
-  .bv-badge small{display:block;font-size:13px;color:var(--muted);line-height:1.35;margin-top:3px}
-  .bv-badge.locked{border-color:var(--line);background:var(--panel-2)}
-  .bv-badge.locked .em{filter:grayscale(1);opacity:.4}
-  .bv-badge.locked b{color:var(--muted)}
+  /* Medals: 2 columns of row cards on phones, 5 columns (2 full rows) from 560 px. */
+  .bv-medals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bv-medal{display:flex;align-items:center;gap:8px;min-width:0;padding:10px 8px;border-radius:14px;border:1.5px solid var(--line);background:var(--panel);text-align:left}
+  .bv-medal:hover{border-color:var(--line-strong)}
+  .bv-medal > span:last-child{min-width:0;overflow-wrap:break-word}
+  .bv-medal b{display:block;font-size:13.5px;line-height:1.25}
+  .bv-medal small{display:block;font-size:12px;line-height:1.3;color:var(--muted);margin-top:2px}
+  .bv-medal .nw{white-space:nowrap}
+  /* Phone row cards are ~150 px wide: a 44 px medal leaves room for the text. */
+  @media(max-width:559px){ .bv-medal .md{width:44px;height:44px} .bv-medal .md .ic{font-size:21px} }
+  @media(min-width:560px){
+    .bv-medals{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+    .bv-medal{flex-direction:column;justify-content:flex-start;gap:8px;padding:14px 8px 12px;text-align:center}
+    .bv-medal b{font-size:14px}
+    .bv-medal small{font-size:12.5px}
+  }
+  .md{position:relative;flex:none;width:56px;height:56px;display:grid;place-items:center;color:var(--brain)}
+  .md-ring{position:absolute;inset:0;width:100%;height:100%}
+  .md .ic{position:relative;font-size:26px}
+  .md.off .ic{color:var(--faint)}
+  .md.big{width:80px;height:80px}
+  .md.big .ic{font-size:36px}
+  /* Info sheet (ring tile or medal detail) */
+  .info-modal{max-width:400px}
+  .info-hero{display:flex;justify-content:center;margin:0 0 14px}
+  .info-text{margin:0 0 10px;font-size:15px;line-height:1.5}
+  .info-text.lead{font-weight:700}
+  .info-tiers{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+  .info-tiers li{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  .info-tiers .pip{flex:none;width:12px;height:12px;border-radius:50%;border:2px solid}
+  .info-tiers b{flex:1;min-width:0}
+  .info-tiers .st{font-size:13.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
   .bv-why{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
   .bv-why li{display:flex;align-items:flex-start;gap:12px;font-size:15px;line-height:1.45}
   .bv-why .em{flex:none;width:28px;font-size:22px;line-height:1.2;text-align:center}
@@ -518,22 +570,30 @@
   .stat .stat-lab{font-size:12px;color:var(--muted);font-weight:600}
   .stat .stat-val{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
   @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px} }
+  @media(max-width:480px){
+    .chart-stats.four{display:grid;grid-template-columns:1fr 1fr}
+    .chart-stats.four .stat{min-width:0;border-left:none}
+    .chart-stats.four .stat:nth-child(even){border-left:1px solid var(--line)}
+    .chart-stats.four .stat:nth-child(n+3){border-top:1px solid var(--line)} }
   .chart-wrap{position:relative;width:100%;margin-top:2px}
   .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
+  .m-range{margin-bottom:14px}
+  .m-range .seg{display:flex;width:100%}
+  .m-range .seg button{flex:1;padding:8px 6px}
   .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.55}
   .chart-tip{position:absolute;pointer-events:none;background:var(--panel);border:1.5px solid var(--line);
     border-radius:10px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
     transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
   .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
-  .chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
-  .chart-legend .lg{display:flex;align-items:center;gap:6px;color:var(--muted)}
-  .chart-legend .lg .sw{width:10px;height:10px;border-radius:3px;flex:none}
-  .chart-legend .lg b{color:var(--text);font-weight:600}
-  .weight-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+  .weight-form{display:grid;gap:14px}
   .weight-form .field{gap:6px}
-  .weight-form .btn{height:45px;white-space:nowrap}
-  @media(max-width:560px){.weight-form{grid-template-columns:1fr 1fr}.weight-form .btn{grid-column:1 / -1;justify-content:center}}
-  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide{grid-column:1 / -1} }
+  .weight-form .seg{display:flex}
+  .weight-form .seg button{flex:1;padding:10px 14px}
+  .weight-form .btn{height:45px;white-space:nowrap;justify-content:center}
+  .w-log-open{margin-left:auto;padding:7px 14px;font-size:13px;align-self:center}
+  .macro-block + .macro-block{margin-top:16px}
+  .macro-cap{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;font-variant-numeric:tabular-nums}
+  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} #metricsView > .section{display:flex;flex-direction:column} #metricsView > .section > .body{flex:1} }
   .recent-weights{margin-top:16px}
   .rw-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
   .rw-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
@@ -545,7 +605,7 @@
 
   /* ---------- Weight-change breakdown ---------- */
   .insight:empty{display:none}
-  .insight{margin-top:18px;padding-top:16px;border-top:4px solid var(--ink)}
+  .insight{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .ins-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .ins-head h3{font-size:17px;font-weight:800}
   .ins-range{font-size:12.5px;color:var(--muted)}
@@ -792,6 +852,8 @@
   <!-- Metrics -->
   <div id="metricsView" style="display:none">
 
+    <div class="m-range"><div class="seg" id="mRange"></div></div>
+
     <div class="section">
       <div class="head"><h2 data-mk="cal" data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
       <div class="body">
@@ -803,32 +865,13 @@
     <div class="section">
       <div class="head"><h2 data-mk="protein" data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
       <div class="body">
-        <div class="chart-legend" id="macroLegend"></div>
-        <div class="chart-wrap" id="macroChart"></div>
+        <div id="macroCharts"></div>
       </div>
     </div>
 
     <div class="section wide">
-      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
+      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span><button class="btn btn-primary w-log-open" id="wLogOpen" type="button" data-i18n="logWeightBtn">Log weight</button></div>
       <div class="body">
-        <div class="weight-form">
-          <div class="field">
-            <label data-i18n="weightDate">Date</label>
-            <input type="date" id="wDate">
-          </div>
-          <div class="field">
-            <label data-i18n="weightLabel">Weight</label>
-            <input type="number" id="wVal" inputmode="decimal" min="0" step="any" placeholder="0">
-          </div>
-          <div class="field">
-            <label data-i18n="units">Units</label>
-            <select id="wUnit" class="unit-select">
-              <option value="kg" data-i18n="unitKg">kg</option>
-              <option value="lb" data-i18n="unitLb">lb</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" id="wLogBtn" data-i18n="logWeightBtn">Log weight</button>
-        </div>
         <div class="chart-stats" id="wStats"></div>
         <div class="chart-wrap" id="wChart"></div>
         <div class="insight" id="wInsight"></div>
@@ -850,7 +893,7 @@
     </div>
     <div class="section wide">
       <div class="head"><h2 data-mk="brain" data-i18n="bvBadgesHead">Badges</h2><span class="hint" id="bvBadgesCount"></span></div>
-      <div class="body"><div class="bv-badges" id="bvBadges"></div></div>
+      <div class="body"><div class="bv-medals" id="bvBadges"></div></div>
     </div>
     <div class="section wide">
       <div class="head"><h2 data-mk="brain" data-i18n="bvWhyHead">Why it matters</h2></div>
@@ -986,10 +1029,43 @@
   </div>
 </div>
 
+<!-- Weight log sheet -->
+<div class="overlay" id="weightOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="weightSheetTitle">
+    <div class="head"><h3 id="weightSheetTitle" data-i18n="logWeightBtn">Log weight</h3><button class="x" type="button" data-close-weight aria-label="×">×</button></div>
+    <div class="body weight-form">
+      <div class="field">
+        <label for="wDate" data-i18n="weightDate">Date</label>
+        <input type="date" id="wDate">
+      </div>
+      <div class="field">
+        <label for="wVal" data-i18n="weightLabel">Weight</label>
+        <input type="number" id="wVal" inputmode="decimal" min="0" step="any" placeholder="0">
+      </div>
+      <div class="field">
+        <label data-i18n="units">Units</label>
+        <div class="seg" id="wUnitSeg">
+          <button type="button" data-unit="kg" data-i18n="unitKg">kg</button>
+          <button type="button" data-unit="lb" data-i18n="unitLb">lb</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="wLogBtn" type="button" data-i18n="logWeightBtn">Log weight</button>
+    </div>
+  </div>
+</div>
+
+<!-- Info sheet: a ring tile or a medal -->
+<div class="overlay" id="infoOverlay">
+  <div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="head"><h3 id="infoTitle"></h3><button class="x" type="button" data-close-info><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button></div>
+    <div class="body"><div class="info-hero" id="infoIcon" aria-hidden="true"></div><div id="infoBody"></div></div>
+  </div>
+</div>
+
 <!-- Coach chat (bottom sheet) -->
 <div class="overlay sheet" id="chatOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
-    <div class="head"><h3 id="chatTitle" data-i18n="chatTitle">Your coach 💬</h3><button class="x" data-close-chat data-i18n-title="chatClose">×</button></div>
+    <div class="head"><h3 id="chatTitle" data-i18n="chatTitle">Your coach</h3><button class="x" data-close-chat data-i18n-title="chatClose">×</button></div>
     <div class="chat-log" id="chatLog" aria-live="polite"></div>
     <div class="chat-status" id="chatStatus"></div>
     <form class="chat-form" id="chatForm">
@@ -1002,7 +1078,7 @@
 <!-- Meet your coach (one-time, 3 steps) -->
 <div class="overlay" id="coachOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
-    <div class="head"><h3 id="mcTitle" data-i18n="mcTitle">Meet your coach 👋</h3></div>
+    <div class="head"><h3 id="mcTitle" data-i18n="mcTitle">Meet your coach</h3></div>
     <div class="body pf" id="mcBody"></div>
   </div>
 </div>
@@ -1028,7 +1104,7 @@
 <div class="overlay" id="levelOverlay">
   <div class="modal lvlup" role="dialog" aria-modal="true" aria-labelledby="lvlUpName">
     <div class="body">
-      <div class="lvlup-em" id="lvlUpEmoji" aria-hidden="true"></div>
+      <div class="lvlup-em" id="lvlUpIcon" aria-hidden="true"></div>
       <p class="lvlup-kicker" data-i18n="lvlUpTitle">Level up!</p>
       <h3 id="lvlUpName"></h3>
       <p class="lvlup-msg" data-i18n="lvlUpMsg"></p>
@@ -1100,13 +1176,16 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="brain.js"></script>
-<script src="game.js"></script>
-<script src="coach.js"></script>
-<script src="shop.js"></script>
-<script src="tour.js"></script>
+<script src="icons.js?v=20261113"></script>
+<script src="charts.js?v=20261113"></script>
+<script src="brain.js?v=20261113"></script>
+<script src="game.js?v=20261113"></script>
+<script src="coach.js?v=20261113"></script>
+<script src="shop.js?v=20261113"></script>
+<script src="tour.js?v=20261113"></script>
 <script>
 "use strict";
+document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
 const KEY = "macroTracker.v1";
 const CAL = (p,c,f)=> p*4 + c*4 + f*9;
 const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
@@ -1296,7 +1375,7 @@ const T = {
     suggestIntro:"Built from your foods plus common foods, to fill what's left today. Pick what to add.",
     noFoodsToSuggest:"You don't have any saved foods yet. Log a few foods and they'll show up here as suggestions.",
     addSomeFoods:"Add a food",
-    targetsMet:"You've already hit today's targets 🎉",
+    targetsMet:"You've already hit today's targets",
     noGoodSuggestion:"Your saved foods can't get closer to today's targets right now.",
     planAdds:"This plan adds", stillLeft:"Still left after", addAllWhatif:"Add all as what-if",
     addAllEaten:"Add all as eaten", suggestionAdded:"Suggestion added",
@@ -1321,9 +1400,9 @@ const T = {
     dailyTotals:"Daily totals", pctTarget:"% of target",
     insSetting:"Weight-change breakdown", insSettingHint:"After each weigh-in, explain what you ate and why your weight moved. When signed in, an AI model writes the explanation from your food totals.",
     insTitle:"Why your weight changed", coachLogin:"Log in to meet your coach",
-    coachNoteHead:"Your coach says", coachAsk:"Ask your coach 💬", chatTitle:"Your coach 💬", chatClose:"Close",
+    coachNoteHead:"Your coach says", coachAsk:"Ask your coach", chatTitle:"Your coach", chatClose:"Close",
     chatEmpty:"Ask anything about your food, your week or your goals.", chatPh:"Type your question…", chatSend:"Send",
-    chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow! 👋",
+    chatTyping:"Your coach is writing…", chatLeft:"{n} left today", chatCapped:"That's all the questions for today. Your coach will be back tomorrow!",
     memAsk:"Remember this for next time?", memYes:"Remember", memNo:"No thanks", memSaved:"Saved to About me", memNotSaved:"Not saved",
     memAdded:"Added to About me", memDup:"Already in About me", memFull:"About me is full (15) — remove one first", memTitle:"What your coach remembers", memRemove:"Remove", memFact:"Fact to remember",
     memEmpty:"Nothing yet — when something in a chat seems worth remembering, your coach will ask first.",
@@ -1353,7 +1432,7 @@ const T = {
     pfCoachOn:"AI coach", pfCoachOnHint:"Daily tip and chat. Your profile is shared with the coach only when this is on.",
     pfNotes:"Anything else your coach should know", pfNotesPh:"e.g. menopausal, walk every morning, night shifts",
     profileSaved:"Saved ✓",
-    mcTitle:"Meet your coach 👋", mcStep:"Step {n} of 3",
+    mcTitle:"Meet your coach", mcStep:"Step {n} of 3",
     mcIntro:"Your coach gives you a short tip each day and answers your questions about food and habits linked to a healthier brain. Three quick questions so it gets to know you.",
     mcFoodIntro:"What do you like to eat, and what do you stay away from?",
     mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
@@ -1382,14 +1461,17 @@ const T = {
     metricsMacroTitle:"Macros", metricsMacroHint:"Protein, carbs & fat eaten per day",
     metricsWeightTitle:"Weight", metricsWeightHint:"Log your weight to track it over time",
     weightDate:"Date", weightLabel:"Weight", logWeightBtn:"Log weight",
+    macroCaption:"{name} · avg {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"No calories logged yet. Add eaten foods on the Tracker tab and they'll show up here.",
-    noWeightData:"No weight logged yet. Add your first entry above.",
+    noWeightData:"No weight logged yet. Tap Log weight to add your first entry.",
+    noRangeData:"No entries in this range",
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
-    statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
-    targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
-    brainTitle:"🧠 Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
-    brainNext:"{n} more {emoji} this week", brainFull:"Every brain goal met this week! 🎉",
+    range7:"7D", range30:"30D", range90:"90D", rangeAll:"All", statAvg7:"7-day average", statOnTarget:"Days on target",
+    statLatest:"Latest", statAvg:"Average", statChange:"Change", statEntries:"Entries",
+    kcalUnit:"kcal", recentEntries:"Recent entries",
+    brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
+    brainNext:"{name}: {n} more this week", brainFull:"Every brain goal met this week!",
     brainHabits:"Habits · {day}", brainIconLabel:"{name}: {n} of {target} this week",
     brainEditFor:"Brain foods in {name}", brainNone:"none yet",
     brainPickHint:"Tap to add or remove. Changes save right away.", brainLimitHead:"Go easy on", brainDone:"Done",
@@ -1401,21 +1483,18 @@ const T = {
     hab_strength:"Strength", hab_walk:"Walk", hab_sleep:"Sleep 7h", hab_social:"People", hab_mind:"Mind",
     tag_sweets:"sweets", tag_fried:"fried", tag_redMeat:"red meat", tag_butter:"butter", tag_cheese:"cheese",
     tabBrain:"Brain", streakDays:"{n}-day streak", streakDay1:"1-day streak",
-    brainStar:"⭐ Macro star · {day}: calories and protein on target",
-    bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {emoji} {level}", bvTop:"You reached the top level! 🏆",
-    bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a 🔥 streak.",
+    brainStar:"Macro star · {day}: calories and protein on target",
+    bvLevelHead:"Your brain level", bvPoints:"{n} brain points", bvToNext:"{n} points to {level}", bvTop:"You reached the top level!",
+    bvProgress:"Progress to the next level", bvPointsHow:"Earn points every week by filling your brain bar.", bvStreakStart:"Log a meal today to start a streak.",
     bvWeeksHead:"Last 8 weeks", bvWeeksHint:"How full your brain bar got", bvWeekLabel:"Week of {date}: {pct}%",
-    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned", bvEarned:"Earned {date}", bvEarnedWeek:"Week of {date}",
+    bvBadgesHead:"Badges", bvBadgesCount:"{n} of {total} earned",
     bvWhyHead:"Why it matters", bvWhyNote:"These are links found in research, not promises, and not medical advice.",
-    badge_firstLog:"First log", badge_streak7:"7-day streak", badge_streak30:"30-day streak", badge_fishWeek:"Fish week", badge_fullBrain:"Full brain",
-    badge_cleanWeek:"Clean week", badge_strongWeek:"Strong week", badge_berryLover:"Berry lover", badge_greenMachine:"Green machine",
-    badge_socialButterfly:"Social butterfly", badge_macroMaster:"Macro master",
-    badgeHint_firstLog:"Log your first meal", badgeHint_streak7:"Log meals 7 days in a row", badgeHint_streak30:"Log meals 30 days in a row",
-    badgeHint_fishWeek:"Hit your 🐟 target in a week", badgeHint_fullBrain:"Fill your brain bar to 100% in a week",
-    badgeHint_cleanWeek:"Log 7+ meals in a week and go easy on sweets, fried food, red meat, butter and cheese",
-    badgeHint_strongWeek:"Do strength training twice in a week", badgeHint_berryLover:"Hit your 🫐 target in 4 weeks",
-    badgeHint_greenMachine:"Hit your 🥬 target in 4 weeks", badgeHint_socialButterfly:"Hit your 👥 target in 4 weeks",
-    badgeHint_macroMaster:"Earn a ⭐ macro star 7 days in a row", badgeHint_level:"Reach {n} brain points",
+    tier1:"Bronze", tier2:"Silver", tier3:"Gold",
+    fam_firstLog:"First log", fam_streak:"Streak", fam_stars:"Macro stars", fam_fullBrain:"Full brain", fam_clean:"Clean weeks",
+    fam_fish:"Fish", fam_strength:"Strength", fam_berries:"Berries", fam_greens:"Greens", fam_social:"Social",
+    famHint_firstLog:"Log your first eaten meal", famHint_streak:"Days in a row with a logged meal", famHint_stars:"Days in a row with a macro star",
+    famHint_weeks:"Weeks you hit your {name} target", famHint_fullBrain:"Weeks you fill your brain bar to 100%", famHint_clean:"Weeks you stay under every limit",
+    unitDays:"{n} days", unitWeeks:"{n} weeks", unitWeek1:"1 week", famProgress:"{have} of {need}", famEarned:"Earned {date}",
     why_greens:"Leafy greens are linked to slower memory decline as we age.",
     why_veg:"Eating plenty of vegetables is linked to a healthier brain over the years.",
     why_berries:"Berries are linked to better memory.",
@@ -1429,7 +1508,7 @@ const T = {
     why_sleep:"Sleeping 7 hours or more is linked to better memory.",
     why_social:"Time with friends and family is linked to a sharper mind as we age.",
     why_mind:"Learning new things, puzzles and games that challenge you are linked to a sharper mind.",
-    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in 🧠 Brain",
+    celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
 
     shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
@@ -1473,7 +1552,7 @@ const T = {
     suggestIntro:"Con tus alimentos y alimentos comunes, para completar lo que falta hoy. Elige qué agregar.",
     noFoodsToSuggest:"Todavía no tienes alimentos guardados. Registra algunos y aparecerán aquí como sugerencias.",
     addSomeFoods:"Agregar un alimento",
-    targetsMet:"¡Ya alcanzaste los objetivos de hoy! 🎉",
+    targetsMet:"¡Ya alcanzaste los objetivos de hoy!",
     noGoodSuggestion:"Tus alimentos guardados no pueden acercarse más a los objetivos de hoy por ahora.",
     planAdds:"Este plan agrega", stillLeft:"Todavía falta", addAllWhatif:"Agregar todo como simulación",
     addAllEaten:"Agregar todo como comido", suggestionAdded:"Sugerencia agregada",
@@ -1498,9 +1577,9 @@ const T = {
     dailyTotals:"Totales del día", pctTarget:"% del objetivo",
     insSetting:"Explicación del cambio de peso", insSettingHint:"Tras cada pesaje, explica lo que comiste y por qué cambió tu peso. Con la sesión iniciada, un modelo de IA redacta la explicación a partir de tus totales.",
     insTitle:"Por qué cambió tu peso", coachLogin:"Inicia sesión para conocer a tu coach",
-    coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach 💬", chatTitle:"Tu coach 💬", chatClose:"Cerrar",
+    coachNoteHead:"Tu coach dice", coachAsk:"Pregúntale a tu coach", chatTitle:"Tu coach", chatClose:"Cerrar",
     chatEmpty:"Pregunta lo que quieras sobre tu comida, tu semana o tus metas.", chatPh:"Escribe tu pregunta…", chatSend:"Enviar",
-    chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana! 👋",
+    chatTyping:"Tu coach está escribiendo…", chatLeft:"Preguntas que te quedan hoy: {n}", chatCapped:"Ya no quedan preguntas por hoy. ¡Tu coach vuelve mañana!",
     memAsk:"¿Lo recuerdo para la próxima vez?", memYes:"Recordar", memNo:"No, gracias", memSaved:"Guardado en Sobre mí", memNotSaved:"No guardado",
     memAdded:"Añadido a Sobre mí", memDup:"Ya está en Sobre mí", memFull:"Sobre mí está lleno (15): quita uno primero", memTitle:"Lo que tu coach recuerda", memRemove:"Quitar", memFact:"Dato para recordar",
     memEmpty:"Todavía nada — cuando algo de un chat valga la pena recordar, tu coach te preguntará primero.",
@@ -1530,7 +1609,7 @@ const T = {
     pfCoachOn:"Coach con IA", pfCoachOnHint:"Consejo diario y chat. Tu perfil solo se comparte con el coach cuando esto está activado.",
     pfNotes:"Algo más que tu coach deba saber", pfNotesPh:"p. ej. menopausia, camino cada mañana, turnos de noche",
     profileSaved:"Guardado ✓",
-    mcTitle:"Conoce a tu coach 👋", mcStep:"Paso {n} de 3",
+    mcTitle:"Conoce a tu coach", mcStep:"Paso {n} de 3",
     mcIntro:"Tu coach te da un consejo corto cada día y responde tus preguntas sobre comida y hábitos ligados a un cerebro más sano. Tres preguntas rápidas para que te conozca.",
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
@@ -1559,14 +1638,17 @@ const T = {
     metricsMacroTitle:"Macros", metricsMacroHint:"Proteína, carbohidratos y grasa por día",
     metricsWeightTitle:"Peso", metricsWeightHint:"Registra tu peso para seguirlo con el tiempo",
     weightDate:"Fecha", weightLabel:"Peso", logWeightBtn:"Registrar peso",
+    macroCaption:"{name} · media {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"Aún no hay calorías registradas. Agrega alimentos comidos en la pestaña Registro y aparecerán aquí.",
-    noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
+    noWeightData:"Aún no has registrado tu peso. Toca Registrar peso para añadir el primero.",
+    noRangeData:"No hay datos en este rango",
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
-    statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
-    targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
-    brainTitle:"🧠 Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
-    brainNext:"Te faltan {n} {emoji} esta semana", brainFull:"¡Cumpliste todas las metas de la semana! 🎉",
+    range7:"7 d", range30:"30 d", range90:"90 d", rangeAll:"Todo", statAvg7:"Media 7 días", statOnTarget:"Días en objetivo",
+    statLatest:"Último", statAvg:"Promedio", statChange:"Cambio", statEntries:"Entradas",
+    kcalUnit:"kcal", recentEntries:"Entradas recientes",
+    brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
+    brainNext:"{name}: {n} más esta semana", brainFull:"¡Cumpliste todas las metas de la semana!",
     brainHabits:"Hábitos · {day}", brainIconLabel:"{name}: {n} de {target} esta semana",
     brainEditFor:"Comida para el cerebro en {name}", brainNone:"nada todavía",
     brainPickHint:"Toca para agregar o quitar. Se guarda al instante.", brainLimitHead:"Con moderación", brainDone:"Listo",
@@ -1578,21 +1660,18 @@ const T = {
     hab_strength:"Fuerza", hab_walk:"Caminar", hab_sleep:"Dormir 7h", hab_social:"Gente", hab_mind:"Mente",
     tag_sweets:"dulces", tag_fried:"fritos", tag_redMeat:"carne roja", tag_butter:"mantequilla", tag_cheese:"queso",
     tabBrain:"Cerebro", streakDays:"Racha de {n} días", streakDay1:"Racha de 1 día",
-    brainStar:"⭐ Estrella de macros · {day}: calorías y proteína en su punto",
-    bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"Te faltan {n} puntos para {emoji} {level}", bvTop:"¡Llegaste al nivel más alto! 🏆",
-    bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu 🔥 racha.",
+    brainStar:"Estrella de macros · {day}: calorías y proteína en su punto",
+    bvLevelHead:"Tu nivel de cerebro", bvPoints:"{n} puntos de cerebro", bvToNext:"{n} puntos para {level}", bvTop:"¡Llegaste al nivel más alto!",
+    bvProgress:"Progreso hacia el siguiente nivel", bvPointsHow:"Gana puntos cada semana llenando tu barra del cerebro.", bvStreakStart:"Registra una comida hoy para empezar tu racha.",
     bvWeeksHead:"Últimas 8 semanas", bvWeeksHint:"Cuánto llenaste tu barra del cerebro", bvWeekLabel:"Semana del {date}: {pct}%",
-    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas", bvEarned:"Conseguida el {date}", bvEarnedWeek:"Semana del {date}",
+    bvBadgesHead:"Insignias", bvBadgesCount:"{n} de {total} conseguidas",
     bvWhyHead:"Por qué importa", bvWhyNote:"Son relaciones que ha encontrado la investigación, no promesas ni consejo médico.",
-    badge_firstLog:"Primer registro", badge_streak7:"Racha de 7 días", badge_streak30:"Racha de 30 días", badge_fishWeek:"Semana de pescado", badge_fullBrain:"Cerebro completo",
-    badge_cleanWeek:"Semana limpia", badge_strongWeek:"Semana fuerte", badge_berryLover:"Amor por los frutos rojos", badge_greenMachine:"Máquina verde",
-    badge_socialButterfly:"Mariposa social", badge_macroMaster:"Maestría en macros",
-    badgeHint_firstLog:"Registra tu primera comida", badgeHint_streak7:"Registra comidas 7 días seguidos", badgeHint_streak30:"Registra comidas 30 días seguidos",
-    badgeHint_fishWeek:"Cumple tu meta de 🐟 en una semana", badgeHint_fullBrain:"Llena tu barra del cerebro al 100% en una semana",
-    badgeHint_cleanWeek:"Registra 7+ comidas en una semana con poco dulce, frito, carne roja, mantequilla y queso",
-    badgeHint_strongWeek:"Haz ejercicio de fuerza 2 veces en una semana", badgeHint_berryLover:"Cumple tu meta de 🫐 en 4 semanas",
-    badgeHint_greenMachine:"Cumple tu meta de 🥬 en 4 semanas", badgeHint_socialButterfly:"Cumple tu meta de 👥 en 4 semanas",
-    badgeHint_macroMaster:"Consigue una ⭐ estrella de macros 7 días seguidos", badgeHint_level:"Llega a {n} puntos de cerebro",
+    tier1:"Bronce", tier2:"Plata", tier3:"Oro",
+    fam_firstLog:"Primer registro", fam_streak:"Racha", fam_stars:"Estrellas de macros", fam_fullBrain:"Cerebro lleno", fam_clean:"Semanas limpias",
+    fam_fish:"Pescado", fam_strength:"Fuerza", fam_berries:"Frutos rojos", fam_greens:"Hojas verdes", fam_social:"Social",
+    famHint_firstLog:"Registra tu primera comida", famHint_streak:"Días seguidos con una comida registrada", famHint_stars:"Días seguidos con estrella de macros",
+    famHint_weeks:"Semanas en que cumples tu objetivo de {name}", famHint_fullBrain:"Semanas con la barra del cerebro al 100%", famHint_clean:"Semanas por debajo de todos los límites",
+    unitDays:"{n} días", unitWeeks:"{n} semanas", unitWeek1:"1 semana", famProgress:"{have} de {need}", famEarned:"Conseguida el {date}",
     why_greens:"Las hojas verdes están ligadas a una pérdida de memoria más lenta con la edad.",
     why_veg:"Comer muchas verduras está ligado a un cerebro más sano con los años.",
     why_berries:"Los frutos rojos están ligados a una mejor memoria.",
@@ -1606,7 +1685,7 @@ const T = {
     why_sleep:"Dormir 7 horas o más está ligado a una mejor memoria.",
     why_social:"Pasar tiempo con amigos y familia está ligado a una mente más ágil con la edad.",
     why_mind:"Aprender cosas nuevas y hacer crucigramas o juegos que te reten está ligado a una mente más ágil.",
-    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en 🧠 Cerebro",
+    celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
 
     shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
@@ -1956,45 +2035,59 @@ function setMealBrain(mealId,tags){
 /* ---------- Brain card, meal chips, Recent row ---------- */
 const BRAIN_FOODS = Brain.CATEGORIES.filter(c=>c.kind==="food").map(c=>c.id).concat("oilyFish");
 const LIMITS = Object.keys(Brain.LIMIT_TAGS);
-const brainEmoji = id => id==="oilyFish" ? "🐟" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).emoji || "";
-const foodEmojis = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>c.emoji).join("");
+const catIcon = id => Icons.svg(id==="oilyFish" ? "fish" : (Brain.CATEGORIES.find(c=>c.id===id)||{}).icon);
+const foodIcons = tags => Brain.CATEGORIES.filter(c=>c.kind==="food" && tags.includes(c.id)).map(c=>Icons.svg(c.icon)).join("");
 let lastBrainBar = 0;
+// SVG progress ring centred at (c,c): grey track, then a --brain arc for frac (0..1) from 12 o'clock.
+function ringArcs(c,r,frac){
+  const len=2*Math.PI*r, base=`cx="${c}" cy="${c}" r="${r}" stroke-width="3"`;
+  return `<circle ${base} style="fill:none;stroke:var(--line)"/>` + (frac>0 ?
+    `<circle ${base} stroke-linecap="round" stroke-dasharray="${(frac*len).toFixed(2)} ${len.toFixed(2)}" transform="rotate(-90 ${c} ${c})" style="fill:none;stroke:var(--brain)"/>` : "");
+}
+// A food category's ring (44 px; "big" for the info sheet). A full category gets a 22 % --brain fill.
+function catRing(c,ws,big){
+  const f=ws.fill[c.id];
+  return `<span class="rg${big?" big":""}${ws.counts[c.id]?"":" zero"}"><svg class="rg-ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">${f>=1?`<circle cx="22" cy="22" r="19" fill-opacity=".22" style="fill:var(--brain)"/>`:""}${ringArcs(22,19,f)}</svg>${Icons.svg(c.icon)}</span>`;
+}
+const catLabel = (c,ws) => t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target});
+function openCatInfo(id){
+  const c=Brain.CATEGORIES.find(x=>x.id===id); if(!c) return;
+  const ws=Brain.weekScore(user(),curDate);
+  openInfo({icon:catRing(c,ws,true), title:t("cat_"+id),
+    html:`<p class="info-text lead">${escapeHtml(catLabel(c,ws))}</p><p class="info-text">${escapeHtml(t("why_"+id))}</p>`});
+}
 function renderBrainCard(){
   const u=user(), ws=Brain.weekScore(u,curDate), lv=Brain.levelFor(Brain.lifetimePoints(u,todayStr())).level;
   const day=(u.habits||{})[curDate]||{}, pct=Math.round(ws.bar*100);
-  const icons=Brain.CATEGORIES.map(c=>{
-    const f=ws.fill[c.id], fp=Math.round(f*100);
-    const lab=escapeAttr(t("brainIconLabel",{name:t("cat_"+c.id), n:ws.counts[c.id], target:c.target}));
-    return `<span class="br-ic${f===1?" full":""}" role="img" aria-label="${lab}" title="${lab}"
-      style="background:linear-gradient(to top,color-mix(in srgb,var(--brain) 30%,transparent) ${fp}%,transparent ${fp}%)"><span aria-hidden="true" style="opacity:${(.35+.65*f).toFixed(2)}">${c.emoji}</span></span>`;
-  }).join("");
+  const rings=Brain.CATEGORIES.filter(c=>c.kind==="food").map(c=>
+    `<button class="br-ring${ws.fill[c.id]>=1?" full":""}" type="button" data-cat="${c.id}" aria-label="${escapeAttr(catLabel(c,ws))}">${catRing(c,ws)}<span class="rg-n" aria-hidden="true">${ws.counts[c.id]}/${c.target}</span></button>`).join("");
   const habits=Brain.CATEGORIES.filter(c=>c.kind==="habit").map(c=>
-    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(t("cat_"+c.id))}"><span class="em" aria-hidden="true">${c.emoji}</span>${t("hab_"+c.id)}</button>`).join("");
-  const next = ws.nextHint ? t("brainNext",{n:ws.nextHint.remaining, emoji:brainEmoji(ws.nextHint.id)}) : t("brainFull");
-  const star = Game.dayStar(u,curDate) ? `<p class="br-star">${t("brainStar",{day:prettyDate(curDate)})}</p>` : "";
+    `<button class="br-hab" data-habit="${c.id}" aria-pressed="${day[c.id]===true}" aria-label="${escapeAttr(catLabel(c,ws))}"><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span>${t("hab_"+c.id)}<span class="hn" aria-hidden="true">${ws.counts[c.id]}/${c.target}</span></button>`).join("");
+  const next = ws.nextHint ? t("brainNext",{name:t("cat_"+ws.nextHint.id), n:ws.nextHint.remaining}) : t("brainFull");
+  const star = Game.dayStar(u,curDate) ? `<p class="br-star">${Icons.svg("star")} ${t("brainStar",{day:prettyDate(curDate)})}</p>` : "";
   const el=document.getElementById("brainCard");
   el.innerHTML = `
     <div class="br-head">
       <div><h2 class="br-title">${t("brainTitle")}</h2><div class="br-sub">${t("brainSub")}</div></div>
-      <span class="br-level"><span class="em" aria-hidden="true">${lv.emoji}</span>${t("lvl_"+lv.id)}</span>
+      <span class="br-level"><span class="em" aria-hidden="true">${Icons.svg(lv.icon)}</span>${t("lvl_"+lv.id)}</span>
     </div>
     <div class="br-meter">
       <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("brainTitle"))}"><span style="width:${lastBrainBar}%"></span></div>
       <span class="br-pct">${pct}%</span>
     </div>
     <p class="br-next">${next}</p>${star}${coachBlock(u)}
-    <div class="br-icons">${icons}</div>
+    <div class="br-rings">${rings}</div>
     <div class="br-hab-lab">${t("brainHabits",{day:prettyDate(curDate)})}</div>
     <div class="br-habits">${habits}</div>`;
   // Grow the bar from its previous width so a tap visibly moves it.
   const bar=el.querySelector(".br-bar > span"); void bar.offsetWidth; bar.style.width=pct+"%"; lastBrainBar=pct;
 }
 function mealChips(m){
-  const tags=Brain.mealTags(m), em=foodEmojis(tags), lim=LIMITS.filter(x=>tags.includes(x));
+  const tags=Brain.mealTags(m), em=foodIcons(tags), lim=LIMITS.filter(x=>tags.includes(x));
   const names=BRAIN_FOODS.concat(LIMITS).filter(x=>tags.includes(x)).map(x=>t((LIMITS.includes(x)?"tag_":"cat_")+x)).join(", ");
   const label=t("brainEditFor",{name:m.name})+": "+(names||t("brainNone"));
   const inner=(em?`<span>${em}</span>`:"")+lim.map(x=>`<span class="lt">${t("tag_"+x)}</span>`).join("");
-  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||"<span>＋🧠</span>"}</button>`;
+  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`<span>＋${Icons.svg("brain")}</span>`}</button>`;
 }
 let pickerMealId = null;
 function openChipPicker(mealId){
@@ -2005,8 +2098,8 @@ function closeChipPicker(){ pickerMealId=null; document.getElementById("brainOve
 function renderChipPicker(){
   const m=dayMeals().find(x=>x.id===pickerMealId); if(!m){ closeChipPicker(); return; }
   const tags=Brain.mealTags(m);
-  const chip=(id,key,cls)=>`<button class="bp-chip${cls}" data-tag="${id}" aria-pressed="${tags.includes(id)}">${cls?"":`<span class="em" aria-hidden="true">${brainEmoji(id)}</span>`}${t(key+id)}</button>`;
-  document.getElementById("brainPickTitle").textContent="🧠 "+m.name;
+  const chip=(id,key,cls)=>`<button class="bp-chip${cls}" data-tag="${id}" aria-pressed="${tags.includes(id)}">${cls?"":`<span class="em" aria-hidden="true">${catIcon(id)}</span>`}${t(key+id)}</button>`;
+  document.getElementById("brainPickTitle").textContent=m.name;
   document.getElementById("brainPickBody").innerHTML = `
     <p class="bp-hint">${t("brainPickHint")}</p>
     <div class="bp-grid">${BRAIN_FOODS.map(id=>chip(id,"cat_","")).join("")}</div>
@@ -2041,7 +2134,7 @@ function renderRecent(){
   recentList=recentMeals(user(),8);
   document.getElementById("recentSec").hidden=!recentList.length;
   document.getElementById("recentRow").innerHTML=recentList.map((m,i)=>{
-    const em=foodEmojis(Brain.mealTags(m));
+    const em=foodIcons(Brain.mealTags(m));
     return `<button class="rc" data-recent="${i}" aria-label="${escapeAttr(t("recentLog",{name:m.name}))}"><span class="plus" aria-hidden="true">+</span><span class="nm">${escapeHtml(m.name)}</span>${em?`<span class="em" aria-hidden="true">${em}</span>`:""}</button>`;
   }).join("");
 }
@@ -2220,7 +2313,7 @@ const TOUR_STEPS=[
   {key:"Log",     tab:"tracker",    target:[()=>document.getElementById("fName").closest(".section"), ()=>document.getElementById("fName").closest(".field")]},
   {key:"Totals",  tab:"tracker",    target:"#cards"},
   {key:"Brain",   tab:"tracker",    target:"#brainCard"},
-  {key:"Weight",  tab:"metrics",    target:"#metricsView .weight-form"},
+  {key:"Weight",  tab:"metrics",    target:"#wLogOpen"},
   {key:"Level",   tab:"brain",      target:()=>document.getElementById("bvLevel").closest(".section")},
   {key:"Collect", tab:"collection", target:"#collectionCard .shop-wallet"},
   {key:"End",                       target:"#usersBtn"}
@@ -2646,7 +2739,7 @@ const streakText = n => t(n===1?"streakDay1":"streakDays",{n});
 function renderStreak(){
   const n=Game.streak(user(),todayStr()), el=document.getElementById("streakPill");
   el.hidden=!n;
-  el.textContent=n?"🔥 "+n:"";
+  el.innerHTML=n?Icons.svg("flame")+escapeHtml(String(n)):"";
   el.setAttribute("aria-label",n?streakText(n):""); el.title=n?streakText(n):"";
 }
 function addDaysStr(s,n){
@@ -2655,32 +2748,72 @@ function addDaysStr(s,n){
 }
 // The Monday of each of the last n weeks, oldest first, ending with today's week.
 const lastWeekStarts = (today,n) => Array.from({length:n},(_,i)=>addDaysStr(Brain.weekStart(today),-7*(n-1-i)));
-const badgeEmoji = id => (Game.BADGES.find(b=>b.id===id)||{}).emoji || "";
-const badgeName = id => id.startsWith("level:") ? t("lvl_"+id.slice(6)) : t("badge_"+id);
-function badgeHint(id){
-  if(!id.startsWith("level:")) return t("badgeHint_"+id);
-  const l=Brain.LEVELS.find(x=>x.id===id.slice(6));
-  return t("badgeHint_level",{n:l.min.toLocaleString(lang()==="es"?"es-ES":"en-US")});
+
+// Toast and level-up name of a badge key: "Streak · Silver", "First log", or a level name.
+function badgeName(id){
+  if(id.startsWith("level:")) return t("lvl_"+id.slice(6));
+  const b=Game.BADGES.find(x=>x.id===id); if(!b) return id;
+  return b.tier ? `${t("fam_"+b.family)} · ${t("tier"+b.tier)}` : t("fam_"+b.family);
 }
-const WEEK_BADGES=["fishWeek","fullBrain","cleanWeek","strongWeek","berryLover","greenMachine","socialButterfly"];
-// Badges stay earned once celebrated, even if the derived grade later drops (goal switch, deleted meal). Week-based/level dates are a week's Monday.
-function shelfBadges(list,celebrated){
-  return list.map(b=>{
-    const day=(celebrated||{})[Game.celebrationKey(b.id.startsWith("level:") ? {type:"level",id:b.id.slice(6)} : {type:"badge",id:b.id})];
-    const e=b.earned || !!day, date=b.earned ? b.date : day;
-    return {id:b.id, earned:e, date, weekly:b.earned && (b.id.startsWith("level:") || WEEK_BADGES.includes(b.id))};
-  });
+const famUnit = (f,n) => f.kind==="once" ? String(n) : f.kind==="weeks" ? (n===1 ? t("unitWeek1") : t("unitWeeks",{n})) : t("unitDays",{n});
+const famHint = f => f.kind==="weeks" && Brain.CATEGORIES.some(c=>c.id===f.id) ? t("famHint_weeks",{name:t("cat_"+f.id).toLowerCase()}) : t("famHint_"+f.id);
+// A tier earned only through `celebrated` has no derived date: show the celebration day.
+const tierDate = (tr,celebrated) => tr.date || (celebrated||{})[tr.key] || "";
+const famEarned = d => d ? t("famEarned",{date:fmtAxisDate(d).replace(/ /g,"\u00a0")}) : "";  // the date never breaks across lines
+// Medal colour: the highest tier earned; a one-tier family ("once") is complete, so it is gold.
+const medalTier = (f,fs) => fs.tier ? (f.kind==="once" ? 3 : fs.tier) : 0;
+// 56 px medal (80 px when big): tier-coloured ring, or a grey track with a --brain arc to tier 1.
+function medalHtml(f,fs,big){
+  const mt=medalTier(f,fs);
+  const ring = mt ? `<circle cx="28" cy="28" r="26.5" stroke-width="3" fill-opacity=".12" style="fill:var(--tier${mt});stroke:var(--tier${mt})"/>`
+    : ringArcs(28,26.5,Math.min(1,fs.have/fs.need));
+  return `<span class="md${mt?"":" off"}${big?" big":""}"><svg class="md-ring" viewBox="0 0 56 56" aria-hidden="true" focusable="false">${ring}</svg>${Icons.svg(f.icon)}</span>`;
+}
+// Caption parts under a medal: ["Silver", "30 days"] when earned, else progress to the next tier (["2 of 4 weeks"]).
+function medalCaption(f,fs,celebrated){
+  if(f.kind==="once") return [fs.tier ? famEarned(tierDate(fs.tiers[0],celebrated)) : t("famHint_firstLog")];
+  if(fs.tier) return [t("tier"+fs.tier), famUnit(f,f.tiers[fs.tier-1])];
+  return [t("famProgress",{have:fs.have, need:famUnit(f,fs.need)})];
+}
+let famStatus=[];
+function openFamInfo(id){
+  const f=Game.FAMILIES.find(x=>x.id===id), fs=famStatus.find(x=>x.id===id); if(!f || !fs) return;
+  const cel=user().celebrated, once=f.kind==="once";
+  const rows=fs.tiers.map((tr,i)=>{
+    const col=once ? 3 : i+1, lab=once ? t("fam_"+f.id) : `${t("tier"+col)} · ${famUnit(f,tr.need)}`;
+    const st=tr.earned ? famEarned(tierDate(tr,cel)) : t("famProgress",{have:fs.have, need:famUnit(f,tr.need)});
+    return `<li><span class="pip" style="border-color:var(--tier${col})${tr.earned?`;background:var(--tier${col})`:""}"></span><b>${escapeHtml(lab)}</b><span class="st">${escapeHtml(st)}</span></li>`;
+  }).join("");
+  openInfo({icon:medalHtml(f,fs,true), title:t("fam_"+f.id), html:`<p class="info-text">${escapeHtml(famHint(f))}</p><ul class="info-tiers">${rows}</ul>`});
+}
+let infoOpener=null;
+// icon: trusted markup built here (ring or medal); title: plain text; html: markup whose values are already escaped.
+function openInfo({icon,title,html}){
+  infoOpener=document.activeElement;
+  document.getElementById("infoIcon").innerHTML=icon;
+  document.getElementById("infoTitle").textContent=title;
+  document.getElementById("infoBody").innerHTML=html;
+  const x=document.querySelector("[data-close-info]"); x.setAttribute("aria-label",t("chatClose"));
+  document.getElementById("infoOverlay").classList.add("on");
+  x.focus();
+}
+function closeInfo(){
+  document.getElementById("infoOverlay").classList.remove("on");
+  if(infoOpener && infoOpener.isConnected) infoOpener.focus();
+  infoOpener=null;
 }
 function renderBrainView(badgeList){
   const u=user(), today=todayStr(), loc=lang()==="es"?"es-ES":"en-US";
   const pts=Brain.lifetimePoints(u,today), L=Brain.levelFor(pts), lv=L.level, n=Game.streak(u,today);
   const prog=L.next ? Math.round(100*(pts-lv.min)/(L.next.min-lv.min)) : 100;
+  const li=Brain.LEVELS.indexOf(lv);
   document.getElementById("bvLevel").innerHTML = `
-    <div class="bv-level"><span class="em" aria-hidden="true">${lv.emoji}</span>
-      <div><div class="bv-lvname">${t("lvl_"+lv.id)}</div><div class="bv-pts">${t("bvPoints",{n:pts.toLocaleString(loc)})}</div></div></div>
+    <ol class="lv-path" style="--lv:${(li/(Brain.LEVELS.length-1)).toFixed(3)}">${Brain.LEVELS.map((l,i)=>
+      `<li class="${i<li?"done":i===li?"cur":""}"${i===li?' aria-current="step"':""}><span class="lv-dot" aria-hidden="true"><span>${Icons.svg(l.icon)}</span></span><span class="lv-nm">${t("lvl_"+l.id)}</span></li>`).join("")}</ol>
+    <div class="bv-lvname">${t("lvl_"+lv.id)}</div><div class="bv-pts">${t("bvPoints",{n:pts.toLocaleString(loc)})}</div>
     <div class="br-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="${escapeAttr(t("bvProgress"))}"><span style="width:${prog}%"></span></div>
-    <p class="bv-next">${L.next ? t("bvToNext",{n:L.toNext.toLocaleString(loc), emoji:L.next.emoji, level:t("lvl_"+L.next.id)}) : t("bvTop")}</p>
-    <p class="bv-sub">${n ? "🔥 "+streakText(n) : t("bvStreakStart")}</p>
+    <p class="bv-next">${L.next ? t("bvToNext",{n:L.toNext.toLocaleString(loc), level:t("lvl_"+L.next.id)}) : t("bvTop")}</p>
+    <p class="bv-sub">${n ? Icons.svg("flame")+" "+escapeHtml(streakText(n)) : t("bvStreakStart")}</p>
     <p class="bv-sub">${t("bvPointsHow")}</p>`;
   const cur=Brain.weekStart(today);
   document.getElementById("bvWeeks").innerHTML = `<div class="bv-weeks">${lastWeekStarts(today,8).map(w=>{
@@ -2688,13 +2821,17 @@ function renderBrainView(badgeList){
     return `<div class="bv-wk${w===cur?" cur":""}" role="img" aria-label="${escapeAttr(t("bvWeekLabel",{date:d, pct:p}))}">
       <span class="pc" aria-hidden="true">${p}%</span><span class="col" aria-hidden="true"><span style="height:${p}%"></span></span><span class="dt" aria-hidden="true">${escapeHtml(d)}</span></div>`;
   }).join("")}</div>`;
-  const shelf=shelfBadges(badgeList,u.celebrated);
-  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:shelf.filter(b=>b.earned).length, total:shelf.length});
-  document.getElementById("bvBadges").innerHTML = shelf.map(b=>
-    `<div class="bv-badge${b.earned?"":" locked"}"><span class="em" aria-hidden="true">${badgeEmoji(b.id)}</span>
-      <div><b>${escapeHtml(badgeName(b.id))}</b><small>${escapeHtml(b.earned ? t(b.weekly?"bvEarnedWeek":"bvEarned",{date:fmtAxisDate(b.date)}) : badgeHint(b.id))}</small></div></div>`).join("");
+  famStatus=Game.familyStatus(u,today,badgeList,u.celebrated);
+  const tiers=[].concat(...famStatus.map(fs=>fs.tiers));
+  document.getElementById("bvBadgesCount").textContent = t("bvBadgesCount",{n:tiers.filter(x=>x.earned).length, total:tiers.length});
+  document.getElementById("bvBadges").innerHTML = famStatus.map(fs=>{
+    const f=Game.FAMILIES.find(x=>x.id===fs.id), name=t("fam_"+f.id), cap=medalCaption(f,fs,u.celebrated);
+    // A two-part caption breaks only at the dot, so "1 week" stays on one line.
+    const capHtml = cap.length>1 ? cap.map(p=>`<span class="nw">${escapeHtml(p)}</span>`).join(" · ") : escapeHtml(cap[0]);
+    return `<button class="bv-medal" type="button" data-fam="${f.id}" aria-label="${escapeAttr(name+", "+cap.join(" · "))}">${medalHtml(f,fs)}<span><b>${escapeHtml(name)}</b><small>${capHtml}</small></span></button>`;
+  }).join("");
   document.getElementById("bvWhy").innerHTML = Brain.CATEGORIES.map(c=>
-    `<li><span class="em" aria-hidden="true">${c.emoji}</span><span>${t("why_"+c.id)}</span></li>`).join("");
+    `<li><span class="em" aria-hidden="true">${Icons.svg(c.icon)}</span><span>${t("why_"+c.id)}</span></li>`).join("");
 }
 function confetti(){
   const box=document.createElement("div"), colors=["--brain","--accent","--protein","--carbs","--cal","--streak"];
@@ -2705,7 +2842,7 @@ function confetti(){
 }
 function openLevelUp(id,extra){
   const l=Brain.LEVELS.find(x=>x.id===id);
-  document.getElementById("lvlUpEmoji").textContent=l.emoji;
+  document.getElementById("lvlUpIcon").innerHTML=Icons.svg(l.icon);
   document.getElementById("lvlUpName").textContent=t("lvl_"+id);
   const ex=document.getElementById("lvlUpExtra"); ex.textContent=extra||""; ex.hidden=!extra;
   document.getElementById("levelOverlay").classList.add("on");
@@ -2734,13 +2871,15 @@ let shopReady=false;
 let celebrating=false;
 function celebrate(badgeList){
   if(!celebrateReady || celebrating || Tour.active() || document.getElementById("authOverlay").classList.contains("on")) return;
-  const u=user(), today=todayStr(), items=Game.newCelebrations(u,today,badgeList);
+  const u=user(), today=todayStr();
+  if(Game.seedNewTiers(u,today,badgeList)) save();
+  const items=Game.newCelebrations(u,today,badgeList);
   if(!items.length) return;
   celebrating=true;
   try{
     const {show,more}=pickCelebrations(items,badgeList,3), lv=show.find(c=>c.type==="level");
     const msgs=show.filter(c=>c.type==="fullWeek").map(()=>t("brainFull"));
-    const bs=show.filter(c=>c.type==="badge").map(c=>badgeEmoji(c.id)+" "+badgeName(c.id));
+    const bs=show.filter(c=>c.type==="badge").map(c=>badgeName(c.id));
     if(bs.length) msgs.push(t(bs.length>1?"celebBadges":"celebBadge",{list:bs.join(", ")}));
     if(show.some(c=>c.type!=="badge") && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
     if(more>0) msgs.push(t("celebMore",{n:more}));
@@ -2799,9 +2938,9 @@ function macroSeries(){
   const dates=Object.keys(days).filter(d=> dayEatenCalories(days[d])>0).sort((a,b)=> a<b ? -1 : 1);
   const build=key=> dates.map(d=>{ let s=0; days[d].forEach(m=>{ if(m.eaten) s+=m[key]; }); return {date:d, value:s}; });
   return [
-    {key:"p", label:t("protein"), short:"P", color:cssVar("--protein"), points:build("ap")},
-    {key:"c", label:t("carbs"),   short:"C", color:cssVar("--carbs"), points:build("ac")},
-    {key:"f", label:t("fat"),     short:(lang()==="es"?"G":"F"), color:cssVar("--fat"), points:build("af")},
+    {key:"p", label:t("protein"), color:cssVar("--protein"), points:build("ap")},
+    {key:"c", label:t("carbs"),   color:cssVar("--carbs"), points:build("ac")},
+    {key:"f", label:t("fat"),     color:cssVar("--fat"), points:build("af")},
   ];
 }
 
@@ -2986,9 +3125,30 @@ document.getElementById("collectionCard").addEventListener("click", e=>{
   const ov=document.getElementById("charOverlay");
   ov.addEventListener("click", e=>{ if(e.target===ov || e.target.closest("[data-close-char]")) ov.classList.remove("on"); });
 })();
+const METRICS_RANGE_KEY="macroTracker.metricsRange";
+let metricsRangeMem=null;
+function metricsRange(){
+  let r=metricsRangeMem;
+  if(r===null){ try{ r=localStorage.getItem(METRICS_RANGE_KEY); }catch(e){ r=null; } }
+  return Charts.RANGES.indexOf(r)>=0 ? r : "30";
+}
+function setMetricsRange(r){
+  if(Charts.RANGES.indexOf(r)<0) r="30";
+  metricsRangeMem=r;
+  try{ localStorage.setItem(METRICS_RANGE_KEY, r); }catch(e){}
+}
+function renderRangeControl(){
+  const cur=metricsRange();
+  document.getElementById("mRange").innerHTML = Charts.RANGES.map(r=>
+    `<button type="button" data-range="${r}" class="${r===cur?"active":""}" aria-pressed="${r===cur}">${escapeHtml(t("range"+(r==="all"?"All":r)))}</button>`).join("");
+}
+document.getElementById("mRange").addEventListener("click", e=>{
+  const b=e.target.closest("[data-range]"); if(!b) return;
+  setMetricsRange(b.dataset.range); renderMetrics();
+});
 function renderMetrics(){
-  document.getElementById("wUnit").value = weightUnit();
-  if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
+  renderRangeControl();
+  renderWeightUnitSeg();
   renderCalChart();
   renderMacroChart();
   renderWeightChart();
@@ -2996,37 +3156,53 @@ function renderMetrics(){
   renderRecentWeights();
 }
 function renderMacroChart(){
-  const series=macroSeries();
-  const legend=document.getElementById("macroLegend");
-  const el=document.getElementById("macroChart");
-  if(!series.some(s=>s.points.length)){ legend.innerHTML=""; drawMultiLineChart(el, series, {empty:t("noCalData")}); return; }
-  legend.innerHTML = series.map(s=>
-    `<span class="lg"><span class="sw" style="background:${s.color}"></span><b>${escapeHtml(s.label)}</b></span>`).join("");
-  drawMultiLineChart(el, series, { ytick:v=>round(v), unit:"g" });
-}
-function renderCalChart(){
-  const pts=calorieSeries();
-  const stats=document.getElementById("calStats");
-  const el=document.getElementById("calChart");
-  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noCalData")}); return; }
-  const latest=pts[pts.length-1].value;
-  const avg=pts.reduce((s,p)=>s+p.value,0)/pts.length;
-  stats.innerHTML =
-    statTile(t("statLatest"), `${round(latest)}${unitSpan(t("kcalUnit"))}`) +
-    statTile(t("statAvg"),    `${round(avg)}${unitSpan(t("kcalUnit"))}`) +
-    statTile(t("statDays"),   pts.length);
-  const tg=targets();
-  drawLineChart(el, pts, {
-    color:cssVar("--cal"), refLine:CAL(tg.p,tg.c,tg.f), refLabel:t("targetRef"),
-    ytick:v=>round(v), tip:v=>`${round(v)} ${t("kcalUnit")}`
+  const series=macroSeries(), tg=targets();
+  const today=todayStr(), range=metricsRange();
+  const host=document.getElementById("macroCharts");
+  host.innerHTML = series.map(s=>`<div class="macro-block"><div class="macro-cap" id="macroCap_${s.key}"></div><div class="chart-wrap" id="macroChart_${s.key}"></div></div>`).join("");
+  if(series.every(s=>!Charts.filterRange(s.points, range, today).length)){
+    const hasAny=series.some(s=>s.points.length);
+    host.innerHTML=`<div class="chart-empty">${escapeHtml(t(hasAny?"noRangeData":"noCalData"))}</div>`;
+    return;
+  }
+  series.forEach(s=>{
+    const inRange=Charts.filterRange(s.points, range, today);
+    const target=tg[s.key];
+    const el=document.getElementById("macroChart_"+s.key);
+    const cap=document.getElementById("macroCap_"+s.key);
+    const avg=inRange.length ? round(inRange.reduce((a,p)=>a+p.value,0)/inRange.length) : "–";
+    cap.textContent=t("macroCaption",{name:s.label, avg, target:round(target)});
+    if(!inRange.length){ drawTrendChart(el, [], {from:today, to:today, color:s.color, unit:"g", height:130, empty:t(s.points.length?"noRangeData":"noCalData")}); return; }
+    const from=Charts.rangeStart(today, range) || s.points[0].date;
+    drawTrendChart(el, inRange, {from, to:today, color:s.color, target, unit:"g", height:130, empty:t("noCalData"), mean:Charts.rollingMean(s.points)});
   });
 }
+function renderCalChart(){
+  const all=calorieSeries();
+  const stats=document.getElementById("calStats");
+  const el=document.getElementById("calChart");
+  const today=todayStr(), range=metricsRange();
+  const inRange=Charts.filterRange(all, range, today);
+  if(!inRange.length){ stats.innerHTML=""; drawTrendChart(el, [], {from:today, to:today, color:cssVar("--cal"), unit:t("kcalUnit"), empty:t(all.length?"noRangeData":"noCalData")}); return; }
+  const from=Charts.rangeStart(today, range) || all[0].date;
+  const mean=Charts.rollingMean(all);
+  const lastAvg=mean.filter(p=>p.date>=from).pop();
+  const tg=targets(), target=CAL(tg.p,tg.c,tg.f);
+  const ot=Charts.onTarget(inRange, target);
+  const avg=inRange.reduce((s,p)=>s+p.value,0)/inRange.length;
+  stats.innerHTML =
+    statTile(t("statAvg7"),     lastAvg ? `${round(lastAvg.value)}${unitSpan(t("kcalUnit"))}` : "–") +
+    statTile(t("statOnTarget"), `${ot.hit}/${ot.total}`) +
+    statTile(t("statAvg"),      `${round(avg)}${unitSpan(t("kcalUnit"))}`);
+  drawTrendChart(el, inRange, {from, to:today, color:cssVar("--cal"), target, unit:t("kcalUnit"), empty:t("noCalData"), mean});
+}
 function renderWeightChart(){
-  const pts=weightSeries();
+  const allW=weightSeries();
+  const pts=Charts.filterRange(allW, metricsRange(), todayStr());
   const stats=document.getElementById("wStats");
   const el=document.getElementById("wChart");
   const u=weightUnit();
-  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noWeightData")}); return; }
+  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t(allW.length?"noRangeData":"noWeightData")}); return; }
   const latest=pts[pts.length-1].value, first=pts[0].value, change=latest-first;
   const sign=change>0?"+":"";
   stats.innerHTML =
@@ -3053,15 +3229,32 @@ function renderRecentWeights(){
 }
 
 /* ---- weight logging ---- */
+function renderWeightUnitSeg(){
+  const cur=weightUnit();
+  document.querySelectorAll("#wUnitSeg [data-unit]").forEach(b=>{
+    const on=b.dataset.unit===cur;
+    b.classList.toggle("active",on); b.setAttribute("aria-pressed",on);
+  });
+}
+function openWeightSheet(){
+  if(!document.getElementById("wDate").value) document.getElementById("wDate").value=todayStr();
+  renderWeightUnitSeg();
+  document.getElementById("weightOverlay").classList.add("on");
+  document.getElementById("wVal").focus();
+}
+function closeWeightSheet(){
+  document.getElementById("weightOverlay").classList.remove("on");
+  document.getElementById("wLogOpen").focus();
+}
 function logWeight(){
   const val=parseFloat(document.getElementById("wVal").value);
   const date=document.getElementById("wDate").value||todayStr();
-  const unit=document.getElementById("wUnit").value==="lb" ? "lb" : "kg";
-  user().weightUnit=unit;
+  const unit=weightUnit();
   if(!(val>0)){ toast(t("weightNeedVal")); return; }
   userWeights()[date] = unit==="lb" ? val*KG_PER_LB : val;
   save();
   document.getElementById("wVal").value="";
+  closeWeightSheet();
   renderMetrics();
   toast(t("weightLogged"));
   requestAiInsight();
@@ -3173,7 +3366,7 @@ function renderInsight(){
   el.innerHTML = `
     <div class="ins-head"><h3>${t("insTitle")}</h3><span class="ins-range">${escapeHtml(fmtAxisDate(f.fromDate))} – ${escapeHtml(fmtAxisDate(f.toDate))}</span></div>
     <p class="ins-headline">${escapeHtml(saved ? saved.headline : ruleHeadline(f))}</p>
-    ${stats ? `<div class="chart-stats">${stats}</div>` : ""}
+    ${stats ? `<div class="chart-stats four">${stats}</div>` : ""}
     ${saved ? `<p class="ins-summary">${escapeHtml(saved.summary)}</p>` : ""}
     <ul class="ins-points">${(saved ? saved.points : rulePoints(f)).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
     ${foot ? `<p class="ins-foot">${foot}</p>` : ""}
@@ -3209,8 +3402,8 @@ function coachBlock(u){
   if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
-  const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">💡 ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
-  return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${t("coachAsk")}</button>` : "");
+  const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">${Icons.svg("lightbulb")} ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
+  return noteHtml + (Coach.available() ? `<button class="btn br-ask" data-coach-chat>${Icons.svg("message-circle")}${t("coachAsk")}</button>` : "");
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
 function requestCoachNote(){
@@ -3297,6 +3490,22 @@ document.getElementById("chatOverlay").addEventListener("click",e=>{
   if(y) answerMemory(Number(y.dataset.memYes), true); else if(n) answerMemory(Number(n.dataset.memNo), false);
 });
 
+/* ---- shared chart helpers ---- */
+function niceTicks(min,max,n){
+  const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
+  const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
+}
+// SVG text for calendar-date x ticks; xOf maps a time (ms) to x
+function xTickLabels(dates, xOf, H, from, to, W){
+  return dates.map(d=>{
+    const anchor = d===from && d!==to ? "start" : d===to && d!==from ? "end" : "middle";
+    let x=xOf(dateToNum(d));
+    if(anchor==="middle") x=Math.max(22, Math.min(W-22, x));
+    return `<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
+  }).join("");
+}
+
 /* ---- the chart renderer ---- */
 function drawLineChart(container, points, opts){
   opts=opts||{};
@@ -3323,11 +3532,7 @@ function drawLineChart(container, points, opts){
   const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
 
   // y ticks — pick a round step
-  const ticks=(function(min,max,n){
-    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
-    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
-    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
-  })(minV,maxV,4);
+  const ticks=niceTicks(minV,maxV,4);
 
   const gid=(container.id||"c")+"-grad";
   let g="";
@@ -3340,22 +3545,12 @@ function drawLineChart(container, points, opts){
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
-  // x labels (first, last, and up to 2 in between)
-  const xIdx=(function(n){
-    if(n<=1) return [0];
-    if(n<=4) return points.map((_,i)=>i);
-    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
-  })(points.length);
-  xIdx.forEach(i=>{
-    const x=xOf(times[i]);
-    const anchor = i===0 ? "start" : i===points.length-1 ? "end" : "middle";
-    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(points[i].date))}</text>`;
-  });
+  // x labels: even calendar ticks
+  g+=xTickLabels(Charts.dateTicks(points[0].date, points[points.length-1].date), xOf, H, points[0].date, points[points.length-1].date, W);
   // reference line
   if(opts.refLine!=null){
     const y=yOf(opts.refLine);
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
-    if(opts.refLabel) g+=`<text x="${W-padR}" y="${(y-6).toFixed(1)}" text-anchor="end" style="fill:var(--muted);font-size:10px">${escapeHtml(opts.refLabel)}</text>`;
   }
   // area + line
   const coords=points.map((p,i)=>[xOf(times[i]), yOf(p.value)]);
@@ -3401,96 +3596,77 @@ function drawLineChart(container, points, opts){
   svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); cxDot.setAttribute("opacity","0"); });
 }
 
-/* ---- multi-series line chart (macros: protein / carbs / fat) ---- */
-function drawMultiLineChart(container, series, opts){
+/* ---- trend chart: daily bars + 7-day average line (calorie chart; macro charts reuse it) ---- */
+function drawTrendChart(container, daily, opts){
   opts=opts||{};
-  const active=series.filter(s=>s.points && s.points.length);
-  if(!active.length){
+  if(!daily.length){
     container.innerHTML=`<div class="chart-empty">${escapeHtml(opts.empty||"")}</div>`;
     return;
   }
   const W=Math.max(260, Math.round(container.clientWidth || container.getBoundingClientRect().width || 320));
-  const H=240, padL=46, padR=34, padT=16, padB=26;
+  const H=opts.height||240;
+  const padL=46, padR=16, padT=16, padB=26;
   const plotW=W-padL-padR, plotH=H-padT-padB;
+  const color=opts.color||"var(--accent)";
+  const mean=(opts.mean||Charts.rollingMean(daily)).filter(p=>p.date>=opts.from && p.date<=opts.to);
 
-  const allDates=[...new Set(active.flatMap(s=>s.points.map(p=>p.date)))].sort((a,b)=> a<b ? -1 : 1);
-  const times=allDates.map(dateToNum);
-  const minT=Math.min(...times), maxT=Math.max(...times);
-  const vals=active.flatMap(s=>s.points.map(p=>p.value));
-  let minV=Math.min(0, ...vals), maxV=Math.max(...vals);   // macros read best from a 0 baseline
-  if(minV===maxV){ maxV=minV+1; } else { maxV += (maxV-minV)*0.12; }
+  let maxV=Math.max.apply(null, daily.map(p=>p.value).concat(mean.map(p=>p.value)));
+  if(opts.target!=null) maxV=Math.max(maxV, opts.target*1.1);
+  maxV*=1.08; if(!(maxV>0)) maxV=1;
+  const minT=dateToNum(opts.from), maxT=dateToNum(opts.to);
+  const days=Math.round((maxT-minT)/864e5);
   const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
-  const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
+  const yOf=v=> padT + (1-v/maxV)*plotH;
 
-  const ticks=(function(min,max,n){
-    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
-    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
-    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
-  })(minV,maxV,4);
+  const ticks=niceTicks(0,maxV,4);
 
   let g="";
   ticks.forEach(v=>{
     const y=yOf(v);
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
-    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
+    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${round(v)}</text>`;
   });
-  const xIdx=(function(n){
-    if(n<=1) return [0];
-    if(n<=4) return allDates.map((_,i)=>i);
-    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
-  })(allDates.length);
-  xIdx.forEach(i=>{
-    const x=xOf(times[i]);
-    const anchor = i===0 ? "start" : i===allDates.length-1 ? "end" : "middle";
-    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(allDates[i]))}</text>`;
+  g+=xTickLabels(Charts.dateTicks(opts.from, opts.to), xOf, H, opts.from, opts.to, W);
+  if(opts.target!=null){
+    const y1=yOf(opts.target*1.1), y2=yOf(opts.target*0.9), y=yOf(opts.target);
+    g+=`<rect x="${padL}" y="${y1.toFixed(1)}" width="${plotW}" height="${(y2-y1).toFixed(1)}" fill="${color}" fill-opacity=".1"/>`;
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
+  }
+  const slot=plotW/(days+1);
+  const barW=Math.max(2, Math.min(18, slot*0.7));
+  daily.forEach(p=>{
+    const x=xOf(dateToNum(p.date)), y=yOf(p.value);
+    g+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${(padT+plotH-y).toFixed(1)}" rx="1.5" fill="${color}" fill-opacity=".3"/>`;
   });
-  // one polyline + dots + a direct end-label per series
-  const perSeries=active.map(s=>{
-    const coords=s.points.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
-    if(coords.length>1)
-      g+=`<polyline points="${coords.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    if(coords.length<=45) coords.forEach(c=> g+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.3" fill="${s.color}"/>`);
-    const last=coords[coords.length-1];
-    g+=`<text x="${Math.min(W-2,last[0]+6).toFixed(1)}" y="${(last[1]+4).toFixed(1)}" style="fill:${s.color};font-size:11px;font-weight:700">${escapeHtml(s.short)}</text>`;
-    const map={}; s.points.forEach((p,i)=> map[p.date]=coords[i]);
-    return {s, map};
-  });
+  const mc=mean.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
+  if(mc.length>1) g+=`<polyline points="${mc.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  else if(mc.length===1) g+=`<circle cx="${mc[0][0].toFixed(1)}" cy="${mc[0][1].toFixed(1)}" r="3" fill="${color}"/>`;
   g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" style="stroke:var(--cross)" stroke-width="1" opacity="0"/>`;
-  active.forEach((s,i)=> g+=`<circle class="cx-dot cx-dot-${i}" r="4.5" fill="${s.color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`);
   g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
 
   container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="chart">${g}</svg><div class="chart-tip"></div>`;
 
   const svg=container.querySelector("svg"), tip=container.querySelector(".chart-tip");
   const cxLine=svg.querySelector(".cx-line"), hit=svg.querySelector(".cx-hit");
-  const dots=active.map((s,i)=> svg.querySelector(".cx-dot-"+i));
-  const xsByDate=allDates.map(d=>xOf(dateToNum(d)));
+  const xs=daily.map(p=>xOf(dateToNum(p.date)));
+  const meanBy={}; mean.forEach(p=>{ meanBy[p.date]=p.value; });
   function onMove(ev){
     const rect=svg.getBoundingClientRect();
     const sx=(ev.clientX-rect.left)*(W/rect.width);
     let bi=0, bd=Infinity;
-    xsByDate.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
-    const date=allDates[bi], px=xsByDate[bi];
+    xs.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
+    const p=daily[bi], px=xs[bi], py=yOf(p.value);
     cxLine.setAttribute("x1",px); cxLine.setAttribute("x2",px); cxLine.setAttribute("opacity","1");
-    let topY=Infinity, rows="";
-    perSeries.forEach((ps,i)=>{
-      const c=ps.map[date];
-      if(c){
-        dots[i].setAttribute("cx",c[0]); dots[i].setAttribute("cy",c[1]); dots[i].setAttribute("opacity","1");
-        topY=Math.min(topY, c[1]);
-        const pt=ps.s.points.find(p=>p.date===date);
-        rows+=`<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${ps.s.color};display:inline-block"></span>${escapeHtml(ps.s.label)}: <b>${round(pt.value)}${opts.unit||""}</b></div>`;
-      } else { dots[i].setAttribute("opacity","0"); }
-    });
-    if(!isFinite(topY)) topY=padT;
-    tip.style.left = (px*(rect.width/W)) + "px";
-    tip.style.top  = (topY*(rect.height/H)) + "px";
+    tip.style.left=(px*(rect.width/W))+"px";
+    tip.style.top=(py*(rect.height/H))+"px";
     tip.style.opacity="1";
-    tip.innerHTML = `<div style="color:var(--muted);font-size:11px;margin-bottom:2px">${escapeHtml(fmtAxisDate(date))}</div>${rows}`;
+    const m=meanBy[p.date];
+    tip.innerHTML=`<div style="color:var(--muted);font-size:11px">${escapeHtml(fmtAxisDate(p.date))}</div><b>${round(p.value)} ${escapeHtml(opts.unit||"")}</b>`
+      +(m!=null?`<div style="color:var(--muted);font-size:11px">${escapeHtml(t("statAvg7"))}: ${round(m)} ${escapeHtml(opts.unit||"")}</div>`:"");
   }
   hit.addEventListener("pointermove",onMove);
   hit.addEventListener("pointerdown",onMove);
-  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); dots.forEach(d=>d.setAttribute("opacity","0")); });
+  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); });
 }
 
 /* ---------- Events ---------- */
@@ -3499,8 +3675,23 @@ document.getElementById("tabs").addEventListener("click",e=>{
 });
 document.getElementById("wLogBtn").addEventListener("click",logWeight);
 document.getElementById("wVal").addEventListener("keydown",e=>{ if(e.key==="Enter") logWeight(); });
-document.getElementById("wUnit").addEventListener("change",e=>{
-  user().weightUnit = e.target.value==="lb" ? "lb" : "kg";
+document.getElementById("wLogOpen").addEventListener("click",openWeightSheet);
+document.getElementById("weightOverlay").addEventListener("click",e=>{
+  if(e.target.id==="weightOverlay"||e.target.closest("[data-close-weight]")) closeWeightSheet();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && document.getElementById("weightOverlay").classList.contains("on")) closeWeightSheet();
+  if(e.key==="Escape" && document.getElementById("infoOverlay").classList.contains("on")) closeInfo();
+});
+document.getElementById("infoOverlay").addEventListener("click",e=>{
+  if(e.target.id==="infoOverlay"||e.target.closest("[data-close-info]")) closeInfo();
+});
+document.getElementById("bvBadges").addEventListener("click",e=>{
+  const m=e.target.closest("[data-fam]"); if(m) openFamInfo(m.dataset.fam);
+});
+document.getElementById("wUnitSeg").addEventListener("click",e=>{
+  const b=e.target.closest("[data-unit]"); if(!b) return;
+  user().weightUnit = b.dataset.unit==="lb" ? "lb" : "kg";
   save(); renderMetrics();
 });
 document.getElementById("wRecent").addEventListener("click",e=>{
@@ -3535,6 +3726,7 @@ document.getElementById("mealsBody").addEventListener("click",e=>{
 });
 document.getElementById("brainCard").addEventListener("click",e=>{
   const h=e.target.closest("[data-habit]"); if(h) toggleHabit(h.dataset.habit);
+  const r=e.target.closest("[data-cat]"); if(r) openCatInfo(r.dataset.cat);
   if(e.target.closest("[data-coach-chat]")) openChat();
   if(e.target.closest("[data-coach-login]")) openAuth();
 });
@@ -3792,7 +3984,7 @@ function mergeUser(primary,secondary){
     habitsAt: Brain.unionHabitsAt(primary.habitsAt, secondary.habitsAt),
     fridge:  unionFridge(primary.fridge, secondary.fridge),
     fridgeSeen: Object.assign({}, secondary.fridgeSeen, primary.fridgeSeen),
-    celebrated: Object.assign({}, secondary.celebrated, primary.celebrated),
+    celebrated: Game.mergeCelebrated(primary.celebrated, secondary.celebrated),
     shop:    Shop.mergeShop(primary.shop, secondary.shop),
     coach:   Coach.mergeCoach(primary.coach, secondary.coach)
   });

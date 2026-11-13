@@ -1,19 +1,19 @@
 // Brain-food detection (MIND diet) for meal names in EN/ES/FR. Pure functions, no DOM/network.
 const Brain = (() => {
   const CATEGORIES = [
-    { id: "greens", emoji: "🥬", target: 6, kind: "food" },
-    { id: "veg", emoji: "🥦", target: 7, kind: "food" },
-    { id: "berries", emoji: "🫐", target: 2, kind: "food" },
-    { id: "nuts", emoji: "🥜", target: 5, kind: "food" },
-    { id: "beans", emoji: "🫘", target: 3, kind: "food" },
-    { id: "fish", emoji: "🐟", target: 2, kind: "food" },
-    { id: "grains", emoji: "🌾", target: 21, kind: "food" },
-    { id: "olive", emoji: "🫒", target: 7, kind: "food" },
-    { id: "strength", emoji: "🏋️", target: 2, kind: "habit" },
-    { id: "walk", emoji: "🚶", target: 5, kind: "habit" },
-    { id: "sleep", emoji: "😴", target: 7, kind: "habit" },
-    { id: "social", emoji: "👥", target: 3, kind: "habit" },
-    { id: "mind", emoji: "🧩", target: 3, kind: "habit" },
+    { id: "greens", icon: "salad", target: 6, kind: "food" },
+    { id: "veg", icon: "carrot", target: 7, kind: "food" },
+    { id: "berries", icon: "cherry", target: 2, kind: "food" },
+    { id: "nuts", icon: "nut", target: 5, kind: "food" },
+    { id: "beans", icon: "bean", target: 3, kind: "food" },
+    { id: "fish", icon: "fish", target: 2, kind: "food" },
+    { id: "grains", icon: "wheat", target: 21, kind: "food" },
+    { id: "olive", icon: "droplet", target: 7, kind: "food" },
+    { id: "strength", icon: "dumbbell", target: 2, kind: "habit" },
+    { id: "walk", icon: "footprints", target: 5, kind: "habit" },
+    { id: "sleep", icon: "moon", target: 7, kind: "habit" },
+    { id: "social", icon: "users", target: 3, kind: "habit" },
+    { id: "mind", icon: "puzzle", target: 3, kind: "habit" },
   ];
   const LIMIT_TAGS = { sweets: 4, fried: 1, redMeat: 3, butter: 4, cheese: 3 };
 
@@ -149,8 +149,8 @@ const Brain = (() => {
   }
 
   const LEVELS = [
-    { id: "sprout", emoji: "🌱", min: 0 }, { id: "growing", emoji: "🌿", min: 500 }, { id: "sharp", emoji: "💡", min: 1500 },
-    { id: "brilliant", emoji: "✨", min: 3500 }, { id: "genius", emoji: "🧠", min: 7000 }, { id: "legend", emoji: "🏆", min: 12000 },
+    { id: "sprout", icon: "sprout", min: 0 }, { id: "growing", icon: "leaf", min: 500 }, { id: "sharp", icon: "lightbulb", min: 1500 },
+    { id: "brilliant", icon: "sparkles", min: 3500 }, { id: "genius", icon: "brain", min: 7000 }, { id: "legend", icon: "trophy", min: 12000 },
   ];
   function levelFor(points) {
     let i = LEVELS.length - 1;
