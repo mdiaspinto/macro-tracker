@@ -521,6 +521,8 @@
     background:transparent;color:var(--text);font:inherit;cursor:pointer;text-align:center}
   .bd-sw{position:relative;display:grid;place-items:center;width:100%;max-width:72px;aspect-ratio:1/1;border-radius:12px;
     border:1.5px solid var(--line);background-color:var(--bg);overflow:hidden}
+  .bd-sw i{position:absolute;top:0;left:0;width:200%;height:200%;transform:scale(.5);transform-origin:0 0}
+  .bd-sw svg{position:relative}
   .bd-opt[aria-pressed="true"] .bd-sw{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
   .bd-opt:not(:disabled):hover .bd-sw{border-color:var(--line-strong)}
   .bd-opt:disabled{cursor:default}
@@ -531,39 +533,45 @@
   .bd-opt small svg{width:12px;height:12px;flex:none}
   .bd-opt .bd-secret{color:var(--tier3);font-weight:700}
   @media(min-width:960px){ .shop-bd{grid-column:1 / -1} .bd-row{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))} }
-  /* Backdrops: CSS gradients on #collectionView. Panels on top stay opaque, so text keeps its contrast. */
-  #collectionView{margin:-10px;padding:10px;border-radius:calc(var(--radius) + 8px)}
-  .bg-plain{background:transparent}
-  .bd-sw.bg-plain{background:var(--bg)}
-  .bg-confetti{background:
-    radial-gradient(circle at 20% 30%,color-mix(in srgb,var(--s-lulu) 75%,transparent) 0 3px,transparent 3.5px) 0 0/56px 56px,
-    radial-gradient(circle at 70% 18%,color-mix(in srgb,var(--s-kiki) 75%,transparent) 0 2.5px,transparent 3px) 0 0/48px 48px,
-    radial-gradient(circle at 42% 72%,color-mix(in srgb,var(--s-momo) 75%,transparent) 0 3px,transparent 3.5px) 0 0/64px 64px,
-    radial-gradient(circle at 85% 62%,color-mix(in srgb,var(--s-nini) 75%,transparent) 0 2.5px,transparent 3px) 0 0/52px 52px,
-    var(--panel-2)}
-  .bg-stripes{background:repeating-linear-gradient(135deg,
-    color-mix(in srgb,var(--s-nini) 22%,var(--bg)) 0 16px,color-mix(in srgb,var(--s-nini) 6%,var(--bg)) 16px 32px)}
-  .bg-ocean{background:
-    radial-gradient(circle at 50% 100%,transparent 15px,color-mix(in srgb,var(--s-momo) 30%,transparent) 16px 18px,transparent 19px) 0 0/40px 20px,
-    radial-gradient(circle at 50% 100%,transparent 15px,color-mix(in srgb,var(--s-momo) 18%,transparent) 16px 18px,transparent 19px) 20px 10px/40px 20px,
-    linear-gradient(180deg,color-mix(in srgb,var(--s-momo) 12%,var(--bg)),color-mix(in srgb,var(--s-momo) 34%,var(--bg)))}
-  .bg-rainbow{background:linear-gradient(160deg,
-    color-mix(in srgb,var(--s-lulu) 30%,var(--bg)),color-mix(in srgb,var(--s-kiki) 30%,var(--bg)) 36%,
-    color-mix(in srgb,var(--s-momo) 30%,var(--bg)) 68%,color-mix(in srgb,var(--s-nini) 30%,var(--bg)))}
-  .bg-gold{background:
-    radial-gradient(90% 70% at 50% 0,color-mix(in srgb,var(--tier3) 55%,transparent),transparent 72%),
-    linear-gradient(180deg,color-mix(in srgb,var(--tier3) 22%,var(--bg)),color-mix(in srgb,var(--tier3) 34%,var(--bg)))}
+  /* Backdrops: CSS gradients. On the Collection tab the chosen one paints the whole page (body.coll-bg) and,
+     on desktop, the sticky header. Panels on top stay opaque, so their text keeps its contrast. */
+  .bg-confetti,.bg-confetti .appbar{background:
+    radial-gradient(circle at 18% 26%,color-mix(in srgb,var(--s-lulu) 70%,transparent) 0 4.5px,transparent 5px) 0 0/58px 58px,
+    radial-gradient(circle at 68% 14%,color-mix(in srgb,var(--s-kiki) 70%,transparent) 0 4px,transparent 4.5px) 0 0/50px 50px,
+    radial-gradient(circle at 40% 70%,color-mix(in srgb,var(--s-momo) 70%,transparent) 0 4.5px,transparent 5px) 0 0/66px 66px,
+    radial-gradient(circle at 84% 58%,color-mix(in srgb,var(--s-nini) 70%,transparent) 0 4px,transparent 4.5px) 0 0/54px 54px,
+    var(--bg)}
+  .bg-stripes,.bg-stripes .appbar{background:repeating-linear-gradient(135deg,
+    color-mix(in srgb,var(--s-nini) 42%,var(--bg)) 0 20px,color-mix(in srgb,var(--s-nini) 8%,var(--bg)) 20px 40px)}
+  .bg-ocean,.bg-ocean .appbar{background:
+    radial-gradient(circle at 50% 100%,transparent 21px,color-mix(in srgb,var(--s-momo) 70%,transparent) 22px 25px,transparent 26px) 0 0/56px 28px,
+    radial-gradient(circle at 50% 100%,transparent 21px,color-mix(in srgb,var(--s-momo) 40%,transparent) 22px 25px,transparent 26px) 28px 14px/56px 28px,
+    linear-gradient(180deg,color-mix(in srgb,var(--s-momo) 22%,var(--bg)),color-mix(in srgb,var(--s-momo) 48%,var(--bg)))}
+  .bg-rainbow,.bg-rainbow .appbar{background:linear-gradient(160deg,
+    color-mix(in srgb,var(--s-lulu) 50%,var(--bg)),color-mix(in srgb,var(--s-kiki) 50%,var(--bg)) 36%,
+    color-mix(in srgb,var(--s-momo) 50%,var(--bg)) 68%,color-mix(in srgb,var(--s-nini) 50%,var(--bg)))}
+  .bg-gold,.bg-gold .appbar{background:
+    radial-gradient(70% 60% at 50% 0,color-mix(in srgb,var(--tier3) 70%,transparent),transparent 75%),
+    radial-gradient(circle,color-mix(in srgb,var(--tier3) 55%,transparent) 0 1.5px,transparent 2px) 0 0/30px 30px,
+    linear-gradient(180deg,color-mix(in srgb,var(--tier3) 30%,var(--bg)),color-mix(in srgb,var(--tier3) 50%,var(--bg)))}
   /* Night sky stays dark in light mode too */
-  .bg-night{background:
-    radial-gradient(circle,rgba(255,255,255,.95) 0 1px,transparent 1.6px) 0 0/37px 41px,
-    radial-gradient(circle,rgba(255,255,255,.7) 0 1px,transparent 1.6px) 13px 19px/53px 59px,
-    radial-gradient(circle,rgba(255,241,200,.9) 0 1.4px,transparent 2px) 29px 7px/89px 83px,
+  .bg-night,.bg-night .appbar{background:
+    radial-gradient(circle,rgba(255,255,255,.95) 0 1.3px,transparent 2px) 0 0/31px 37px,
+    radial-gradient(circle,rgba(255,255,255,.75) 0 1px,transparent 1.6px) 13px 19px/47px 43px,
+    radial-gradient(circle,rgba(255,236,170,.95) 0 2px,transparent 2.8px) 29px 7px/89px 83px,
     linear-gradient(180deg,#0B1433,#1C2C5E)}
-  .bg-globe{background:
-    repeating-linear-gradient(0deg,color-mix(in srgb,var(--s-momo) 22%,transparent) 0 1px,transparent 1px 28px),
-    repeating-linear-gradient(90deg,color-mix(in srgb,var(--s-momo) 22%,transparent) 0 1px,transparent 1px 28px),
-    radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--s-kiki) 14%,var(--bg)),color-mix(in srgb,var(--s-momo) 18%,var(--bg)))}
-  #collectionView.bg-night .shop-done{color:#EEF2EC}
+  .bg-globe,.bg-globe .appbar{background:
+    repeating-linear-gradient(0deg,color-mix(in srgb,var(--s-momo) 50%,transparent) 0 1.5px,transparent 1.5px 32px),
+    repeating-linear-gradient(90deg,color-mix(in srgb,var(--s-momo) 50%,transparent) 0 1.5px,transparent 1.5px 32px),
+    radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--s-kiki) 24%,var(--bg)),color-mix(in srgb,var(--s-momo) 30%,var(--bg)))}
+  body.coll-bg,body.coll-bg .appbar{background-attachment:fixed}
+  /* Text that sits directly on the backdrop */
+  body.coll-bg .shop-done{display:table;margin:12px auto 0;padding:6px 14px;border-radius:999px;background:var(--panel)}
+  body.coll-bg{--halo:var(--bg)}
+  body.coll-bg .brand h1,body.coll-bg .brand small{text-shadow:0 0 3px var(--halo),0 0 6px var(--halo),0 0 10px var(--halo)}
+  body.bg-night{--halo:#0B1433}
+  body.bg-night .brand h1{color:#EEF2EC}
+  body.bg-night .brand small{color:#B9C3DD}
   /* Shelves: one per series; every colour reads --s (set inline to the series token) */
   .shelf{--s:var(--accent);--s-strong:color-mix(in srgb,var(--s) 80%,#000);--s-on:#fff;--floor:rgba(22,32,27,.22);
     position:relative;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--s) 30%,var(--line));border-radius:var(--radius);
@@ -3050,6 +3058,7 @@ function renderTabs(){
   document.getElementById("metricsView").style.display = curTab==="metrics" ? "" : "none";
   document.getElementById("brainView").style.display   = curTab==="brain"   ? "" : "none";
   document.getElementById("collectionView").style.display = curTab==="collection" ? "" : "none";
+  if(curTab!=="collection") setPageBackdrop(null);
 }
 const TABS=["tracker","metrics","brain","collection"];
 // quiet: the tour passing through Metrics is not a real visit, so it does not ask the AI for a weight breakdown.
@@ -3160,7 +3169,7 @@ function renderCollection(){
     Shop.pickerBackdrops(owned).forEach(p=>{
       const bd=Shop.BACKDROPS.filter(x=>x.id===p.id)[0], secret=bd.kind==="secrets";
       h+='<button class="bd-opt'+(p.unlocked?"":" locked")+'" data-bg="'+escapeAttr(p.id)+'" aria-pressed="'+(p.id===bg?"true":"false")+'"'+(p.unlocked?"":" disabled")+'>'+
-         '<span class="bd-sw bg-'+escapeAttr(p.id)+'" aria-hidden="true">'+(p.unlocked?"":Icons.svg("lock"))+'</span>'+
+         '<span class="bd-sw" aria-hidden="true"><i class="bg-'+escapeAttr(p.id)+'"></i>'+(p.unlocked?"":Icons.svg("lock"))+'</span>'+
          '<span class="bd-name">'+escapeHtml(bdName(bd))+'</span>';
       if(!p.unlocked) h+='<small>'+escapeHtml(t("shopLockedAt",{n:p.n}))+'</small>';
       else if(secret) h+='<small class="bd-secret">'+Icons.svg("sparkles")+escapeHtml(t("shopSecretReward"))+'</small>';
@@ -3212,7 +3221,13 @@ function renderCollection(){
   h+='</section>';
   if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
   el.innerHTML=h;
-  document.getElementById("collectionView").className="bg-"+bg;
+  setPageBackdrop(bg);
+}
+// Paints the Collection backdrop on the whole page; null or "plain" leaves the page as it is.
+function setPageBackdrop(id){
+  const cl=document.body.classList;
+  Array.prototype.slice.call(cl).forEach(c=>{ if(c==="coll-bg" || c.indexOf("bg-")===0) cl.remove(c); });
+  if(id && id!=="plain"){ cl.add("coll-bg"); cl.add("bg-"+id); }
 }
 function openBox(){
   const u=user();
