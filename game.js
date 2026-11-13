@@ -68,14 +68,14 @@ const Game = (() => {
     return out;
   }
 
-  // Same backward rule as streak(), but stops once the count reaches cap (so scanning every day stays linear).
-  function runCount(user, from, cap, first) {
+  // Same backward rule as streak() over precomputed arrays (lg: logged flags, wk: week starts, index 0 = earliest day);
+  // stops once the count reaches cap. Index arithmetic keeps scanning every day cheap.
+  function runCount(lg, wk, from, cap) {
     let c = 0, gapWeek = null;
-    for (let d = from; d >= first; d = addDays(d, -1)) {
-      if (logged(user, d)) { if (++c >= cap) return c; continue; }
-      const w = B.weekStart(d);
-      if (gapWeek === w) return c;
-      gapWeek = w;
+    for (let i = from; i >= 0; i--) {
+      if (lg[i]) { if (++c >= cap) return c; continue; }
+      if (gapWeek === wk[i]) return c;
+      gapWeek = wk[i];
     }
     return c;
   }
@@ -88,9 +88,10 @@ const Game = (() => {
     const streakF = FAMILIES[1], starF = FAMILIES[2];
     // streak: first day whose (capped) run count reaches each tier
     have.streak = 0;
-    for (const d of days) {
-      if (!logged(user, d)) continue;
-      const c = runCount(user, d, top(streakF.tiers), first);
+    const lg = days.map(d => logged(user, d)), wk = days.map(d => B.weekStart(d));
+    for (let i = 0; i < days.length; i++) {
+      if (!lg[i]) continue;
+      const d = days[i], c = runCount(lg, wk, i, top(streakF.tiers));
       if (c > have.streak) { for (let i = 0; i < streakF.tiers.length; i++) if (!date[streakF.keys[i]] && c >= streakF.tiers[i]) date[streakF.keys[i]] = d; have.streak = c; }
     }
     let run = 0; have.stars = 0;
@@ -114,8 +115,8 @@ const Game = (() => {
 
   // Per family: highest earned tier (a celebrated key counts), longest run / weeks so far, next threshold.
   function familyStatus(user, today, badgeList, celebrated) {
-    const done = celebrated || {}, by = {}, have = scan(user, today).have;
-    (badgeList || []).forEach(b => { by[b.id] = b; });
+    const done = celebrated || {}, by = {}, sc = scan(user, today), have = sc.have;
+    (badgeList || sc.list).forEach(b => { by[b.id] = b; });
     return FAMILIES.map(f => {
       const tiers = f.keys.map((key, i) => ({ key, need: f.tiers[i], earned: !!((by[key] && by[key].earned) || done[key]), date: (by[key] && by[key].date) || null }));
       let tier = 0; tiers.forEach((t, i) => { if (t.earned) tier = i + 1; });
@@ -129,7 +130,7 @@ const Game = (() => {
     if (user.celebrated && user.celebrated["tiers:v1"]) return false;
     if (!user.celebrated) user.celebrated = {};
     const fam = {}; FAMILIES.forEach(f => f.keys.forEach(k => { fam[k] = true; }));
-    (badgeList || []).forEach(b => { if (b.earned && fam[b.id] && LEGACY_KEYS.indexOf(b.id) < 0) user.celebrated[b.id] = today; });
+    (badgeList || badges(user, today)).forEach(b => { if (b.earned && fam[b.id] && LEGACY_KEYS.indexOf(b.id) < 0) user.celebrated[b.id] = today; });
     user.celebrated["tiers:v1"] = today;
     return true;
   }

@@ -270,3 +270,17 @@ test("familyStatus/seedNewTiers tolerate null user and missing celebrated", () =
   assert.equal(Game.seedNewTiers(u, "2026-11-11", Game.badges(u, "2026-11-11")), true);
   assert.deepEqual(Object.keys(u.celebrated), ["tiers:v1"]);
 });
+test("seedNewTiers without a list seeds like with one; no burst afterwards", () => {
+  const u = empty(); mondays.forEach(m => addMeals(u, m, 2, ["berries", "fish"]));
+  const v = JSON.parse(JSON.stringify(u));
+  assert.equal(Game.seedNewTiers(u, "2026-11-11"), true);
+  Game.seedNewTiers(v, "2026-11-11", Game.badges(v, "2026-11-11"));
+  assert.deepEqual(u.celebrated, v.celebrated);
+  assert.equal(u.celebrated.fish4, "2026-11-11");
+  const fresh = Game.newCelebrations(u, "2026-11-11").filter(x => x.type === "badge").map(x => x.id);
+  assert.deepEqual(fresh.filter(id => Game.LEGACY_KEYS.indexOf(id) < 0), []);
+});
+test("familyStatus without a badge list still reports earned tiers", () => {
+  const u = empty(); mondays.forEach(m => addMeals(u, m, 2, ["fish"]));
+  assert.equal(Game.familyStatus(u, "2026-11-11").find(f => f.id === "fish").tier, 2);
+});
