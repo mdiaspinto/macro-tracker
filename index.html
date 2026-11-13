@@ -3741,7 +3741,7 @@ function renderInsight(){
 const weightProfile = p => ({age:p.age, sex:p.sex, heightCm:p.heightCm, activity:p.activity, notes:p.notes});
 // Ask the Worker for a written explanation of the latest period; the rule-based text stays as the fallback.
 async function requestAiInsight(){
-  if(insightPending) return;
+  if(demoMode || insightPending) return;
   const u=user();
   if(!INSIGHTS_URL || !cloudEnabled() || !session || u.insightsOn===false) return;
   const f=breakdownFacts(); if(!f || !f.loggedDays) return;
@@ -4464,7 +4464,7 @@ function exitDemo(){ leaveDemoState(); switchTab("tracker", true); renderAll(); 
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
 function authBusy(on){
-  ["authLoginBtn","authCreateBtn","authInput","authPassword","authBackDemo"].forEach(id=>authEl(id).disabled=on);
+  ["authLoginBtn","authCreateBtn","authInput","authPassword","authBackDemo","authDemoBtn","authOfflineBtn"].forEach(id=>authEl(id).disabled=on);
   authEl("authLoginBtn").textContent = on ? t("checking") : t("authLogin");
 }
 function authForm(){
@@ -4494,6 +4494,7 @@ async function doCreate(){
       }catch(e){ authError(t("demoBackupErr")); authBusy(false); return; }
     }
     const session0=await authCall("signUp", f.u, f.pw);
+    if(demoMode!==fromDemo){ authBusy(false); return; }   // the state changed under this call: write nothing
     if(fromDemo){   // the demo never merges: the account starts fresh with the demo name and character
       saveSession(session0);
       endTourLeavingDemo();
@@ -4507,6 +4508,7 @@ async function doCreate(){
     }
     saveSession(session0);
     const legacy=await legacyGet(f.u);
+    if(demoMode){ authBusy(false); return; }
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
       if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
@@ -4521,9 +4523,12 @@ async function doLogin(){
   const fromDemo=demoMode;
   authBusy(true);
   try{
-    saveSession(await authCall("signInWithPassword", f.u, f.pw));
+    const session1=await authCall("signInWithPassword", f.u, f.pw);
+    if(demoMode!==fromDemo){ authBusy(false); return; }   // the state changed under this call: write nothing
+    saveSession(session1);
     if(fromDemo) leaveDemoState();   // real state is loaded; nothing from the demo can reach the account
     const remote=await cloudGet();
+    if(demoMode){ authBusy(false); return; }
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
       if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
