@@ -847,9 +847,19 @@
   @keyframes tour-in{from{opacity:0;transform:translateY(6px)}}
   .tour-media[hidden]{display:none}
   .tour-media .logo{width:48px;height:48px;border-radius:12px;margin-bottom:12px}
+  /* The professor stands in his own column beside the text; the buttons span both columns below. */
+  .tour-bubble{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:start}
+  .tour-media{grid-column:1;grid-row:1}
+  .tour-text{grid-column:2;grid-row:1}
+  .tour-media[hidden] + .tour-text{grid-column:1 / -1}
+  .tour-actions{grid-column:1 / -1}
+  .tour-media .tour-guide{display:block;width:88px;height:88px;object-fit:contain;margin:-6px 0 0 -8px;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));animation:tour-guide-pop .35s cubic-bezier(.3,1.5,.5,1) both}
+  @keyframes tour-guide-pop{from{opacity:0;transform:translateY(8px) scale(.9)}}
+  @media(max-width:380px){ .tour-media .tour-guide{width:72px;height:72px} }
   @media (prefers-color-scheme: dark){ .tour-media .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
   .tour-count{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 0 4px;font-variant-numeric:tabular-nums}
-  .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px}
+  .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
   .tour-body{font-size:14.5px;line-height:1.5;margin:0}
   .tour-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px}
   .tour-skip{margin-right:auto;min-height:44px;padding:0 6px;background:transparent;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:2px}
@@ -1594,15 +1604,15 @@ const T = {
     mcFoodIntro:"What do you like to eat, and what do you stay away from?",
     mcMoreIntro:"Last one — both are optional. You can change all of this anytime in Users & targets.",
     mcSkip:"Skip", mcBack:"Back", mcNext:"Next", mcDone:"Done", mcDoneToast:"All set — your coach knows you a bit better!",
-    tourWelcomeT:"Welcome to Macro Tracker", tourWelcomeB:"Track what you eat, feed your brain, and collect characters along the way. This quick tour takes a minute.",
+    tourWelcomeT:"Hi {name}, welcome to Macro Tracker", tourWelcomeB:"I'll be your guide. Let me show you how to track what you eat, feed your brain and fill your collection. It takes about a minute.",
     tourGoalT:"Your goal and day", tourGoalB:"Switch between Lean and Bulk targets, and move between days here.",
-    tourLogT:"Log a meal", tourLogB:"Type what you ate and how much. The app estimates the macros for you.",
+    tourLogT:"Log a meal", tourLogB:"Type what you ate and how much. The app can estimate the macros for you.",
     tourTotalsT:"Your day at a glance", tourTotalsB:"Calories, protein, carbs and fat against your targets.",
-    tourBrainT:"Feed your brain", tourBrainB:"Brain-healthy foods and habits fill this bar each week and earn points.",
-    tourWeightT:"Weigh in", tourWeightB:"Log your weight here. Regular weigh-ins earn points too.",
-    tourLevelT:"Levels and badges", tourLevelB:"Your brain points grow your level and unlock badges.",
-    tourCollectT:"Your collection", tourCollectB:"Points buy mystery boxes with characters to collect. Your first box is free!",
-    tourEndT:"You're all set", tourEndB:"Replay this tour any time from here.",
+    tourBrainT:"Feed your brain", tourBrainB:"Brain-healthy foods and habits fill these rings and the weekly bar, and earn points.",
+    tourWeightT:"Weigh in", tourWeightB:"Tap Log weight to add a weigh-in. Regular weigh-ins earn points too.",
+    tourLevelT:"Levels and badges", tourLevelB:"Your brain points raise your level and earn bronze, silver and gold badges.",
+    tourCollectT:"Your collection", tourCollectB:"Points buy mystery boxes. Fill each shelf, unlock backdrops, and stamp secret characters in your passport. Your first box is free!",
+    tourEndT:"You're all set, {name}", tourEndB:"Replay this tour any time from Users & targets, here.",
     tourNext:"Next", tourBack:"Back", tourSkip:"Skip", tourDone:"Done", tourCount:"{n} of {total}", tourReplay:"Replay tour",
     insByClaude:"Explanation written by an AI model from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
@@ -1773,15 +1783,15 @@ const T = {
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
     mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
-    tourWelcomeT:"Te damos la bienvenida a Macro Tracker", tourWelcomeB:"Registra lo que comes, cuida tu cerebro y colecciona personajes por el camino. Este tour rápido dura un minuto.",
+    tourWelcomeT:"¡Hola, {name}! Esto es Macro Tracker", tourWelcomeB:"Seré tu guía. Te enseño a registrar lo que comes, cuidar tu cerebro y llenar tu colección. Dura más o menos un minuto.",
     tourGoalT:"Tu objetivo y tu día", tourGoalB:"Aquí cambias entre Definición y Volumen y pasas de un día a otro.",
-    tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app estima los macros por ti.",
+    tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app puede estimar los macros por ti.",
     tourTotalsT:"Tu día de un vistazo", tourTotalsB:"Calorías, proteínas, carbohidratos y grasas frente a tus objetivos.",
-    tourBrainT:"Alimenta tu cerebro", tourBrainB:"Los alimentos y hábitos buenos para el cerebro llenan esta barra cada semana y suman puntos.",
-    tourWeightT:"Pésate", tourWeightB:"Registra tu peso aquí. Pesarte con regularidad también suma puntos.",
-    tourLevelT:"Niveles e insignias", tourLevelB:"Tus puntos de cerebro suben tu nivel y desbloquean insignias.",
-    tourCollectT:"Tu colección", tourCollectB:"Con tus puntos compras cajas sorpresa con personajes para coleccionar. ¡La primera caja es gratis!",
-    tourEndT:"¡Todo listo!", tourEndB:"Repite este tour cuando quieras desde aquí.",
+    tourBrainT:"Alimenta tu cerebro", tourBrainB:"Los alimentos y hábitos buenos para el cerebro llenan estos anillos y la barra semanal, y suman puntos.",
+    tourWeightT:"Pésate", tourWeightB:"Toca Registrar peso para añadir un pesaje. Pesarte con regularidad también suma puntos.",
+    tourLevelT:"Niveles e insignias", tourLevelB:"Tus puntos de cerebro suben tu nivel y te dan insignias de bronce, plata y oro.",
+    tourCollectT:"Tu colección", tourCollectB:"Con tus puntos abres cajas sorpresa. Llena cada estante, desbloquea fondos y sella personajes secretos en tu pasaporte. ¡La primera caja es gratis!",
+    tourEndT:"¡Todo listo, {name}!", tourEndB:"Repite este tour cuando quieras desde Usuarios y objetivos, aquí.",
     tourNext:"Siguiente", tourBack:"Atrás", tourSkip:"Saltar", tourDone:"Listo", tourCount:"{n} de {total}", tourReplay:"Repetir el tour",
     insByClaude:"Explicación redactada por un modelo de IA a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
@@ -1860,7 +1870,7 @@ function lang(){ return (user().lang==="es") ? "es" : "en"; }
 function t(key, params){
   const L=lang();
   let s = (T[L] && T[L][key]!=null) ? T[L][key] : (T.en[key]!=null ? T.en[key] : key);
-  if(params) for(const k in params) s = s.replace("{"+k+"}", params[k]);
+  if(params) for(const k in params) s = s.replace("{"+k+"}", ()=>params[k]);   // a function, so "$" in a value (e.g. a name) stays literal
   return s;
 }
 function applyI18n(){
@@ -2467,23 +2477,28 @@ function closeMeetCoach(done){
 
 /* ---------- First-time tour (engine in tour.js) ---------- */
 // key -> tourKeyT / tourKeyB copy. Steps without a tab stay on the tab the person was on.
+// guide: pose of the professor (img/guide/1-4: 1 presenting, 2 idea, 3 excited checklist, 4 wink + thumbs up).
 const TOUR_STEPS=[
-  {key:"Welcome", logo:true},
-  {key:"Goal",    tab:"tracker",    target:"#trackerView .daterow"},
+  {key:"Welcome", guide:1},
+  {key:"Goal",    guide:2, tab:"tracker",    target:"#trackerView .daterow"},
   // The whole Add food form where it fits beside the bubble, else just the food name field (phones).
-  {key:"Log",     tab:"tracker",    target:[()=>document.getElementById("fName").closest(".section"), ()=>document.getElementById("fName").closest(".field")]},
-  {key:"Totals",  tab:"tracker",    target:"#cards"},
-  {key:"Brain",   tab:"tracker",    target:"#brainCard"},
-  {key:"Weight",  tab:"metrics",    target:"#wLogOpen"},
-  {key:"Level",   tab:"brain",      target:()=>document.getElementById("bvLevel").closest(".section")},
-  {key:"Collect", tab:"collection", target:"#collectionCard .shop-wallet"},
-  {key:"End",                       target:"#usersBtn"}
+  {key:"Log",     guide:3, tab:"tracker",    target:[()=>document.getElementById("fName").closest(".section"), ()=>document.getElementById("fName").closest(".field")]},
+  {key:"Totals",  guide:1, tab:"tracker",    target:"#cards"},
+  {key:"Brain",   guide:2, tab:"tracker",    target:"#brainCard"},
+  {key:"Weight",  guide:3, tab:"metrics",    target:"#wLogOpen"},
+  {key:"Level",   guide:4, tab:"brain",      target:()=>document.getElementById("bvLevel").closest(".section")},
+  {key:"Collect", guide:3, tab:"collection", target:"#collectionCard .shop-wallet"},
+  {key:"End",     guide:4,                   target:"#usersBtn"}
 ];
+// Raise this to show the tour once more to every profile (for example after a big redesign).
+const TOUR_VERSION=2;
+const guideImg = n => `<img class="tour-guide" src="img/guide/${n}.webp" width="96" height="96" alt="" aria-hidden="true">`;
 function startTour(){
   if(Tour.active()) return;
-  const prevTab=curTab, logo=document.querySelector(".brand .logo").outerHTML;
-  Tour.start(TOUR_STEPS.map(s=>({target:s.target||null, tab:s.tab||prevTab, media:s.logo?logo:"",
-      title:t("tour"+s.key+"T"), body:t("tour"+s.key+"B")})), {
+  const prevTab=curTab, name=user().name||"";
+  [1,2,3,4].forEach(n=>{ new Image().src="img/guide/"+n+".webp"; });   // no blank frame while a pose loads
+  Tour.start(TOUR_STEPS.map(s=>({target:s.target||null, tab:s.tab||prevTab, media:guideImg(s.guide),
+      title:t("tour"+s.key+"T",{name}), body:t("tour"+s.key+"B",{name})})), {
     labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
     switchTab:tab=>switchTab(tab,true),
     inset:()=>{ const ab=document.querySelector(".appbar");
@@ -2491,7 +2506,7 @@ function startTour(){
       const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // phone: sticky tab bar + 8px air
     fallbackFocus:()=>document.getElementById("usersBtn"),   // e.g. started from "Continue offline" or the settings modal
     onEnd:()=>{
-      user().tourSeen=true; save();
+      const u=user(); u.tourSeen=true; u.tourSeenV=TOUR_VERSION; save();
       switchTab(prevTab,true);
       celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
       maybeShowMeetCoach();
@@ -2500,7 +2515,7 @@ function startTour(){
 }
 // Once per profile, when the app is fully up for them (after the first cloud pull when signed in) and nothing else is open.
 function maybeStartTour(){
-  if(Tour.active() || user().tourSeen || !celebrateReady || document.querySelector(".overlay.on")) return;
+  if(Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
   startTour();
 }
 function saveTargets(){
@@ -4228,6 +4243,7 @@ function mergeUser(primary,secondary){
     profile: pf.profile, profileAt: pf.profileAt,
     coachIntroSeen: !!(primary.coachIntroSeen || secondary.coachIntroSeen),
     tourSeen: !!(primary.tourSeen || secondary.tourSeen),
+    tourSeenV: Math.max(primary.tourSeenV||0, secondary.tourSeenV||0),
     foods:   unionFoods(primary.foods, secondary.foods),
     days:    unionDays(primary.days,  secondary.days),
     weights: unionWeights(primary.weights, secondary.weights),
