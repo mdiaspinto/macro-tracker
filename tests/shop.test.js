@@ -116,6 +116,13 @@ test("resetShop: openings before the reset are ignored and the free box reopens"
   assert.deepEqual(Shop.owned(u), ["s01"]);
   assert.equal(Shop.freeAvailable(u), false);
 });
+test("resetShop: clears collection/shine celebration keys for the four series only", () => {
+  const u = { shop: { start: "2026-11-02", startPoints: 0, pulls: {} },
+    celebrated: { "collection:lulu": "d", "shine:lulu": "d", "collection:nini": "d", "shine:kiki": "d", "shine:momo": "d", other: "x" } };
+  Shop.resetShop(u, 5000);
+  assert.deepEqual(u.celebrated, { other: "x" });
+  Shop.resetShop({ shop: { pulls: {} } }, 1); // no celebrated map: no throw
+});
 test("mergeShop: newest resetAt wins in both argument orders and filters the union", () => {
   const before = { start: "2026-11-02", startPoints: 100, pulls: { a: { c: "kiki-3", at: 1000, free: true } } };
   const after = { start: "2026-11-02", startPoints: 100, resetAt: 5000, pulls: { c: { c: "s01", at: 6000, free: true } } };
@@ -144,6 +151,15 @@ test("unlockedBackdrops: commons and secrets thresholds", () => {
   assert.ok(a.includes("confetti")); assert.ok(!a.includes("stripes"));
   const b = Shop.unlockedBackdrops(s5);
   assert.ok(b.includes("gold")); assert.ok(!b.includes("confetti"));
+});
+
+test("unlockedBackdrops: night/globe at 10/15 secrets; stripes/ocean/rainbow at 12/18/24 commons", () => {
+  const has = (ids, b) => Shop.unlockedBackdrops(ids).includes(b);
+  assert.ok(!has(secrets.slice(0, 9), "night")); assert.ok(has(secrets.slice(0, 10), "night"));
+  assert.ok(!has(secrets.slice(0, 14), "globe")); assert.ok(has(secrets.slice(0, 15), "globe"));
+  [["stripes", 12], ["ocean", 18], ["rainbow", 24]].forEach(([b, n]) => {
+    assert.ok(!has(commons.slice(0, n - 1), b), b + " below " + n); assert.ok(has(commons.slice(0, n), b), b + " at " + n);
+  });
 });
 
 test("unlockedBackdrops: secrets never count toward commons milestones", () => {

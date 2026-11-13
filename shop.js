@@ -83,7 +83,11 @@ const Shop = (() => {
 
   // Empties the collection and reopens the free box. Old openings stay stored (so a device that
   // still has them can't sync them back in) but are ignored from now on.
-  const resetShop = (user, now) => { if (user.shop) user.shop.resetAt = now; };
+  const resetShop = (user, now) => {
+    if (!user.shop) return;
+    user.shop.resetAt = now;
+    if (user.celebrated) COLLECTIONS.forEach(col => { delete user.celebrated["collection:" + col.id]; delete user.celebrated["shine:" + col.id]; });
+  };
 
   const addPull = (user, result, free, now, rand) => {
     if (!user.shop) throw new Error("addPull: user.shop is missing");
@@ -143,8 +147,6 @@ const Shop = (() => {
 
   const secretsFound = user => owned(user).filter(id => { const c = byId(id); return !!c && c.tier === "secret"; });
 
-  // Union of pulls by key; start/startPoints from the side with the earlier start
-  // (tie -> larger startPoints, so the result does not depend on argument order); newest resetAt wins.
   const MILESTONES = [6, 12, 18, 24];
   const BACKDROPS = [
     { id: "plain", en: "Plain", es: "Liso", kind: "always", n: 0 },
@@ -186,6 +188,8 @@ const Shop = (() => {
   };
   const backdropFor = (ids, chosen) => unlockedBackdrops(ids).indexOf(chosen) >= 0 ? chosen : "plain";
 
+  // Union of pulls by key; start/startPoints from the side with the earlier start
+  // (tie -> larger startPoints, so the result does not depend on argument order); newest resetAt wins.
   const mergeShop = (a, b) => {
     if (!a && !b) return undefined;
     const withReset = (o, r) => { if (r) o.resetAt = r; return o; };
