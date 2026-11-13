@@ -27,3 +27,12 @@ test("new shop copy", () => {
   assert.equal(T.en.shopNext, "{n} more characters: {name} backdrop");
   assert.equal(T.es.passport, "Pasaporte");
 });
+test("demo copy", () => {
+  assert.equal(T.en.demoTry, "Try the demo"); assert.equal(T.es.demoTry, "Probar la demo");
+  assert.equal(T.en.tourDemoWelcomeT, "Hi {name}, welcome to the demo"); assert.equal(T.es.tourDemoWelcomeT, "¡Hola, {name}! Esto es la demo");
+  assert.equal(T.en.tourDemoCollectB, "Tap Open your free box to get your first character.");
+  assert.equal(T.es.tourDemoCollectB, "Toca Abre tu caja gratis para conseguir tu primer personaje.");
+  assert.equal(T.en.tourDemoEndT, "Like it, {name}?"); assert.equal(T.es.tourDemoEndT, "¿Te gusta, {name}?");
+  assert.equal(T.en.demoBanner, "Demo · sample data"); assert.equal(T.es.demoBanner, "Demo · datos de ejemplo");
+  assert.equal(T.en.demoBackToDemo, "Back to the demo"); assert.equal(T.es.demoBackToDemo, "Volver a la demo");
+});

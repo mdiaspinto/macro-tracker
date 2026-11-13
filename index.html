@@ -832,6 +832,8 @@
   .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
   .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
   .auth-offline:hover{color:var(--text)}
+  #demoSheet[hidden],#authMain[hidden]{display:none}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
   .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:14px}
   .account-bar .acc-who{font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .account-bar .acc-who b{color:var(--accent-text)}
@@ -1159,6 +1161,7 @@
 <div class="overlay" id="authOverlay">
   <div class="modal auth-modal">
     <div class="body">
+      <div id="authMain">
       <div class="auth-brand"><div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div><h3 data-i18n="authTitle">Log in to sync</h3></div>
       <p class="auth-intro" data-i18n="authIntro">Sign in to sync your logs across your devices.</p>
       <div class="field">
@@ -1175,7 +1178,26 @@
         <button class="btn btn-primary" id="authLoginBtn" data-i18n="authLogin">Log in</button>
         <button class="btn btn-ghost" id="authCreateBtn" data-i18n="authCreate">Create account</button>
       </div>
+      <button class="btn btn-ghost full" id="authDemoBtn" style="margin-top:10px" data-i18n="demoTry">Try the demo</button>
       <button class="auth-offline" id="authOfflineBtn" data-i18n="authContinueOffline">Continue offline</button>
+      </div>
+      <div id="demoSheet" hidden>
+        <div class="auth-brand"><h3 data-i18n="demoNameTitle">Try Macro Tracker</h3></div>
+        <div class="field">
+          <label for="demoName" data-i18n="demoNameLabel">Your name</label>
+          <input id="demoName" maxlength="24" autocomplete="off" data-i18n-ph="demoNamePh" placeholder="e.g. Alex">
+        </div>
+        <div class="field">
+          <label id="demoLangLabel" data-i18n="demoLang">Language</label>
+          <div class="seg" role="group" aria-labelledby="demoLangLabel">
+            <button type="button" id="demoLangEn" aria-pressed="false">EN</button>
+            <button type="button" id="demoLangEs" aria-pressed="false">ES</button>
+          </div>
+        </div>
+        <div class="auth-error" id="demoNameErr" role="alert"></div>
+        <button class="btn btn-primary full" id="demoStartBtn" style="margin-top:14px" data-i18n="demoStart">Start the demo</button>
+        <button class="auth-offline" id="demoBackBtn" data-i18n="demoBack">Back</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1510,6 +1532,12 @@ function migrateProfiles(s){ s.users.forEach(ensureProfile); s.migrations.profil
 const T = {
   en: {
     switchUser:"Switch user", manageUsers:"Manage users & targets",
+    demoTry:"Try the demo", demoNameTitle:"Try Macro Tracker", demoNameLabel:"Your name", demoNamePh:"e.g. Alex", demoLang:"Language", demoStart:"Start the demo", demoBack:"Back", demoNameErr:"Enter your name to start.",
+    tourDemoWelcomeT:"Hi {name}, welcome to the demo", tourDemoWelcomeB:"This is a sample week so you can see everything in action. Nothing here is saved to an account.",
+    tourDemoCollectB:"Tap Open your free box to get your first character.",
+    tourDemoEndT:"Like it, {name}?", tourDemoEndB:"Create a free account to keep your name and your new character, and start tracking for real.",
+    demoCreate:"Create my account", demoKeep:"Keep exploring", demoBanner:"Demo · sample data", demoBannerCreate:"Create account", demoExit:"Exit demo",
+    demoCarry:"Your demo name and character come with you.", demoBackToDemo:"Back to the demo",
     lean:"Lean", bulk:"Bulk", prevDay:"Previous day", nextDay:"Next day", today:"Today",
     addFood:"Add food", addFoodHint:"Enter macros per reference amount, then how much you ate",
     foodName:"Food name", foodNamePh:"Start typing… e.g. Chicken breast",
@@ -1689,6 +1717,12 @@ const T = {
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
+    demoTry:"Probar la demo", demoNameTitle:"Prueba Macro Tracker", demoNameLabel:"Tu nombre", demoNamePh:"p. ej. Alex", demoLang:"Idioma", demoStart:"Empezar la demo", demoBack:"Volver", demoNameErr:"Escribe tu nombre para empezar.",
+    tourDemoWelcomeT:"¡Hola, {name}! Esto es la demo", tourDemoWelcomeB:"Es una semana de ejemplo para que lo veas todo en marcha. Nada de esto se guarda en una cuenta.",
+    tourDemoCollectB:"Toca Abre tu caja gratis para conseguir tu primer personaje.",
+    tourDemoEndT:"¿Te gusta, {name}?", tourDemoEndB:"Crea una cuenta gratis para conservar tu nombre y tu nuevo personaje, y empezar a registrar de verdad.",
+    demoCreate:"Crear mi cuenta", demoKeep:"Seguir explorando", demoBanner:"Demo · datos de ejemplo", demoBannerCreate:"Crear cuenta", demoExit:"Salir de la demo",
+    demoCarry:"Tu nombre y tu personaje de la demo vienen contigo.", demoBackToDemo:"Volver a la demo",
     lean:"Definición", bulk:"Volumen", prevDay:"Día anterior", nextDay:"Día siguiente", today:"Hoy",
     addFood:"Agregar alimento", addFoodHint:"Ingresa los macros por cantidad de referencia y cuánto comiste",
     foodName:"Nombre del alimento", foodNamePh:"Escribe… p. ej. Pechuga de pollo",
@@ -1882,6 +1916,7 @@ function applyI18n(){
 }
 
 /* ---------- State ---------- */
+let demoMode = false;   // guest demo: state lives under Demo.KEY, no cloud, no real data
 let state = load();
 let curDate = todayStr();
 let editCtx = null; // {type:"meal", id} | {type:"food", name}
@@ -1933,7 +1968,10 @@ function load(){
   const users = initialUsers();
   return { users, activeId:users[0].id, migrations:{clearedSeedFoods:true, setupProfiles:true, fixProfileTargets:true} };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); scheduleCloudSync(); }
+function save(){
+  if(demoMode){ localStorage.setItem(Demo.KEY, JSON.stringify(state)); return; }   // the demo never touches the real key or the cloud
+  localStorage.setItem(KEY, JSON.stringify(state)); scheduleCloudSync();
+}
 function user(){ return state.users.find(u=>u.id===state.activeId) || state.users[0]; }
 function targets(){ return user().targets[user().goal]; }
 function dayMeals(){ const u=user(); if(!u.days[curDate]) u.days[curDate]=[]; return u.days[curDate]; }
@@ -2516,7 +2554,7 @@ function startTour(){
 }
 // Once per profile, when the app is fully up for them (after the first cloud pull when signed in) and nothing else is open.
 function maybeStartTour(){
-  if(Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
+  if(demoMode || Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
   startTour();
 }
 function saveTargets(){
@@ -4278,12 +4316,12 @@ function mergeState(primary,secondary){
 
 /* ---- background sync ---- */
 function scheduleCloudSync(){
-  if(!cloudEnabled() || !session) return;
+  if(demoMode || !cloudEnabled() || !session) return;
   clearTimeout(cloudTimer);
   cloudTimer=setTimeout(()=>{ cloudPut(payloadOf()).catch(()=>{}); }, 1500);
 }
 async function pullRemote(){
-  if(!cloudEnabled() || !session) return;
+  if(demoMode || !cloudEnabled() || !session) return;
   try{
     const remote=await cloudGet();
     if(remote && remote.state){
@@ -4299,12 +4337,54 @@ async function pullRemote(){
 /* ---- auth UI ---- */
 function authEl(id){ return document.getElementById(id); }
 function openAuth(){
+  showDemoSheet(false);
   authEl("authError").textContent=""; authEl("authPassword").value="";
   authEl("authUpgrade").style.display = legacyUser ? "block" : "none";
   if(legacyUser && !authEl("authInput").value) authEl("authInput").value=legacyUser;
   authEl("authOverlay").classList.add("on");
   setTimeout(()=>authEl(authEl("authInput").value ? "authPassword" : "authInput").focus(),50);
 }
+function showDemoSheet(on){
+  authEl("authMain").hidden=on; authEl("demoSheet").hidden=!on;
+  if(on){ authEl("demoNameErr").textContent=""; setTimeout(()=>authEl("demoName").focus(),50); }
+}
+let demoLangPick = (navigator.language||"").toLowerCase().indexOf("es")===0 ? "es" : "en";
+function setDemoLang(l){
+  demoLangPick=l;
+  authEl("demoLangEn").setAttribute("aria-pressed", String(l==="en"));
+  authEl("demoLangEs").setAttribute("aria-pressed", String(l==="es"));
+}
+function startDemo(name, lang){
+  state=Demo.stateOf(Demo.sampleUser(name, lang, todayStr(), makeUser));
+  demoMode=true; document.body.classList.add("demo");
+  save();
+  enterDemoApp();
+}
+function startDemoTour(){}   // Task 6 replaces this
+function enterDemoApp(){
+  closeAuth();
+  celebrateReady=true; shopReady=true;
+  switchTab("tracker", true);
+  renderAll();
+  updateAccountUI();
+  if(!user().demoTourDone) startDemoTour();
+}
+function resumeDemo(){
+  let raw=null, s=null;
+  try{ raw=localStorage.getItem(Demo.KEY); s=raw ? JSON.parse(raw) : null; }catch(e){ s=null; }
+  if(!s || !Array.isArray(s.users) || s.users.length!==1 || !s.users[0]) return false;
+  state=s; demoMode=true; document.body.classList.add("demo");
+  if(user().demoBuilt!==todayStr()){ state=Demo.stateOf(Demo.refresh(user(), todayStr(), makeUser)); save(); }
+  enterDemoApp();
+  return true;
+}
+function leaveDemoState(){
+  if(Tour.active()) Tour.end(false);
+  try{ localStorage.removeItem(Demo.KEY); }catch(e){}
+  demoMode=false; document.body.classList.remove("demo");
+  state=load();
+}
+function exitDemo(){ leaveDemoState(); renderAll(); openAuth(); }
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
 function authBusy(on){
@@ -4373,6 +4453,8 @@ function startApp(){
   }
 }
 function boot(){
+  if(cloudEnabled() && session){ try{ localStorage.removeItem(Demo.KEY); }catch(e){} }   // a stale demo never runs over a signed-in account
+  else if(resumeDemo()){ updatePreview(); return; }
   if(cloudEnabled() && !session) openAuth();   // gate first launch until they log in / create
   else startApp();
   updatePreview();
@@ -4381,6 +4463,17 @@ function boot(){
 authEl("authLoginBtn").addEventListener("click", doLogin);
 authEl("authCreateBtn").addEventListener("click", doCreate);
 authEl("authOfflineBtn").addEventListener("click", authOffline);
+authEl("authDemoBtn").addEventListener("click", ()=>{ setDemoLang(demoLangPick); showDemoSheet(true); });
+authEl("demoBackBtn").addEventListener("click", ()=>{ showDemoSheet(false); authEl("authDemoBtn").focus(); });
+authEl("demoLangEn").addEventListener("click", ()=>setDemoLang("en"));
+authEl("demoLangEs").addEventListener("click", ()=>setDemoLang("es"));
+function submitDemoName(){
+  const name=authEl("demoName").value.trim();
+  if(!name){ authEl("demoNameErr").textContent=t("demoNameErr"); authEl("demoName").focus(); return; }
+  startDemo(name, demoLangPick);
+}
+authEl("demoStartBtn").addEventListener("click", submitDemoName);
+authEl("demoName").addEventListener("keydown", e=>{ if(e.key==="Enter") submitDemoName(); });
 authEl("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") authEl("authPassword").focus(); });
 authEl("authPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
 authEl("logoutBtn").addEventListener("click", doLogout);
