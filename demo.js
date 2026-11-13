@@ -5,6 +5,7 @@ const Demo = (() => {
   const S = typeof Shop !== "undefined" ? Shop : require("./shop.js");
 
   const KEY = "macroTracker.demo.v1", BACKUP_KEY = "macroTracker.v1.backup";
+  const MAX_DAYS = 30; // a stored demo (guest name, pulls) is deleted this many days after it started
   const TARGETS = { lean: { p: 150, c: 200, f: 60 }, bulk: { p: 160, c: 220, f: 65 } };
 
   // Foods: [en, es, p, c, f] per 100 g.
@@ -62,6 +63,7 @@ const Demo = (() => {
     }
     user.collectionBg = "plain";
     user.demoBuilt = today;
+    user.demoStarted = today;
     user.shop = { start: today, startPoints: B.lifetimePoints(user, today), pulls: {} };
     return user;
   }
@@ -69,12 +71,21 @@ const Demo = (() => {
   function refresh(demoUser, today, makeUser) {
     const fresh = sampleUser(demoUser.name, demoUser.lang, today, makeUser);
     fresh.id = demoUser.id;
+    fresh.demoStarted = demoUser.demoStarted || demoUser.demoBuilt || today;
     fresh.collectionBg = demoUser.collectionBg;
     if (demoUser.demoTourDone) fresh.demoTourDone = demoUser.demoTourDone;
     const pulls = (demoUser.shop && demoUser.shop.pulls) || {};
     const spent = S.balance(demoUser, today, 0).spent;
     fresh.shop = { start: today, startPoints: B.lifetimePoints(fresh, today) - spent, pulls };
     return fresh;
+  }
+
+  // True when the demo started MAX_DAYS or more days before today (local dates), or its start is unknown.
+  function expired(demoUser, today) {
+    const start = demoUser && (demoUser.demoStarted || demoUser.demoBuilt);
+    if (!start) return true;
+    const utc = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+    return (utc(today) - utc(start)) / 864e5 >= MAX_DAYS;
   }
 
   const stateOf = user => ({ users: [user], activeId: user.id,
@@ -110,6 +121,6 @@ const Demo = (() => {
     });
   }
 
-  return { KEY, BACKUP_KEY, TARGETS, stateOf, sampleUser, refresh, accountState, usernameFrom, hasRealData };
+  return { KEY, BACKUP_KEY, MAX_DAYS, TARGETS, expired, stateOf, sampleUser, refresh, accountState, usernameFrom, hasRealData };
 })();
 if (typeof module !== "undefined") module.exports = Demo; else window.Demo = Demo;

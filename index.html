@@ -859,7 +859,7 @@
   .tour-spot{position:fixed;z-index:91;border-radius:16px;pointer-events:none;
     box-shadow:0 0 0 2px var(--accent),0 0 0 200vmax var(--scrim);transition:top .3s ease,left .3s ease,width .3s ease,height .3s ease}
   .tour-spot.tour-none{box-shadow:0 0 0 200vmax var(--scrim)}
-  .tour-bubble{position:fixed;z-index:92;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;
+  .tour-bubble{position:fixed;z-index:92;width:min(384px,calc(100vw - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;
     background:var(--panel);color:var(--text);border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);padding:18px 20px 14px}
   .tour-bubble.tour-in{animation:tour-in .22s ease both}
   @keyframes tour-in{from{opacity:0;transform:translateY(6px)}}
@@ -871,10 +871,10 @@
   .tour-text{grid-column:2;grid-row:1}
   .tour-media[hidden] + .tour-text{grid-column:1 / -1}
   .tour-actions{grid-column:1 / -1}
-  .tour-media .tour-guide{display:block;width:88px;height:88px;object-fit:contain;margin:-6px 0 0 -8px;
+  .tour-media .tour-guide{display:block;width:116px;height:116px;object-fit:contain;margin:-6px 0 0 -8px;
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));animation:tour-guide-pop .35s cubic-bezier(.3,1.5,.5,1) both}
   @keyframes tour-guide-pop{from{opacity:0;transform:translateY(8px) scale(.9)}}
-  @media(max-width:380px){ .tour-media .tour-guide{width:72px;height:72px} }
+  @media(max-width:380px){ .tour-media .tour-guide{width:96px;height:96px} }
   @media (prefers-color-scheme: dark){ .tour-media .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
   .tour-count{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 0 4px;font-variant-numeric:tabular-nums}
   .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
@@ -1390,14 +1390,14 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261116"></script>
-<script src="charts.js?v=20261116"></script>
-<script src="brain.js?v=20261116"></script>
-<script src="game.js?v=20261116"></script>
-<script src="coach.js?v=20261116"></script>
-<script src="shop.js?v=20261116"></script>
-<script src="demo.js?v=20261116"></script>
-<script src="tour.js?v=20261116"></script>
+<script src="icons.js?v=20261117"></script>
+<script src="charts.js?v=20261117"></script>
+<script src="brain.js?v=20261117"></script>
+<script src="game.js?v=20261117"></script>
+<script src="coach.js?v=20261117"></script>
+<script src="shop.js?v=20261117"></script>
+<script src="demo.js?v=20261117"></script>
+<script src="tour.js?v=20261117"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -2563,7 +2563,7 @@ const TOUR_STEPS=[
 ];
 // Raise this to show the tour once more to every profile (for example after a big redesign).
 const TOUR_VERSION=2;
-const guideImg = n => `<img class="tour-guide" src="img/guide/${n}.webp" width="96" height="96" alt="" aria-hidden="true">`;
+const guideImg = n => `<img class="tour-guide" src="img/guide/${n}.webp" width="116" height="116" alt="" aria-hidden="true">`;
 // Shared by the real tour and the demo tour. `edit(step, i)` may return the step fields to change.
 function runTour(edit, onEnd){
   if(Tour.active()) return;
@@ -4441,6 +4441,7 @@ function resumeDemo(){
   let raw=null, s=null;
   try{ raw=localStorage.getItem(Demo.KEY); s=raw ? JSON.parse(raw) : null; }catch(e){ s=null; }
   if(!s || !Array.isArray(s.users) || s.users.length!==1 || !s.users[0]) return false;
+  if(Demo.expired(s.users[0], todayStr())){ try{ localStorage.removeItem(Demo.KEY); }catch(e){} return false; }   // guest data is kept for 30 days at most
   state=s; demoMode=true; document.body.classList.add("demo");
   if(user().demoBuilt!==todayStr()){ state=Demo.stateOf(Demo.refresh(user(), todayStr(), makeUser)); save(); }
   enterDemoApp();
