@@ -523,6 +523,9 @@
   @media(max-width:420px){ .stat{padding:10px} .stat .stat-val{font-size:21px} }
   .chart-wrap{position:relative;width:100%;margin-top:2px}
   .chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
+  .m-range{margin-bottom:14px}
+  .m-range .seg{display:flex;width:100%}
+  .m-range .seg button{flex:1;padding:8px 6px}
   .chart-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px;line-height:1.55}
   .chart-tip{position:absolute;pointer-events:none;background:var(--panel);border:1.5px solid var(--line);
     border-radius:10px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
@@ -536,7 +539,7 @@
   .weight-form .field{gap:6px}
   .weight-form .btn{height:45px;white-space:nowrap}
   @media(max-width:560px){.weight-form{grid-template-columns:1fr 1fr}.weight-form .btn{grid-column:1 / -1;justify-content:center}}
-  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide{grid-column:1 / -1} }
+  @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} }
   .recent-weights{margin-top:16px}
   .rw-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
   .rw-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
@@ -794,6 +797,8 @@
 
   <!-- Metrics -->
   <div id="metricsView" style="display:none">
+
+    <div class="m-range"><div class="seg" id="mRange"></div></div>
 
     <div class="section">
       <div class="head"><h2 data-mk="cal" data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
@@ -1392,6 +1397,7 @@ const T = {
     noCalData:"No calories logged yet. Add eaten foods on the Tracker tab and they'll show up here.",
     noWeightData:"No weight logged yet. Add your first entry above.",
     weightLogged:"Weight logged ✓", weightRemoved:"Entry removed", weightNeedVal:"Enter a weight first",
+    range7:"7D", range30:"30D", range90:"90D", rangeAll:"All", statAvg7:"7-day average", statOnTarget:"Days on target",
     statLatest:"Latest", statAvg:"Average", statDays:"Days", statChange:"Change", statEntries:"Entries",
     targetRef:"target", kcalUnit:"kcal", recentEntries:"Recent entries",
     brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
@@ -1569,6 +1575,7 @@ const T = {
     noCalData:"Aún no hay calorías registradas. Agrega alimentos comidos en la pestaña Registro y aparecerán aquí.",
     noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
     weightLogged:"Peso registrado ✓", weightRemoved:"Entrada eliminada", weightNeedVal:"Ingresa un peso primero",
+    range7:"7 d", range30:"30 d", range90:"90 d", rangeAll:"Todo", statAvg7:"Media 7 días", statOnTarget:"Días en objetivo",
     statLatest:"Último", statAvg:"Promedio", statDays:"Días", statChange:"Cambio", statEntries:"Entradas",
     targetRef:"objetivo", kcalUnit:"kcal", recentEntries:"Entradas recientes",
     brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
@@ -2992,7 +2999,29 @@ document.getElementById("collectionCard").addEventListener("click", e=>{
   const ov=document.getElementById("charOverlay");
   ov.addEventListener("click", e=>{ if(e.target===ov || e.target.closest("[data-close-char]")) ov.classList.remove("on"); });
 })();
+const METRICS_RANGE_KEY="macroTracker.metricsRange";
+let metricsRangeMem=null;
+function metricsRange(){
+  let r=metricsRangeMem;
+  if(r===null){ try{ r=localStorage.getItem(METRICS_RANGE_KEY); }catch(e){ r=null; } }
+  return Charts.RANGES.indexOf(r)>=0 ? r : "30";
+}
+function setMetricsRange(r){
+  if(Charts.RANGES.indexOf(r)<0) r="30";
+  metricsRangeMem=r;
+  try{ localStorage.setItem(METRICS_RANGE_KEY, r); }catch(e){}
+}
+function renderRangeControl(){
+  const cur=metricsRange();
+  document.getElementById("mRange").innerHTML = Charts.RANGES.map(r=>
+    `<button type="button" data-range="${r}" class="${r===cur?"active":""}" aria-pressed="${r===cur}">${escapeHtml(t("range"+(r==="all"?"All":r)))}</button>`).join("");
+}
+document.getElementById("mRange").addEventListener("click", e=>{
+  const b=e.target.closest("[data-range]"); if(!b) return;
+  setMetricsRange(b.dataset.range); renderMetrics();
+});
 function renderMetrics(){
+  renderRangeControl();
   document.getElementById("wUnit").value = weightUnit();
   if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
   renderCalChart();
@@ -3011,24 +3040,26 @@ function renderMacroChart(){
   drawMultiLineChart(el, series, { ytick:v=>round(v), unit:"g" });
 }
 function renderCalChart(){
-  const pts=calorieSeries();
+  const all=calorieSeries();
   const stats=document.getElementById("calStats");
   const el=document.getElementById("calChart");
-  if(!pts.length){ stats.innerHTML=""; drawLineChart(el, [], {empty:t("noCalData")}); return; }
-  const latest=pts[pts.length-1].value;
-  const avg=pts.reduce((s,p)=>s+p.value,0)/pts.length;
+  const today=todayStr(), range=metricsRange();
+  const inRange=Charts.filterRange(all, range, today);
+  if(!inRange.length){ stats.innerHTML=""; drawTrendChart(el, [], {from:today, to:today, color:cssVar("--cal"), unit:t("kcalUnit"), empty:t("noCalData")}); return; }
+  const from=Charts.rangeStart(today, range) || all[0].date;
+  const mean=Charts.rollingMean(all);
+  const lastAvg=mean.filter(p=>p.date>=from).pop();
+  const tg=targets(), target=CAL(tg.p,tg.c,tg.f);
+  const ot=Charts.onTarget(inRange, target);
+  const avg=inRange.reduce((s,p)=>s+p.value,0)/inRange.length;
   stats.innerHTML =
-    statTile(t("statLatest"), `${round(latest)}${unitSpan(t("kcalUnit"))}`) +
-    statTile(t("statAvg"),    `${round(avg)}${unitSpan(t("kcalUnit"))}`) +
-    statTile(t("statDays"),   pts.length);
-  const tg=targets();
-  drawLineChart(el, pts, {
-    color:cssVar("--cal"), refLine:CAL(tg.p,tg.c,tg.f), refLabel:t("targetRef"),
-    ytick:v=>round(v), tip:v=>`${round(v)} ${t("kcalUnit")}`
-  });
+    statTile(t("statAvg7"),     lastAvg ? `${round(lastAvg.value)}${unitSpan(t("kcalUnit"))}` : "–") +
+    statTile(t("statOnTarget"), `${ot.hit}/${ot.total}`) +
+    statTile(t("statAvg"),      `${round(avg)}${unitSpan(t("kcalUnit"))}`);
+  drawTrendChart(el, inRange, {from, to:today, color:cssVar("--cal"), target, unit:t("kcalUnit"), empty:t("noCalData"), mean});
 }
 function renderWeightChart(){
-  const pts=weightSeries();
+  const pts=Charts.filterRange(weightSeries(), metricsRange(), todayStr());
   const stats=document.getElementById("wStats");
   const el=document.getElementById("wChart");
   const u=weightUnit();
@@ -3346,16 +3377,12 @@ function drawLineChart(container, points, opts){
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
-  // x labels (first, last, and up to 2 in between)
-  const xIdx=(function(n){
-    if(n<=1) return [0];
-    if(n<=4) return points.map((_,i)=>i);
-    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
-  })(points.length);
-  xIdx.forEach(i=>{
-    const x=xOf(times[i]);
-    const anchor = i===0 ? "start" : i===points.length-1 ? "end" : "middle";
-    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(points[i].date))}</text>`;
+  // x labels: even calendar ticks
+  const ticksX=Charts.dateTicks(points[0].date, points[points.length-1].date);
+  ticksX.forEach((d,i)=>{
+    const x=xOf(dateToNum(d));
+    const anchor = i===0 ? "start" : i===ticksX.length-1 && ticksX.length>1 ? "end" : "middle";
+    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
   });
   // reference line
   if(opts.refLine!=null){
@@ -3405,6 +3432,87 @@ function drawLineChart(container, points, opts){
   hit.addEventListener("pointermove",onMove);
   hit.addEventListener("pointerdown",onMove);
   svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); cxDot.setAttribute("opacity","0"); });
+}
+
+/* ---- trend chart: daily bars + 7-day average line (calorie chart; macro charts reuse it) ---- */
+function drawTrendChart(container, daily, opts){
+  opts=opts||{};
+  if(!daily.length){
+    container.innerHTML=`<div class="chart-empty">${escapeHtml(opts.empty||"")}</div>`;
+    return;
+  }
+  const W=Math.max(260, Math.round(container.clientWidth || container.getBoundingClientRect().width || 320));
+  const H=opts.height||240;
+  const padL=46, padR=16, padT=16, padB=26;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const color=opts.color||"var(--accent)";
+  const mean=(opts.mean||Charts.rollingMean(daily)).filter(p=>p.date>=opts.from && p.date<=opts.to);
+
+  let maxV=Math.max.apply(null, daily.map(p=>p.value).concat(mean.map(p=>p.value)));
+  if(opts.target!=null) maxV=Math.max(maxV, opts.target*1.1);
+  maxV*=1.08; if(!(maxV>0)) maxV=1;
+  const minT=dateToNum(opts.from), maxT=dateToNum(opts.to);
+  const days=Math.round((maxT-minT)/864e5);
+  const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
+  const yOf=v=> padT + (1-v/maxV)*plotH;
+
+  const ticks=(function(max,n){
+    const step0=max/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
+    const out=[]; for(let v=0; v<=max+1e-6; v+=step) out.push(v); return out;
+  })(maxV,4);
+
+  let g="";
+  ticks.forEach(v=>{
+    const y=yOf(v);
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
+    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${round(v)}</text>`;
+  });
+  const dt=Charts.dateTicks(opts.from, opts.to);
+  dt.forEach((d,i)=>{
+    const anchor = i===0 ? "start" : i===dt.length-1 && dt.length>1 ? "end" : "middle";
+    g+=`<text x="${xOf(dateToNum(d)).toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
+  });
+  if(opts.target!=null){
+    const y1=yOf(opts.target*1.1), y2=yOf(opts.target*0.9), y=yOf(opts.target);
+    g+=`<rect x="${padL}" y="${y1.toFixed(1)}" width="${plotW}" height="${(y2-y1).toFixed(1)}" fill="color-mix(in srgb, ${color} 10%, transparent)"/>`;
+    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
+  }
+  const slot=plotW/(days+1);
+  const barW=Math.max(2, Math.min(18, slot*0.7));
+  daily.forEach(p=>{
+    const x=xOf(dateToNum(p.date)), y=yOf(p.value);
+    g+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${(padT+plotH-y).toFixed(1)}" rx="1.5" fill="color-mix(in srgb, ${color} 30%, transparent)"/>`;
+  });
+  const mc=mean.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
+  if(mc.length>1) g+=`<polyline points="${mc.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  else if(mc.length===1) g+=`<circle cx="${mc[0][0].toFixed(1)}" cy="${mc[0][1].toFixed(1)}" r="3" fill="${color}"/>`;
+  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" style="stroke:var(--cross)" stroke-width="1" opacity="0"/>`;
+  g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="chart">${g}</svg><div class="chart-tip"></div>`;
+
+  const svg=container.querySelector("svg"), tip=container.querySelector(".chart-tip");
+  const cxLine=svg.querySelector(".cx-line"), hit=svg.querySelector(".cx-hit");
+  const xs=daily.map(p=>xOf(dateToNum(p.date)));
+  const meanBy={}; mean.forEach(p=>{ meanBy[p.date]=p.value; });
+  function onMove(ev){
+    const rect=svg.getBoundingClientRect();
+    const sx=(ev.clientX-rect.left)*(W/rect.width);
+    let bi=0, bd=Infinity;
+    xs.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
+    const p=daily[bi], px=xs[bi], py=yOf(p.value);
+    cxLine.setAttribute("x1",px); cxLine.setAttribute("x2",px); cxLine.setAttribute("opacity","1");
+    tip.style.left=(px*(rect.width/W))+"px";
+    tip.style.top=(py*(rect.height/H))+"px";
+    tip.style.opacity="1";
+    const m=meanBy[p.date];
+    tip.innerHTML=`<div style="color:var(--muted);font-size:11px">${escapeHtml(fmtAxisDate(p.date))}</div><b>${round(p.value)} ${escapeHtml(opts.unit||"")}</b>`
+      +(m!=null?`<div style="color:var(--muted);font-size:11px">${escapeHtml(t("statAvg7"))}: ${round(m)} ${escapeHtml(opts.unit||"")}</div>`:"");
+  }
+  hit.addEventListener("pointermove",onMove);
+  hit.addEventListener("pointerdown",onMove);
+  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); });
 }
 
 /* ---- multi-series line chart (macros: protein / carbs / fat) ---- */
