@@ -120,6 +120,20 @@
   }
   @media(max-width:400px){ .tab{font-size:12.5px;padding:7px 2px 6px} }
 
+  /* ---------- Demo banner ---------- */
+  .demo-bar{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1.5px solid var(--line);border-radius:14px;
+    padding:6px 8px 6px 14px;margin-bottom:10px;font-size:13px;font-weight:600}
+  .demo-bar[hidden]{display:none}
+  .demo-bar .demo-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .demo-bar button{flex:none;white-space:nowrap;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:700}
+  .demo-bar #demoBarCreate{background:var(--text);color:var(--bg)}
+  .demo-bar #demoBarExit{background:transparent;color:var(--muted);text-decoration:underline;padding:6px 4px}
+  .demo-bar #demoBarExit:hover{color:var(--text)}
+  @media(min-width:960px){ .demo-bar{grid-column:1/-1;grid-row:2;margin:14px 0 0} }
+  body.demo #accountBar,body.demo .addnew,body.demo #quizBox,body.demo [data-userdel]{display:none!important}
+  #demoExitBtn{display:none;margin-top:8px}
+  body.demo #demoExitBtn{display:block}
+
   /* ---------- Goal toggle + date row ---------- */
   .seg{display:inline-flex;background:var(--panel-2);border:1.5px solid var(--line);border-radius:14px;padding:3px}
   .seg button{background:transparent;color:var(--muted);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600}
@@ -832,6 +846,10 @@
   .auth-error{color:var(--over);font-size:13px;min-height:18px;margin-top:8px}
   .auth-offline{display:block;margin:16px auto 0;background:transparent;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
   .auth-offline:hover{color:var(--text)}
+  #authOverlay:not(.from-demo) #authCarry,#authOverlay:not(.from-demo) #authBackDemo{display:none}
+  #authOverlay.from-demo #authDemoBtn,#authOverlay.from-demo #authOfflineBtn{display:none}
+  #demoSheet[hidden],#authMain[hidden]{display:none}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
   .account-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:14px}
   .account-bar .acc-who{font-size:13.5px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .account-bar .acc-who b{color:var(--accent-text)}
@@ -893,6 +911,12 @@
     <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
     <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
     </div>
+  </div>
+
+  <div class="demo-bar" id="demoBar" hidden>
+    <span class="demo-label" data-i18n="demoBanner">Demo · sample data</span>
+    <button type="button" id="demoBarCreate" data-i18n="demoBannerCreate">Create account</button>
+    <button type="button" id="demoBarExit" data-i18n="demoExit">Exit demo</button>
   </div>
 
   <!-- Tabs (only shown when logged into an account) -->
@@ -1149,6 +1173,7 @@
         <input type="checkbox" id="insightsToggle">
       </label>
       <button class="btn btn-ghost full" id="replayTourBtn" style="margin-top:16px" data-i18n="tourReplay">Replay tour</button>
+      <button class="btn btn-ghost full" id="demoExitBtn" data-i18n="demoExit">Exit demo</button>
       <div class="divider"></div>
       <div class="pf" id="aboutMe"></div>
     </div>
@@ -1159,8 +1184,10 @@
 <div class="overlay" id="authOverlay">
   <div class="modal auth-modal">
     <div class="body">
+      <div id="authMain">
       <div class="auth-brand"><div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div><h3 data-i18n="authTitle">Log in to sync</h3></div>
       <p class="auth-intro" data-i18n="authIntro">Sign in to sync your logs across your devices.</p>
+      <p class="auth-intro" id="authCarry" data-i18n="demoCarry">Your demo name and character come with you.</p>
       <div class="field">
         <label data-i18n="authUsername">Username</label>
         <input id="authInput" autocomplete="username" autocapitalize="none" spellcheck="false" data-i18n-ph="authUsernamePh" placeholder="e.g. martin">
@@ -1175,7 +1202,27 @@
         <button class="btn btn-primary" id="authLoginBtn" data-i18n="authLogin">Log in</button>
         <button class="btn btn-ghost" id="authCreateBtn" data-i18n="authCreate">Create account</button>
       </div>
+      <button class="btn btn-ghost full" id="authDemoBtn" style="margin-top:10px" data-i18n="demoTry">Try the demo</button>
       <button class="auth-offline" id="authOfflineBtn" data-i18n="authContinueOffline">Continue offline</button>
+      <button class="auth-offline" id="authBackDemo" data-i18n="demoBackToDemo">Back to the demo</button>
+      </div>
+      <div id="demoSheet" hidden>
+        <div class="auth-brand"><h3 data-i18n="demoNameTitle">Try Macro Tracker</h3></div>
+        <div class="field">
+          <label for="demoName" data-i18n="demoNameLabel">Your name</label>
+          <input id="demoName" maxlength="24" autocomplete="off" data-i18n-ph="demoNamePh" placeholder="e.g. Alex">
+        </div>
+        <div class="field">
+          <label id="demoLangLabel" data-i18n="demoLang">Language</label>
+          <div class="seg" role="group" aria-labelledby="demoLangLabel">
+            <button type="button" id="demoLangEn" aria-pressed="false">EN</button>
+            <button type="button" id="demoLangEs" aria-pressed="false">ES</button>
+          </div>
+        </div>
+        <div class="auth-error" id="demoNameErr" role="alert"></div>
+        <button class="btn btn-primary full" id="demoStartBtn" style="margin-top:14px" data-i18n="demoStart">Start the demo</button>
+        <button class="auth-offline" id="demoBackBtn" data-i18n="demoBack">Back</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1343,17 +1390,19 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261115"></script>
-<script src="charts.js?v=20261115"></script>
-<script src="brain.js?v=20261115"></script>
-<script src="game.js?v=20261115"></script>
-<script src="coach.js?v=20261115"></script>
-<script src="shop.js?v=20261115"></script>
-<script src="tour.js?v=20261115"></script>
+<script src="icons.js?v=20261116"></script>
+<script src="charts.js?v=20261116"></script>
+<script src="brain.js?v=20261116"></script>
+<script src="game.js?v=20261116"></script>
+<script src="coach.js?v=20261116"></script>
+<script src="shop.js?v=20261116"></script>
+<script src="demo.js?v=20261116"></script>
+<script src="tour.js?v=20261116"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
 const KEY = "macroTracker.v1";
+const DEMO_KEY = "macroTracker.demo.v1";   // same value as Demo.KEY; load() must not depend on the demo.js global
 const CAL = (p,c,f)=> p*4 + c*4 + f*9;
 const round = (n,d=0)=>{const m=10**d; return Math.round(n*m)/m;};
 const todayStr = ()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
@@ -1509,6 +1558,12 @@ function migrateProfiles(s){ s.users.forEach(ensureProfile); s.migrations.profil
 const T = {
   en: {
     switchUser:"Switch user", manageUsers:"Manage users & targets",
+    demoTry:"Try the demo", demoNameTitle:"Try Macro Tracker", demoNameLabel:"Your name", demoNamePh:"e.g. Alex", demoLang:"Language", demoStart:"Start the demo", demoBack:"Back", demoNameErr:"Enter your name to start.",
+    tourDemoWelcomeT:"Hi {name}, welcome to the demo", tourDemoWelcomeB:"This is a sample week so you can see everything in action. Nothing here is saved to an account.",
+    tourDemoCollectB:"Tap Open your free box to get your first character.",
+    tourDemoEndT:"Like it, {name}?", tourDemoEndB:"Create a free account to keep your name and your new character, and start tracking for real.",
+    demoCreate:"Create my account", demoKeep:"Keep exploring", demoBanner:"Demo · sample data", demoBannerCreate:"Create account", demoExit:"Exit demo",
+    demoCarry:"Your demo name and character come with you.", demoBackToDemo:"Back to the demo", demoBackupErr:"We could not keep a copy of the data on this device, so nothing changed. Free up some storage and try again.",
     lean:"Lean", bulk:"Bulk", prevDay:"Previous day", nextDay:"Next day", today:"Today",
     addFood:"Add food", addFoodHint:"Enter macros per reference amount, then how much you ate",
     foodName:"Food name", foodNamePh:"Start typing… e.g. Chicken breast",
@@ -1688,6 +1743,12 @@ const T = {
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
+    demoTry:"Probar la demo", demoNameTitle:"Prueba Macro Tracker", demoNameLabel:"Tu nombre", demoNamePh:"p. ej. Alex", demoLang:"Idioma", demoStart:"Empezar la demo", demoBack:"Volver", demoNameErr:"Escribe tu nombre para empezar.",
+    tourDemoWelcomeT:"¡Hola, {name}! Esto es la demo", tourDemoWelcomeB:"Es una semana de ejemplo para que lo veas todo en marcha. Nada de esto se guarda en una cuenta.",
+    tourDemoCollectB:"Toca Abre tu caja gratis para conseguir tu primer personaje.",
+    tourDemoEndT:"¿Te gusta, {name}?", tourDemoEndB:"Crea una cuenta gratis para conservar tu nombre y tu nuevo personaje, y empezar a registrar de verdad.",
+    demoCreate:"Crear mi cuenta", demoKeep:"Seguir explorando", demoBanner:"Demo · datos de ejemplo", demoBannerCreate:"Crear cuenta", demoExit:"Salir de la demo",
+    demoCarry:"Tu nombre y tu personaje de la demo vienen contigo.", demoBackToDemo:"Volver a la demo", demoBackupErr:"No pudimos guardar una copia de los datos de este dispositivo, así que no cambió nada. Libera espacio e inténtalo de nuevo.",
     lean:"Definición", bulk:"Volumen", prevDay:"Día anterior", nextDay:"Día siguiente", today:"Hoy",
     addFood:"Agregar alimento", addFoodHint:"Ingresa los macros por cantidad de referencia y cuánto comiste",
     foodName:"Nombre del alimento", foodNamePh:"Escribe… p. ej. Pechuga de pollo",
@@ -1881,6 +1942,8 @@ function applyI18n(){
 }
 
 /* ---------- State ---------- */
+let demoLeaving = false;   // true while leaveDemoState()/sign-up ends a running demo tour: its onEnd then skips the post-tour actions
+let demoMode = false;   // guest demo: state lives under Demo.KEY, no cloud, no real data
 let state = load();
 let curDate = todayStr();
 let editCtx = null; // {type:"meal", id} | {type:"food", name}
@@ -1924,7 +1987,8 @@ function load(){
         }
         // One-time: the free-text bio becomes the coach profile's notes.
         if(!s.migrations.profileFromBio) migrateProfiles(s);
-        localStorage.setItem(KEY, JSON.stringify(s));
+        // A demo reload runs this before boot(): migrate in memory only, so the real key stays untouched.
+        if(!localStorage.getItem(DEMO_KEY)) localStorage.setItem(KEY, JSON.stringify(s));
         return s;
       }
     }
@@ -1932,14 +1996,21 @@ function load(){
   const users = initialUsers();
   return { users, activeId:users[0].id, migrations:{clearedSeedFoods:true, setupProfiles:true, fixProfileTargets:true} };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); scheduleCloudSync(); }
+function save(){
+  if(demoMode){ localStorage.setItem(Demo.KEY, JSON.stringify(state)); return; }   // the demo never touches the real key or the cloud
+  localStorage.setItem(KEY, JSON.stringify(state)); scheduleCloudSync();
+}
 function user(){ return state.users.find(u=>u.id===state.activeId) || state.users[0]; }
 function targets(){ return user().targets[user().goal]; }
 function dayMeals(){ const u=user(); if(!u.days[curDate]) u.days[curDate]=[]; return u.days[curDate]; }
 
 /* ---------- Rendering ---------- */
+function renderDemoBar(){
+  document.getElementById("demoBar").hidden = !(demoMode && !Tour.active());
+}
 function renderAll(){
   applyI18n();
+  renderDemoBar();
   renderUserSelect();
   renderGoal();
   renderCards();
@@ -2453,7 +2524,7 @@ let mcStep=0;
 // (auth, level-up, chat…). Called after the first pull, when a note arrives, and when the level-up closes.
 function maybeShowMeetCoach(){
   const u=user();
-  if(!session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
+  if(demoMode || !session || !celebrateReady || u.coachIntroSeen || profile(u).coachOn===false || !Coach.noteFor(u,todayStr())) return;
   if(document.querySelector(".overlay.on") || Tour.active()) return;
   openMeetCoach();
 }
@@ -2493,29 +2564,56 @@ const TOUR_STEPS=[
 // Raise this to show the tour once more to every profile (for example after a big redesign).
 const TOUR_VERSION=2;
 const guideImg = n => `<img class="tour-guide" src="img/guide/${n}.webp" width="96" height="96" alt="" aria-hidden="true">`;
-function startTour(){
+// Shared by the real tour and the demo tour. `edit(step, i)` may return the step fields to change.
+function runTour(edit, onEnd){
   if(Tour.active()) return;
   const prevTab=curTab, name=user().name||"";
   [1,2,3,4].forEach(n=>{ new Image().src="img/guide/"+n+".webp"; });   // no blank frame while a pose loads
-  Tour.start(TOUR_STEPS.map(s=>({target:s.target||null, tab:s.tab||prevTab, media:guideImg(s.guide),
-      title:t("tour"+s.key+"T",{name}), body:t("tour"+s.key+"B",{name})})), {
+  Tour.start(TOUR_STEPS.map(s=>{
+    const st={target:s.target||null, tab:s.tab||prevTab, media:guideImg(s.guide),
+      title:t("tour"+s.key+"T",{name}), body:t("tour"+s.key+"B",{name})};
+    return edit ? Object.assign(st, edit(s)) : st;
+  }), {
     labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
     switchTab:tab=>switchTab(tab,true),
     inset:()=>{ const ab=document.querySelector(".appbar");
       if(getComputedStyle(ab).display!=="contents") return ab.offsetHeight+8;   // desktop: sticky header + 8px air
       const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // phone: sticky tab bar + 8px air
     fallbackFocus:()=>document.getElementById("usersBtn"),   // e.g. started from "Continue offline" or the settings modal
-    onEnd:()=>{
-      const u=user(); u.tourSeen=true; u.tourSeenV=TOUR_VERSION; save();
-      switchTab(prevTab,true);
-      celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
-      maybeShowMeetCoach();
-    }
+    onEnd:(finished, actionId)=>onEnd(prevTab, finished, actionId)
   });
+}
+function startTour(){
+  runTour(null, prevTab=>{
+    const u=user(); u.tourSeen=true; u.tourSeenV=TOUR_VERSION; save();
+    switchTab(prevTab,true);
+    celebrate(Game.badges(user(), todayStr()));   // held back during the tour; Meet your coach waits for a level-up to close
+    maybeShowMeetCoach();
+  });
+}
+// The demo tour: demo welcome, the free box opened inside the tour (only while it is unused), an end card with sign-up.
+function startDemoTour(){
+  if(Tour.active()) return;
+  const freeBox=Shop.freeAvailable(user());
+  runTour(s=>{
+    if(s.key==="Welcome") return {title:t("tourDemoWelcomeT",{name:user().name||""}), body:t("tourDemoWelcomeB")};
+    if(s.key==="Collect" && freeBox) return {body:t("tourDemoCollectB"), target:"#collectionCard [data-shop-open]", wait:true};
+    if(s.key==="End") return {title:t("tourDemoEndT",{name:user().name||""}), body:t("tourDemoEndB"), target:null,
+      actions:[{id:"create", label:t("demoCreate"), primary:true}, {id:"keep", label:t("demoKeep")}]};
+    return {};
+  }, (prevTab, finished, actionId)=>{
+    user().demoTourDone=true; save();   // also when leaveDemoState() or the sign-up ended the tour: it saves to the demo key they remove
+    if(demoLeaving) return;
+    switchTab(prevTab,true);
+    renderDemoBar();
+    if(actionId==="create") openDemoAuth();
+    else celebrate(Game.badges(user(), todayStr()));
+  });
+  renderDemoBar();
 }
 // Once per profile, when the app is fully up for them (after the first cloud pull when signed in) and nothing else is open.
 function maybeStartTour(){
-  if(Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
+  if(demoMode || Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
   startTour();
 }
 function saveTargets(){
@@ -3271,6 +3369,7 @@ const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-mot
 let rvTimers=[], rvState=null; // rvState: {result, phase:"anim"|"done"}
 function rvLater(fn,ms){ rvTimers.push(setTimeout(fn,ms)); }
 function showReveal(result, free, prevOwned){
+  Tour.suspend();   // a demo tour step that waits for the box: hide the tour while the reveal runs
   const ov=document.getElementById("revealOverlay"), box=document.getElementById("rvBox");
   const rv=ov.querySelector(".rv"), ch=document.getElementById("rvChar"), cap=document.getElementById("rvCap"), ok=document.getElementById("rvOk");
   const reduced=reducedMotion(), c=shopChar(result.id);
@@ -3367,6 +3466,7 @@ function closeReveal(){
       toast(t("shopColDone")+" "+(col?col.name:""), null, 4500);
     }
   }
+  Tour.signal();   // a demo tour step that waited for the box goes on
 }
 (function(){
   const ov=document.getElementById("revealOverlay");
@@ -3641,7 +3741,7 @@ function renderInsight(){
 const weightProfile = p => ({age:p.age, sex:p.sex, heightCm:p.heightCm, activity:p.activity, notes:p.notes});
 // Ask the Worker for a written explanation of the latest period; the rule-based text stays as the fallback.
 async function requestAiInsight(){
-  if(insightPending) return;
+  if(demoMode || insightPending) return;
   const u=user();
   if(!INSIGHTS_URL || !cloudEnabled() || !session || u.insightsOn===false) return;
   const f=breakdownFacts(); if(!f || !f.loggedDays) return;
@@ -3665,7 +3765,7 @@ Coach.init({ url:INSIGHTS_URL, getToken:idToken, hasSession:()=>cloudEnabled() &
   onChange:()=>{ save(); renderBrainCard(); renderChat(); maybeShowMeetCoach(); } });
 // Note area on the brain card: today's note (model text, escaped) + the chat button. The nextHint line above always stays.
 function coachBlock(u){
-  if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
+  if(demoMode || !INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
   const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">${Icons.svg("lightbulb")} ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
@@ -3673,7 +3773,7 @@ function coachBlock(u){
 }
 // Once a day per user, on the Tracker, after the first cloud pull (so another device's note counts).
 function requestCoachNote(){
-  if(curTab==="tracker" && celebrateReady && cloudEnabled() && session && profile().coachOn!==false) Coach.ensureNote(user(), todayStr());
+  if(!demoMode && curTab==="tracker" && celebrateReady && cloudEnabled() && session && profile().coachOn!==false) Coach.ensureNote(user(), todayStr());
 }
 let chatWaiting=false, chatError=false;
 function openChat(){
@@ -4042,8 +4142,14 @@ document.getElementById("usersOverlay").addEventListener("click",e=>{
 });
 document.getElementById("replayTourBtn").addEventListener("click",()=>{
   document.getElementById("usersOverlay").classList.remove("on");
-  startTour();
+  if(demoMode) startDemoTour(); else startTour();
 });
+document.getElementById("demoExitBtn").addEventListener("click",()=>{
+  document.getElementById("usersOverlay").classList.remove("on");
+  exitDemo();
+});
+document.getElementById("demoBarCreate").addEventListener("click",()=>openDemoAuth());
+document.getElementById("demoBarExit").addEventListener("click",()=>exitDemo());
 document.getElementById("userList").addEventListener("click",e=>{
   const sw=e.target.closest("[data-switch]"), del=e.target.closest("[data-userdel]");
   if(sw){ state.activeId=sw.dataset.switch; save(); renderAll(); renderUserList(); renderTargets(); }
@@ -4277,14 +4383,15 @@ function mergeState(primary,secondary){
 
 /* ---- background sync ---- */
 function scheduleCloudSync(){
-  if(!cloudEnabled() || !session) return;
+  if(demoMode || !cloudEnabled() || !session) return;
   clearTimeout(cloudTimer);
   cloudTimer=setTimeout(()=>{ cloudPut(payloadOf()).catch(()=>{}); }, 1500);
 }
 async function pullRemote(){
-  if(!cloudEnabled() || !session) return;
+  if(demoMode || !cloudEnabled() || !session) return;
   try{
     const remote=await cloudGet();
+    if(demoMode || !session) return;   // the guest started the demo while this pull was in flight
     if(remote && remote.state){
       state=mergeState(state, remote.state); // local wins on scalars; pull in other device's new logs
       localStorage.setItem(KEY, JSON.stringify(state));
@@ -4297,17 +4404,67 @@ async function pullRemote(){
 
 /* ---- auth UI ---- */
 function authEl(id){ return document.getElementById(id); }
-function openAuth(){
+function openAuth(fromDemo){
+  showDemoSheet(false);
+  authEl("authOverlay").classList.toggle("from-demo", !!fromDemo);
   authEl("authError").textContent=""; authEl("authPassword").value="";
   authEl("authUpgrade").style.display = legacyUser ? "block" : "none";
-  if(legacyUser && !authEl("authInput").value) authEl("authInput").value=legacyUser;
+  if(legacyUser && !fromDemo && !authEl("authInput").value) authEl("authInput").value=legacyUser;
   authEl("authOverlay").classList.add("on");
   setTimeout(()=>authEl(authEl("authInput").value ? "authPassword" : "authInput").focus(),50);
 }
+function showDemoSheet(on){
+  authEl("authMain").hidden=on; authEl("demoSheet").hidden=!on;
+  if(on){ authEl("demoNameErr").textContent=""; setTimeout(()=>authEl("demoName").focus(),50); }
+}
+let demoLangPick = (navigator.language||"").toLowerCase().indexOf("es")===0 ? "es" : "en";
+function setDemoLang(l){
+  demoLangPick=l;
+  authEl("demoLangEn").setAttribute("aria-pressed", String(l==="en"));
+  authEl("demoLangEs").setAttribute("aria-pressed", String(l==="es"));
+}
+function startDemo(name, lang){
+  state=Demo.stateOf(Demo.sampleUser(name, lang, todayStr(), makeUser));
+  demoMode=true; document.body.classList.add("demo");
+  save();
+  enterDemoApp();
+}
+function enterDemoApp(){
+  closeAuth();
+  celebrateReady=true; shopReady=true;
+  switchTab("tracker", true);
+  renderAll();
+  updateAccountUI();
+  if(!user().demoTourDone) startDemoTour();
+}
+function resumeDemo(){
+  let raw=null, s=null;
+  try{ raw=localStorage.getItem(Demo.KEY); s=raw ? JSON.parse(raw) : null; }catch(e){ s=null; }
+  if(!s || !Array.isArray(s.users) || s.users.length!==1 || !s.users[0]) return false;
+  state=s; demoMode=true; document.body.classList.add("demo");
+  if(user().demoBuilt!==todayStr()){ state=Demo.stateOf(Demo.refresh(user(), todayStr(), makeUser)); save(); }
+  enterDemoApp();
+  return true;
+}
+function endTourLeavingDemo(){
+  demoLeaving=true;
+  try{ if(Tour.active()) Tour.end(false); } finally { demoLeaving=false; }
+}
+function leaveDemoState(){
+  endTourLeavingDemo();
+  try{ localStorage.removeItem(Demo.KEY); }catch(e){}
+  demoMode=false; document.body.classList.remove("demo");
+  state=load();
+}
+function openDemoAuth(){
+  authEl("authInput").value=Demo.usernameFrom(user().name);
+  openAuth(true);
+}
+function exitDemo(){ leaveDemoState(); switchTab("tracker", true); renderAll(); openAuth(); }   // the demo tab must not render the real shop
 function closeAuth(){ authEl("authOverlay").classList.remove("on"); }
 function authError(msg){ authEl("authError").textContent=msg; }
 function authBusy(on){
-  ["authLoginBtn","authCreateBtn","authInput","authPassword"].forEach(id=>authEl(id).disabled=on);
+  ["authLoginBtn","authCreateBtn","authInput","authPassword","authBackDemo","authDemoBtn","authOfflineBtn"].forEach(id=>authEl(id).disabled=on);
   authEl("authLoginBtn").textContent = on ? t("checking") : t("authLogin");
 }
 function authForm(){
@@ -4318,33 +4475,68 @@ function authForm(){
 }
 async function doCreate(){
   const f=authForm(); if(!f) return;
+  const fromDemo=demoMode;
   authBusy(true);
   try{
-    saveSession(await authCall("signUp", f.u, f.pw));
+    let acc=null;
+    if(fromDemo){   // data safety first: confirm a copy of real device data exists BEFORE any network call
+      try{
+        const raw=localStorage.getItem(KEY);
+        if(raw){
+          let parsed=null, ok=true;
+          try{ parsed=JSON.parse(raw); }catch(e){ ok=false; }   // unreadable data is kept too
+          if(!ok || Demo.hasRealData(parsed)){
+            localStorage.setItem(Demo.BACKUP_KEY, raw);
+            if(localStorage.getItem(Demo.BACKUP_KEY)!==raw) throw new Error("backup");
+          }
+        }
+        acc=Demo.accountState(user(), todayStr(), TOUR_VERSION, makeUser);
+      }catch(e){ authError(t("demoBackupErr")); authBusy(false); return; }
+    }
+    const session0=await authCall("signUp", f.u, f.pw);
+    if(demoMode!==fromDemo){ authBusy(false); return; }   // the state changed under this call: write nothing
+    if(fromDemo){   // the demo never merges: the account starts fresh with the demo name and character
+      saveSession(session0);
+      endTourLeavingDemo();
+      try{ localStorage.removeItem(Demo.KEY); }catch(e){}
+      demoMode=false; document.body.classList.remove("demo");
+      state=acc; localStorage.setItem(KEY, JSON.stringify(state));
+      await cloudPut(payloadOf()).catch(()=>{});
+      shopReady=true;
+      authBusy(false); authEl("authOverlay").classList.remove("from-demo"); startApp(); toast(t("authCreated",{name:f.u}));
+      return;
+    }
+    saveSession(session0);
     const legacy=await legacyGet(f.u);
+    if(demoMode){ authBusy(false); return; }
     if(legacy && legacy.state) state=mergeState(state, legacy.state); // bring the old account's logs along
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
-      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
+      if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());   // current device data seeds the new account
     shopReady=true;
     authBusy(false); startApp(); toast(t("authCreated",{name:f.u}));
-  }catch(e){ authError(authMsg(e)); authBusy(false); }
+  }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 async function doLogin(){
   const f=authForm(); if(!f) return;
+  const fromDemo=demoMode;
   authBusy(true);
   try{
-    saveSession(await authCall("signInWithPassword", f.u, f.pw));
+    const session1=await authCall("signInWithPassword", f.u, f.pw);
+    if(demoMode!==fromDemo){ authBusy(false); return; }   // the state changed under this call: write nothing
+    saveSession(session1);
+    if(fromDemo) leaveDemoState();   // real state is loaded; nothing from the demo can reach the account
     const remote=await cloudGet();
+    if(demoMode){ authBusy(false); return; }
     if(remote && remote.state) state=mergeState(remote.state, state); // adopt account, but keep local-only logs (union)
     (state.users||[]).forEach(u=>{ // a shop made while signed out must not turn the account's history into points
-      if(u && u.shop) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
+      if(u && u.shop && !(u.shop.startPoints<0)) u.shop.startPoints=Math.max(u.shop.startPoints||0, Brain.lifetimePoints(u, u.shop.start)); });
     localStorage.setItem(KEY, JSON.stringify(state));
     await cloudPut(payloadOf());        // push merged back so the account gains local logs
     shopReady=true;
     authBusy(false); startApp(); toast(t("authWelcome",{name:f.u}));
-  }catch(e){ authError(authMsg(e)); authBusy(false); }
+  }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 function doLogout(){
   session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
@@ -4372,6 +4564,8 @@ function startApp(){
   }
 }
 function boot(){
+  if(cloudEnabled() && session){ try{ localStorage.removeItem(Demo.KEY); }catch(e){} }   // a stale demo never runs over a signed-in account
+  else if(resumeDemo()){ updatePreview(); return; }
   if(cloudEnabled() && !session) openAuth();   // gate first launch until they log in / create
   else startApp();
   updatePreview();
@@ -4379,7 +4573,19 @@ function boot(){
 
 authEl("authLoginBtn").addEventListener("click", doLogin);
 authEl("authCreateBtn").addEventListener("click", doCreate);
+authEl("authBackDemo").addEventListener("click", ()=>{ closeAuth(); authEl("authOverlay").classList.remove("from-demo"); renderAll(); });
 authEl("authOfflineBtn").addEventListener("click", authOffline);
+authEl("authDemoBtn").addEventListener("click", ()=>{ setDemoLang(demoLangPick); showDemoSheet(true); });
+authEl("demoBackBtn").addEventListener("click", ()=>{ showDemoSheet(false); authEl("authDemoBtn").focus(); });
+authEl("demoLangEn").addEventListener("click", ()=>setDemoLang("en"));
+authEl("demoLangEs").addEventListener("click", ()=>setDemoLang("es"));
+function submitDemoName(){
+  const name=authEl("demoName").value.trim();
+  if(!name){ authEl("demoNameErr").textContent=t("demoNameErr"); authEl("demoName").focus(); return; }
+  startDemo(name, demoLangPick);
+}
+authEl("demoStartBtn").addEventListener("click", submitDemoName);
+authEl("demoName").addEventListener("keydown", e=>{ if(e.key==="Enter") submitDemoName(); });
 authEl("authInput").addEventListener("keydown", e=>{ if(e.key==="Enter") authEl("authPassword").focus(); });
 authEl("authPassword").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
 authEl("logoutBtn").addEventListener("click", doLogout);
