@@ -6,9 +6,9 @@ const start = html.indexOf("const T = {");
 const block = html.slice(start + "const T = ".length, html.indexOf("\n};", start) + 2);
 const T = new Function("return " + block)();
 
-test("no emoji outside shop strings", () => {
+test("no emoji in any string", () => {
   ["en", "es"].forEach(l => Object.keys(T[l]).forEach(k => {
-    if (!k.startsWith("shop")) assert.ok(!EMOJI.test(T[l][k]), l + "." + k + " has emoji");
+    assert.ok(!EMOJI.test(T[l][k]), l + "." + k + " has emoji");
   }));
 });
 test("es has every en key", () => {
@@ -20,4 +20,10 @@ test("new copy", () => {
   assert.equal(T.es.brainNext, "{name}: {n} más esta semana");
   assert.equal(T.en.bvToNext, "{n} points to {level}");
   assert.equal(T.es.bvToNext, "{n} puntos para {level}");
+});
+test("new shop copy", () => {
+  assert.equal(T.en.shopOpen, "Open a box");
+  assert.equal(T.es.shopShort, "Te faltan {n} puntos para la próxima caja");
+  assert.equal(T.en.shopNext, "{n} more characters: {name} backdrop");
+  assert.equal(T.es.passport, "Pasaporte");
 });

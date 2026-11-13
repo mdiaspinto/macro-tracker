@@ -23,6 +23,7 @@
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
     --brain:#7A4FD6; --streak:#D9480F;
     --tier1:#A8642B; --tier2:#7E878C; --tier3:#B98A12;
+    --s-lulu:#D85A30; --s-kiki:#1D9E75; --s-momo:#378ADD; --s-nini:#D4537E;
     --grid:rgba(22,32,27,.08); --cross:rgba(22,32,27,.3);
     --focus:#2F6FD6;
     --radius:22px; --radius-sm:14px;
@@ -41,6 +42,7 @@
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
       --brain:#B79CFF; --streak:#FF8A4C;
       --tier1:#D08B4E; --tier2:#C3CBD0; --tier3:#F2C14E;
+      --s-lulu:#F0997B; --s-kiki:#5DCAA5; --s-momo:#85B7EB; --s-nini:#ED93B1;
       --grid:rgba(238,242,236,.07); --cross:rgba(238,242,236,.3);
       --focus:#7DB8FF;
       --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
@@ -73,6 +75,8 @@
   @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 
   /* ---------- Top bar ---------- */
+  .appbar{display:contents}
+  .top-actions{display:contents}
   .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 18px}
   .brand{display:flex;align-items:center;gap:11px;margin-right:auto;min-width:0}
   .brand .logo,.auth-brand .logo{width:36px;height:36px;border-radius:9px;flex:none;display:block}
@@ -105,7 +109,15 @@
   .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tab:hover{color:var(--text)}
   .tab.active{background:var(--panel);color:var(--text);border-color:var(--line-strong);font-weight:700}
-  @media(min-width:960px){ .tabs{max-width:520px} }
+  @media(min-width:960px){
+    .appbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:16px;position:sticky;top:0;z-index:30;
+      background:var(--bg);padding:4px 0 18px}
+    .topbar{display:contents}
+    .brand{grid-column:1;grid-row:1;margin-right:0}
+    .tabs{grid-column:2;grid-row:1;position:static;margin-bottom:0}
+    .tab{flex:none;min-width:84px;padding:7px 14px 6px}
+    .top-actions{grid-column:3;grid-row:1;display:flex;align-items:center;gap:10px;justify-content:flex-end}
+  }
   @media(max-width:400px){ .tab{font-size:12.5px;padding:7px 2px 6px} }
 
   /* ---------- Goal toggle + date row ---------- */
@@ -134,7 +146,7 @@
   .tracker-grid{display:block}
   @media(min-width:960px){
     .tracker-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;align-items:start}
-    .tracker-side{position:sticky;top:84px}
+    .tracker-side{position:sticky;top:96px}
   }
 
   /* ---------- Daily totals: a nutrition-facts label ---------- */
@@ -216,11 +228,12 @@
   .br-hab[aria-pressed="true"]::after{content:"✓";position:absolute;top:3px;right:6px;font-size:12px;font-weight:900;color:var(--brain)}
 
   /* Brain chips on each meal + chip picker */
-  .mchips{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-height:44px;margin:2px 0 -8px -8px;padding:4px 8px;
+  .mchips{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-height:32px;margin:-6px 0 -6px -4px;padding:2px 8px;
     border-radius:10px;background:transparent;font-size:19px;line-height:1.2;text-align:left;max-width:100%}
   .mchips:hover{background:color-mix(in srgb,var(--brain) 12%,transparent)}
-  .mchips.empty{font-size:15px;color:var(--muted)}
-  .mchips.empty span{border:1.5px dashed var(--line-strong);border-radius:8px;padding:4px 8px}
+  .mchips.empty{display:inline-flex;align-items:center;gap:2px;padding:2px 8px;text-align:left;font-size:14px;font-weight:600;color:var(--muted);min-width:32px;opacity:.75}
+  .mchips.empty svg{width:16px;height:16px}
+  .mchips.empty:hover{opacity:1}
   .mchips .lt{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
   .bp-hint{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.5}
   .bp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -414,21 +427,21 @@
   @media(max-width:480px){.qty-row.triple{grid-template-columns:1fr 1fr}.qty-row.triple .unit-field{grid-column:1 / -1}}
 
   /* ---------- Meals ---------- */
-  .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;
     padding:12px 18px;border-bottom:1px solid var(--line)}
   .meal:last-of-type{border-bottom:none}
   .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,var(--accent-soft) 8px,var(--accent-soft) 9px)}
-  .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-strong);background:transparent;display:grid;place-items:center;color:transparent;font-size:13px;font-weight:900;flex:none}
+  .meal .chk{margin-top:-1px;width:24px;height:24px;border-radius:7px;border:2px solid var(--line-strong);background:transparent;display:grid;place-items:center;color:transparent;font-size:13px;font-weight:900;flex:none}
   .meal .chk:hover{border-color:var(--good)}
   .meal .chk.on{background:var(--good);border-color:var(--good);color:var(--panel)}
   .meal .info{cursor:pointer;border-radius:8px;transition:background .15s;padding:3px 8px;margin:-3px -8px;min-width:0}
   .meal .info:hover{background:var(--panel-2)}
   .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .meal .info .macros{font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .meal .info .macros{display:flex;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
   .meal .info .macros .m{margin-right:10px;font-weight:600}
   .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
   .badge.whatif{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
-  .meal .right{display:flex;align-items:center;gap:6px}
+  .meal .right{display:flex;align-items:center;gap:6px;align-self:center}
   .meal .del{background:transparent;color:var(--faint);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
   .meal .del svg{width:16px;height:16px}
   .meal .del:hover{color:var(--over);background:var(--panel-2)}
@@ -454,39 +467,177 @@
 
 
   /* ---------- Collection ---------- */
-  .card{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px 18px 18px}
-  .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .shop-wallet img{width:56px;height:56px;border-radius:14px;flex:none;object-fit:cover}
-  .shop-wallet .wtxt{flex:1;min-width:120px}
-  .shop-bal{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .shop-page{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  /* Wide screens: full content width; hero, secrets and the final message span both columns, shelves form a 2 x 2 grid */
+  @media(min-width:960px){
+    .shop-page{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+    .shop-wallet,.shop-secrets,.shop-done{grid-column:1 / -1}
+  }
+  /* Wallet hero: the box, the points, the open button and the milestone track */
+  .shop-wallet{position:relative;border:1.5px solid var(--line);border-radius:var(--radius);padding:16px 18px 18px;
+    background:radial-gradient(120% 150% at 0 0,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),var(--panel)}
+  .shop-wallet h2{font-size:17px;font-weight:800;margin-bottom:10px}
+  .shop-main{min-width:0}
+  .shop-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .shop-box{position:relative;flex:none;width:72px;height:72px}
+  .shop-box::before{content:"";position:absolute;inset:-10px;border-radius:50%;
+    background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 40%,transparent),transparent)}
+  .shop-box img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+  .shop-box img.wiggle{transform-origin:50% 92%;animation:boxWig 4s ease-in-out 1s infinite}
+  @keyframes boxWig{0%,14%,100%{transform:rotate(0)}2%{transform:rotate(-7deg)}5%{transform:rotate(6deg)}8%{transform:rotate(-4deg)}11%{transform:rotate(2deg)}}
+  .shop-wallet .wtxt{flex:1;min-width:0}
+  .shop-bal{display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .shop-week .ic{margin:0 2px}
   .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .shop-top .btn{min-height:44px;justify-content:center}
+  @media(max-width:559px){ .shop-top .btn{flex:1 1 100%} }
+  @media(min-width:560px){ .shop-box{width:96px;height:96px} }
   .shop-short{margin-top:12px}
   .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
   .shop-short .bar i{display:block;height:100%;background:var(--accent)}
   .shop-short small{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
-  .shop-col{margin-top:16px;border:1.5px solid var(--line);border-radius:18px;padding:12px}
-  .shop-col.done{border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
-  .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .shop-col .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
-  .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-  /* Wide screens: keep the collection a readable column so character tiles stay small and sharp */
-  @media(min-width:960px){ #collectionView{max-width:520px} } /* lines up with the tab bar above it */
-  .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:14px;overflow:hidden;background:var(--panel-2);padding:0;border:1.5px solid var(--line)}
-  .shop-grid button.tile{cursor:pointer}
-  .shop-grid .tile img{display:block;width:100%;height:100%;object-fit:cover}
-  .shop-grid .sil{filter:brightness(0);opacity:.12}
-  @media (prefers-color-scheme: dark){ .shop-grid .sil{filter:brightness(0) invert(1);opacity:.14} }
-  .shop-secrets{margin-top:16px}
+  /* Milestone track: steps at 6 / 12 / 18 / 24 commons (secrets never count) */
+  .shop-goals{margin-top:18px;min-width:0}
+  .ms-track{position:relative;height:50px;margin:0 16px}
+  .ms-line{position:absolute;left:0;right:0;top:13px;height:6px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+  .ms-line i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+  .ms-step{position:absolute;top:0;width:32px;margin-left:-16px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .ms-step .dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:15px;
+    background:var(--panel);border:2px solid color-mix(in srgb,var(--line-strong) 50%,var(--line));color:var(--faint)}
+  .ms-step.on .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .ms-step.next .dot{border-color:var(--accent);color:var(--accent-text)}
+  .ms-step b{font-size:11.5px;font-weight:700;line-height:1;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ms-step.on b{color:var(--text)}
+  .shop-next{margin:4px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}
+  @media(min-width:960px){
+    .shop-wallet{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;align-items:center;padding:20px 24px 22px}
+    .shop-wallet h2{grid-column:1 / -1}
+    .shop-goals{margin-top:0}
+  }
+  /* Backdrop picker: one swatch per backdrop; each swatch reuses the backdrop class */
+  .shop-bd{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);min-width:0}
+  .shop-bd h3{font-size:13px;font-weight:800;margin:0 0 8px}
+  .bd-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+  .bd-opt{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:4px 2px 6px;border:none;border-radius:12px;
+    background:transparent;color:var(--text);font:inherit;cursor:pointer;text-align:center}
+  .bd-sw{position:relative;display:grid;place-items:center;width:100%;max-width:72px;aspect-ratio:1/1;border-radius:12px;
+    border:1.5px solid var(--line);background-color:var(--bg);overflow:hidden}
+  .bd-sw i{position:absolute;top:0;left:0;width:200%;height:200%;transform:scale(.5);transform-origin:0 0}
+  .bd-sw svg{position:relative}
+  .bd-opt[aria-pressed="true"] .bd-sw{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
+  .bd-opt:not(:disabled):hover .bd-sw{border-color:var(--line-strong)}
+  .bd-opt:disabled{cursor:default}
+  .bd-opt.locked .bd-sw{opacity:.5}
+  .bd-opt.locked .bd-sw svg{width:20px;height:20px;color:var(--text)}
+  .bd-name{font-size:11.5px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+  .bd-opt small{display:flex;align-items:center;justify-content:center;gap:3px;font-size:10.5px;line-height:1.2;color:var(--muted)}
+  .bd-opt small svg{width:12px;height:12px;flex:none}
+  .bd-opt .bd-secret{color:var(--accent-text);font-weight:700}
+  @media(min-width:960px){ .shop-bd{grid-column:1 / -1} .bd-row{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))} }
+  /* Backdrops: CSS gradients. On the Collection tab the chosen one paints the whole page (body.coll-bg) and,
+     on desktop, the sticky header. Panels on top stay opaque, so their text keeps its contrast. */
+  .bg-confetti,.bg-confetti .appbar{background:
+    radial-gradient(circle at 18% 26%,color-mix(in srgb,var(--s-lulu) 70%,transparent) 0 4.5px,transparent 5px) 0 0/58px 58px,
+    radial-gradient(circle at 68% 14%,color-mix(in srgb,var(--s-kiki) 70%,transparent) 0 4px,transparent 4.5px) 0 0/50px 50px,
+    radial-gradient(circle at 40% 70%,color-mix(in srgb,var(--s-momo) 70%,transparent) 0 4.5px,transparent 5px) 0 0/66px 66px,
+    radial-gradient(circle at 84% 58%,color-mix(in srgb,var(--s-nini) 70%,transparent) 0 4px,transparent 4.5px) 0 0/54px 54px,
+    var(--bg)}
+  .bg-stripes,.bg-stripes .appbar{background:repeating-linear-gradient(135deg,
+    color-mix(in srgb,var(--s-nini) 42%,var(--bg)) 0 20px,color-mix(in srgb,var(--s-nini) 8%,var(--bg)) 20px 40px)}
+  .bg-ocean,.bg-ocean .appbar{background:
+    radial-gradient(circle at 50% 100%,transparent 21px,color-mix(in srgb,var(--s-momo) 70%,transparent) 22px 25px,transparent 26px) 0 0/56px 28px,
+    radial-gradient(circle at 50% 100%,transparent 21px,color-mix(in srgb,var(--s-momo) 40%,transparent) 22px 25px,transparent 26px) 28px 14px/56px 28px,
+    linear-gradient(180deg,color-mix(in srgb,var(--s-momo) 22%,var(--bg)),color-mix(in srgb,var(--s-momo) 48%,var(--bg)))}
+  .bg-rainbow,.bg-rainbow .appbar{background:linear-gradient(160deg,
+    color-mix(in srgb,var(--s-lulu) 50%,var(--bg)),color-mix(in srgb,var(--s-kiki) 50%,var(--bg)) 36%,
+    color-mix(in srgb,var(--s-momo) 50%,var(--bg)) 68%,color-mix(in srgb,var(--s-nini) 50%,var(--bg)))}
+  .bg-gold,.bg-gold .appbar{background:
+    radial-gradient(70% 60% at 50% 0,color-mix(in srgb,var(--tier3) 70%,transparent),transparent 75%),
+    radial-gradient(circle,color-mix(in srgb,var(--tier3) 55%,transparent) 0 1.5px,transparent 2px) 0 0/30px 30px,
+    linear-gradient(180deg,color-mix(in srgb,var(--tier3) 30%,var(--bg)),color-mix(in srgb,var(--tier3) 50%,var(--bg)))}
+  /* Night sky stays dark in light mode too */
+  .bg-night,.bg-night .appbar{background:
+    radial-gradient(circle,rgba(255,255,255,.95) 0 1.3px,transparent 2px) 0 0/31px 37px,
+    radial-gradient(circle,rgba(255,255,255,.75) 0 1px,transparent 1.6px) 13px 19px/47px 43px,
+    radial-gradient(circle,rgba(255,236,170,.95) 0 2px,transparent 2.8px) 29px 7px/89px 83px,
+    linear-gradient(180deg,#0B1433,#1C2C5E)}
+  .bg-globe,.bg-globe .appbar{background:
+    repeating-linear-gradient(0deg,color-mix(in srgb,var(--s-momo) 50%,transparent) 0 1.5px,transparent 1.5px 32px),
+    repeating-linear-gradient(90deg,color-mix(in srgb,var(--s-momo) 50%,transparent) 0 1.5px,transparent 1.5px 32px),
+    radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--s-kiki) 24%,var(--bg)),color-mix(in srgb,var(--s-momo) 30%,var(--bg)))}
+  body.coll-bg,body.coll-bg .appbar{background-attachment:fixed}
+  /* Text that sits directly on the backdrop */
+  body.coll-bg .shop-done{display:table;margin:12px auto 0;padding:6px 14px;border-radius:999px;background:var(--panel)}
+  body.coll-bg{--halo:var(--bg)}
+  body.coll-bg .brand h1,body.coll-bg .brand small{text-shadow:0 0 3px var(--halo),0 0 6px var(--halo),0 0 10px var(--halo)}
+  body.bg-night{--halo:#0B1433}
+  body.bg-night .brand h1{color:#EEF2EC}
+  body.bg-night .brand small{color:#B9C3DD}
+  /* Shelves: one per series; every colour reads --s (set inline to the series token) */
+  .shelf{--s:var(--accent);--s-strong:color-mix(in srgb,var(--s) 80%,#000);--s-on:#fff;--floor:rgba(22,32,27,.22);
+    position:relative;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--s) 30%,var(--line));border-radius:var(--radius);
+    padding:14px 16px 16px;background:color-mix(in srgb,var(--s) 10%,var(--panel))}
+  @media (prefers-color-scheme: dark){ .shelf{--s-strong:var(--s);--s-on:#111713;--floor:rgba(0,0,0,.45)} }
+  .shelf.done{border:2px solid var(--tier3);box-shadow:0 0 0 4px color-mix(in srgb,var(--tier3) 16%,transparent)}
+  .shelf-head{display:flex;align-items:center;gap:10px;min-height:30px}
+  .shelf.done .shelf-head{padding-right:40px}
+  .shelf-pill{background:var(--s-strong);color:var(--s-on);font-family:var(--font-display);font-size:15px;font-weight:800;
+    letter-spacing:-.01em;padding:4px 12px;border-radius:999px}
+  .shelf-count{font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .shelf-bar{height:5px;border-radius:99px;background:color-mix(in srgb,var(--s) 18%,transparent);overflow:hidden;margin:10px 0 12px}
+  .shelf-bar i{display:block;height:100%;border-radius:99px;background:var(--s)}
+  .shelf-done{font-size:12.5px;font-weight:700;color:var(--accent-text);margin:-4px 0 10px}
+  .shelf-ribbon{position:absolute;top:0;right:16px;width:30px;height:40px;display:flex;justify-content:center;padding-top:7px;
+    font-size:16px;background:var(--tier3);color:var(--accent-ink);clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}
+  .shelf-row{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 2px 6px}
+  .shelf-row + .shelf-row{margin-top:12px}
+  .shelf-row::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:2px;
+    background:color-mix(in srgb,var(--s) 35%,transparent);box-shadow:0 3px 6px -2px color-mix(in srgb,var(--s) 40%,transparent)}
+  .niche{position:relative;display:block;aspect-ratio:1/1;min-width:0;padding:0;border:none;border-radius:12px 12px 4px 4px;
+    background:radial-gradient(70% 55% at 50% 0,color-mix(in srgb,var(--s) 24%,transparent),transparent 72%),color-mix(in srgb,var(--panel) 70%,transparent)}
+  .niche::before{content:"";position:absolute;top:0;left:32%;right:32%;height:3px;border-radius:0 0 3px 3px;
+    background:color-mix(in srgb,var(--s) 70%,#fff);box-shadow:0 0 10px 2px color-mix(in srgb,var(--s) 45%,transparent)}
+  .niche img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;padding:8%;transition:transform .2s}
+  button.niche{cursor:pointer}
+  button.niche:hover img{transform:translateY(-3px)}
+  .niche.own::after{content:"";position:absolute;left:25%;right:25%;bottom:6%;height:9%;border-radius:50%;
+    background:radial-gradient(closest-side,var(--floor),transparent)}
+  .niche .sil{position:absolute;inset:8%;background:color-mix(in srgb,var(--s) 30%,transparent);
+    -webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+  /* One-time light sweep the first time a completed shelf renders */
+  .shelf.shine::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;transform:translateX(-110%);
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.6) 47%,rgba(255,255,255,.2) 54%,transparent 70%);
+    animation:shelfShine 1.5s .8s ease-in-out both}
+  @media (prefers-color-scheme: dark){ .shelf.shine::after{background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.28) 47%,rgba(255,255,255,.1) 54%,transparent 70%)} }
+  @keyframes shelfShine{to{transform:translateX(110%)}}
+  .shop-secrets{border:1.5px solid var(--line);border-radius:var(--radius);padding:14px 16px 16px;background:var(--panel)}
   .shop-secrets .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .shop-secrets .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
+  .shop-secrets .ch b{font-family:var(--font-display);font-size:16px;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+  .shop-secrets .ch b svg{width:18px;height:18px;color:var(--tier3)}
   .shop-secrets .ch span{font-size:13px;color:var(--muted)}
-  .shop-secrets .grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .passport{border-color:var(--tier3)}
+  .passport.closed{border-style:dashed}
+  .passport .stamps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media(min-width:960px){ .passport .stamps{grid-template-columns:repeat(4,minmax(0,1fr))} }
+  .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;background:transparent;color:var(--text);
+    border:2px dashed var(--tier3);border-radius:10px;cursor:pointer;transform:rotate(var(--rot,0deg));font:inherit}
+  .stamp img{display:block;width:100%;max-width:96px;aspect-ratio:1;object-fit:cover;border-radius:6px}
+  .stamp span{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-text);text-align:center;overflow-wrap:anywhere}
   .shop-teaser{font-size:13.5px;color:var(--muted);text-align:center;padding:8px 0}
   .shop-done{font-size:14px;font-weight:700;text-align:center;margin-top:12px}
   .rv{width:100%;max-width:380px;text-align:center;outline:none}
   .rv-stage{position:relative;width:min(78vw,300px);aspect-ratio:445/520;margin:0 auto}
   .rv-stage>img,.rv-char img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .rv-rays{position:absolute;left:50%;top:46%;width:150%;aspect-ratio:1;margin:-75% 0 0 -75%;border-radius:50%;pointer-events:none;
+    background:repeating-conic-gradient(from 0deg,var(--s,var(--tier3)) 0 8deg,transparent 8deg 24deg);opacity:0;transition:opacity .5s;
+    -webkit-mask-image:radial-gradient(circle,#000 0,#000 25%,transparent 68%);mask-image:radial-gradient(circle,#000 0,#000 25%,transparent 68%);
+    animation:rvRays 14s linear infinite}
+  .rv.lit .rv-rays{opacity:.28}
+  @keyframes rvRays{to{transform:rotate(360deg)}}
+  .rv-bar{height:8px;border-radius:4px;background:var(--line);margin:8px auto 0;max-width:200px;overflow:hidden}
+  .rv-bar i{display:block;height:100%;background:var(--s);border-radius:4px;transition:width .45s ease-out}
+  .rv-cap .u{font-size:14px;font-weight:800;color:var(--text);margin-top:8px}
+  .rv-cap .u2{font-size:12px;font-weight:600;color:var(--muted)}
   .rv-char{position:absolute;inset:0;opacity:0}
   .rv-char.show{opacity:1}
   .rv-char.pop img{animation:rvPop .6s cubic-bezier(.2,1.4,.4,1) both}
@@ -495,7 +646,7 @@
   .rv-spark{position:absolute;inset:0;pointer-events:none}
   .rv-spark i{position:absolute;left:50%;top:45%;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--accent);opacity:0;animation:rvSpark 1.1s ease-out forwards}
   .rv.secret .rv-spark i{background:#FFD24A;box-shadow:0 0 8px 2px #FFD24A}
-  .rv-cap{min-height:92px;margin-top:14px;color:var(--text);opacity:0}
+  .rv-cap{min-height:134px;margin-top:14px;color:var(--text);opacity:0}
   .rv-cap.show{opacity:1;transition:opacity .4s}
   .rv-cap .n{font-family:var(--font-display);font-size:21px;font-weight:800;letter-spacing:-.01em}
   .rv-cap .s{font-size:14px;font-weight:500;color:var(--text);margin-top:3px}
@@ -721,14 +872,17 @@
 <body>
 <div class="wrap">
 
-  <!-- Top bar -->
+  <!-- Header: top bar + tabs (one sticky row on desktop) -->
+  <header class="appbar">
   <div class="topbar">
     <div class="brand">
       <div class="logo"><svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#16201B"/><rect x="5" y="5" width="11.5" height="11.5" rx="4" fill="#4F8DF5"/><rect x="19.5" y="5" width="11.5" height="11.5" rx="4" fill="#3FB27F"/><rect x="5" y="19.5" width="11.5" height="11.5" rx="4" fill="#FFC93C"/><rect x="19.5" y="19.5" width="11.5" height="11.5" rx="4" fill="#A07CF2"/></svg></div>
       <div><h1>Macro Tracker</h1><small id="brandSub">Loading…</small></div>
     </div>
+    <div class="top-actions">
     <select class="pill" id="userSelect" data-i18n-title="switchUser"></select>
     <button class="icon-btn" id="usersBtn" data-i18n-title="manageUsers" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+    </div>
   </div>
 
   <!-- Tabs (only shown when logged into an account) -->
@@ -738,6 +892,7 @@
     <button class="tab" data-tab="brain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M12 5v13"/></svg><span data-i18n="tabBrain">Brain</span></button>
     <button class="tab" data-tab="collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg><span data-i18n="tabCollection">Collection</span></button>
   </div>
+  </header>
 
   <div id="trackerView" class="tracker-grid">
   <div class="tracker-side">
@@ -905,7 +1060,7 @@
 
   <!-- Collection: wallet, box opening, characters -->
   <div id="collectionView" style="display:none">
-    <div class="card" id="collectionCard"></div>
+    <div class="shop-page" id="collectionCard"></div>
   </div><!-- /collectionView -->
 
 </div>
@@ -1096,7 +1251,7 @@
 <!-- Collection: box opening reveal -->
 <div class="overlay" id="revealOverlay">
   <div class="rv" role="dialog" aria-modal="true" aria-live="polite" tabindex="-1">
-    <div class="rv-stage"><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
+    <div class="rv-stage"><div class="rv-rays" aria-hidden="true"></div><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
     <div class="rv-cap" id="rvCap"></div>
     <button class="btn btn-primary" id="rvOk"></button>
   </div>
@@ -1178,13 +1333,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261113"></script>
-<script src="charts.js?v=20261113"></script>
-<script src="brain.js?v=20261113"></script>
-<script src="game.js?v=20261113"></script>
-<script src="coach.js?v=20261113"></script>
-<script src="shop.js?v=20261113"></script>
-<script src="tour.js?v=20261113"></script>
+<script src="icons.js?v=20261115"></script>
+<script src="charts.js?v=20261115"></script>
+<script src="brain.js?v=20261115"></script>
+<script src="game.js?v=20261115"></script>
+<script src="coach.js?v=20261115"></script>
+<script src="shop.js?v=20261115"></script>
+<script src="tour.js?v=20261115"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -1328,8 +1483,8 @@ function initialUsers(){
 }
 /* ---------- Profile (About me) ---------- */
 // Declared before load() runs. Lazily fills missing fields too, since Firebase drops nulls and empty arrays.
-const PROFILE_GOALS = [["loseWeight","⚖️"],["strength","💪"],["brainHealth","🧠"],["energy","⚡"]];
-const PROFILE_TONES = [["cheer","🎉"],["straight","🎯"]];
+const PROFILE_GOALS = [["loseWeight","scale"],["strength","dumbbell"],["brainHealth","brain"],["energy","zap"]];
+const PROFILE_TONES = [["cheer","party-popper"],["straight","target"]];
 function ensureProfile(u){
   const p = Object.assign({age:null, sex:"", heightCm:null, activity:"", goals:[], likes:"", avoids:"",
     familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||""), coachOn:true}, u.profile);
@@ -1513,10 +1668,12 @@ const T = {
     celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
 
-    shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
-    shopShort:"{n} more ⭐ for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
-    shopTeaser:"✨ Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"✨ Secret! ✨",
-    shopDup:"You already have {name}! +{r} ⭐ back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
+    shopTitle:"Collection", shopBalance:"{n}", shopPoints:"points", shopWeekLabel:"This week: {b} brain points and {w} weigh-in points", shopOpen:"Open a box", shopOpenLabel:"Open a box for {p} points", shopFree:"Open your free box",
+    shopShort:"{n} more points for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
+    shopTeaser:"Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"Secret!",
+    shopNew:"New", shopCompleted:"Completed {date}", shopNext:"{n} more characters: {name} backdrop", shopNext1:"One more character: {name} backdrop", shopAllMilestones:"Every character backdrop unlocked", shopBackdrop:"Backdrop", shopLockedAt:"{n} characters", shopSecretReward:"Secret reward", shopUnlocked:"New backdrop: {name}",
+    passport:"Passport", passportStamps:"{n} stamps", passportStamp1:"1 stamp",
+    shopDup:"You already have {name}! +{r} points back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
@@ -1690,10 +1847,12 @@ const T = {
     celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
 
-    shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
-    shopShort:"Te faltan {n} ⭐ para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
-    shopTeaser:"✨ Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"✨ ¡Secreto! ✨",
-    shopDup:"¡Ya tienes a {name}! +{r} ⭐ de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
+    shopTitle:"Colección", shopBalance:"{n}", shopPoints:"puntos", shopWeekLabel:"Esta semana: {b} puntos de cerebro y {w} puntos de pesaje", shopOpen:"Abrir una caja", shopOpenLabel:"Abrir una caja por {p} puntos", shopFree:"Abre tu caja gratis",
+    shopShort:"Te faltan {n} puntos para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
+    shopTeaser:"Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"¡Secreto!",
+    shopNew:"Nuevo", shopCompleted:"Completada el {date}", shopNext:"Te faltan {n} personajes: fondo {name}", shopNext1:"Te falta 1 personaje: fondo {name}", shopAllMilestones:"Todos los fondos de personajes desbloqueados", shopBackdrop:"Fondo", shopLockedAt:"{n} personajes", shopSecretReward:"Premio secreto", shopUnlocked:"Nuevo fondo: {name}",
+    passport:"Pasaporte", passportStamps:"{n} sellos", passportStamp1:"1 sello",
+    shopDup:"¡Ya tienes a {name}! +{r} puntos de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
@@ -1921,8 +2080,8 @@ function renderMeals(){
           <span class="m m-c">${round(m.ac)}C</span>
           <span class="m m-f">${round(m.af)}F</span>
           <span class="m m-cal">${round(cal)} kcal</span>
+          ${mealChips(m)}
         </div>
-        ${mealChips(m)}
       </div>
       <div class="right"><button class="del" data-del="${m.id}" title="Remove" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button></div>
     </div>`;
@@ -2089,7 +2248,7 @@ function mealChips(m){
   const names=BRAIN_FOODS.concat(LIMITS).filter(x=>tags.includes(x)).map(x=>t((LIMITS.includes(x)?"tag_":"cat_")+x)).join(", ");
   const label=t("brainEditFor",{name:m.name})+": "+(names||t("brainNone"));
   const inner=(em?`<span>${em}</span>`:"")+lim.map(x=>`<span class="lt">${t("tag_"+x)}</span>`).join("");
-  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`<span>＋${Icons.svg("brain")}</span>`}</button>`;
+  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`+${Icons.svg("brain")}`}</button>`;
 }
 let pickerMealId = null;
 function openChipPicker(mealId){
@@ -2214,9 +2373,9 @@ function profileFields(part){
         ${["sedentary","light","moderate","active","very"].map(a=>opt(a,t("act"+a[0].toUpperCase()+a.slice(1)),p.activity)).join("")}</select></label></div>
     </div>`;
   if(part==="goals") return `<p class="pf-label">${t("pfGoals")}</p>
-    <div class="bp-grid">${PROFILE_GOALS.map(([g,em])=>`<button type="button" class="bp-chip" data-goal="${g}" aria-pressed="${p.goals.includes(g)}"><span class="em" aria-hidden="true">${em}</span>${t("goal_"+g)}</button>`).join("")}</div>
+    <div class="bp-grid">${PROFILE_GOALS.map(([g,ic])=>`<button type="button" class="bp-chip" data-goal="${g}" aria-pressed="${p.goals.includes(g)}"><span class="em" aria-hidden="true">${Icons.svg(ic)}</span>${t("goal_"+g)}</button>`).join("")}</div>
     <p class="pf-label">${t("pfTone")}</p>
-    <div class="bp-grid">${PROFILE_TONES.map(([v,em])=>`<button type="button" class="bp-chip" data-tone="${v}" aria-pressed="${p.tone===v}"><span class="em" aria-hidden="true">${em}</span><span>${t("tone_"+v)}<small>${t("tone_"+v+"Hint")}</small></span></button>`).join("")}</div>`;
+    <div class="bp-grid">${PROFILE_TONES.map(([v,ic])=>`<button type="button" class="bp-chip" data-tone="${v}" aria-pressed="${p.tone===v}"><span class="em" aria-hidden="true">${Icons.svg(ic)}</span><span>${t("tone_"+v)}<small>${t("tone_"+v+"Hint")}</small></span></button>`).join("")}</div>`;
   if(part==="food") return txt("likes","pfLikes",200) + txt("avoids","pfAvoids",200);
   return `<label class="setting-row"><span><b>${t("pfFamily")}</b><small>${t("pfFamilyHint")}</small></span>
       <input type="checkbox" data-pf="familyHistory" ${p.familyHistory?"checked":""}></label>`
@@ -2327,7 +2486,9 @@ function startTour(){
       title:t("tour"+s.key+"T"), body:t("tour"+s.key+"B")})), {
     labels:{next:t("tourNext"), back:t("tourBack"), skip:t("tourSkip"), done:t("tourDone"), count:(n,total)=>t("tourCount",{n,total})},
     switchTab:tab=>switchTab(tab,true),
-    inset:()=>{ const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // sticky tab bar + 8px air
+    inset:()=>{ const ab=document.querySelector(".appbar");
+      if(getComputedStyle(ab).display!=="contents") return ab.offsetHeight+8;   // desktop: sticky header + 8px air
+      const tb=document.getElementById("tabs"); return (parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8; }, // phone: sticky tab bar + 8px air
     fallbackFocus:()=>document.getElementById("usersBtn"),   // e.g. started from "Continue offline" or the settings modal
     onEnd:()=>{
       user().tourSeen=true; save();
@@ -2904,6 +3065,7 @@ function renderTabs(){
   document.getElementById("metricsView").style.display = curTab==="metrics" ? "" : "none";
   document.getElementById("brainView").style.display   = curTab==="brain"   ? "" : "none";
   document.getElementById("collectionView").style.display = curTab==="collection" ? "" : "none";
+  if(curTab!=="collection") setPageBackdrop(null);
 }
 const TABS=["tracker","metrics","brain","collection"];
 // quiet: the tour passing through Metrics is not a real visit, so it does not ask the AI for a weight breakdown.
@@ -2960,56 +3122,119 @@ function ensureShop(u){
 }
 function shopChar(id){ return Shop.byId(id); }
 function shopName(c){ return lang()==="es" ? c.es : c.en; }
+function bdName(b){ return lang()==="es" ? b.es : b.en; }
 function renderCollection(){
   // Only draws while the Collection tab is open, so its images load only there.
   const el=document.getElementById("collectionCard"); if(!el || curTab!=="collection") return;
   const u=user(), today=todayStr();
   const ready=ensureShop(u);
   const owned=ready ? Shop.owned(u) : [];
-  let h='<div class="head"><h2 data-mk="accent" style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
-  // wallet
+  // wallet hero: box, balance, open button, milestone track
   let bal=null, canOpen=false, free=false;
   if(ready){
     bal=Shop.balance(u, today, Brain.lifetimePoints(u, today));
     free=Shop.freeAvailable(u);
     canOpen=free || bal.balance>=Shop.PRICE;
   }
-  h+='<div class="shop-wallet"><img src="img/box-1.webp" width="56" height="56" alt="" loading="lazy"><div class="wtxt">';
-  h+='<div class="shop-bal">'+(ready?escapeHtml(t("shopBalance",{n:bal.balance})):"…")+'</div>';
+  const wiggle=ready && canOpen && !boxBusy && !reducedMotion();
+  let h='<section class="shop-wallet"><h2 data-mk="accent">'+escapeHtml(t("shopTitle"))+'</h2><div class="shop-main"><div class="shop-top">';
+  h+='<div class="shop-box"><img'+(wiggle?' class="wiggle"':'')+' src="img/box-1.webp" width="96" height="96" alt="" loading="lazy"></div><div class="wtxt">';
+  h+='<div class="shop-bal"'+(ready?' role="img" aria-label="'+escapeAttr(t("shopBalance",{n:bal.balance})+" "+t("shopPoints"))+'"':"")+'>'+(ready?Icons.svg("points")+'<span>'+escapeHtml(t("shopBalance",{n:bal.balance}))+'</span>':"…")+'</div>';
   if(ready){
     const b=Math.min(Brain.weekScore(u, Brain.weekStart(today)).points, bal.brain);
-    h+='<div class="shop-week">'+escapeHtml(t("shopWeek",{b:b, w:Shop.weightPoints(u, today).thisWeek}))+'</div>';
+    const wp=Shop.weightPoints(u, today).thisWeek;
+    h+='<div class="shop-week" role="img" aria-label="'+escapeAttr(t("shopWeekLabel",{b:b, w:wp}))+'">'+Icons.svg("brain")+'+'+escapeHtml(String(b))+' · '+Icons.svg("scale")+'+'+escapeHtml(String(wp))+'</div>';
   }
-  h+='</div><button class="btn btn-primary" data-shop-open'+((canOpen&&!boxBusy)?"":" disabled")+'>'+
-     escapeHtml(free?t("shopFree"):t("shopOpen",{p:Shop.PRICE}))+'</button></div>';
+  h+='</div><button class="btn btn-primary" data-shop-open'+(free?"":' aria-label="'+escapeAttr(t("shopOpenLabel",{p:Shop.PRICE}))+'"')+((canOpen&&!boxBusy)?"":" disabled")+'>'+
+     (free?escapeHtml(t("shopFree")):escapeHtml(t("shopOpen"))+' '+Icons.svg("points")+escapeHtml(String(Shop.PRICE)))+'</button></div>';
   if(ready && !canOpen){
     const need=Shop.PRICE-bal.balance, pct=Math.max(0,Math.min(100,Math.round(bal.balance/Shop.PRICE*100)));
     h+='<div class="shop-short"><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+escapeHtml(t("shopShort",{n:need}))+'</small></div>';
   }
-  // collections
-  const have={}; owned.forEach(id=>{have[id]=true;});
-  Shop.COLLECTIONS.forEach(col=>{
-    const pr=ready?Shop.progress(u, col.id):{have:0,total:6};
-    h+='<div class="shop-col'+(pr.have>=pr.total?" done":"")+'"><div class="ch"><b>'+escapeHtml(col.name)+'</b><span>'+
-       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div><div class="shop-grid">';
-    Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common").forEach(c=>{
-      if(have[c.id]) h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>';
-      else h+='<span class="tile"><img class="sil" src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="" aria-hidden="true"></span>';
+  h+='</div>';
+  // milestone track: counts only the 24 commons, never secrets
+  const commons=Shop.commonsCount(owned), last=Shop.MILESTONES[Shop.MILESTONES.length-1], next=Shop.nextMilestone(owned);
+  h+='<div class="shop-goals"><div class="ms-track" aria-hidden="true"><div class="ms-line"><i style="width:'+Math.round(Math.min(commons,last)/last*100)+'%"></i></div>';
+  Shop.MILESTONES.forEach(m=>{
+    const cls=commons>=m?" on":(next && next.need===m?" next":"");
+    h+='<span class="ms-step'+cls+'" style="left:'+Math.round(m/last*100)+'%"><span class="dot">'+Icons.svg("gift")+'</span><b>'+escapeHtml(String(m))+'</b></span>';
+  });
+  h+='</div>';
+  if(ready){ // the line waits for the shop data, so it never shows a wrong count
+    h+='<p class="shop-next">';
+    if(next){
+      const bd=Shop.BACKDROPS.filter(x=>x.id===next.backdrop)[0], left=next.need-next.have;
+      h+=escapeHtml(t(left===1?"shopNext1":"shopNext",{n:left, name:bd?bdName(bd):""}));
+    } else h+=escapeHtml(t("shopAllMilestones"));
+    h+='</p>';
+  }
+  h+='</div>';
+  // backdrop picker: locked commons show a lock and their count; secret backdrops appear only once unlocked
+  const bg=Shop.backdropFor(owned, u.collectionBg);
+  if(ready){
+    h+='<div class="shop-bd"><h3>'+escapeHtml(t("shopBackdrop"))+'</h3><div class="bd-row" role="group" aria-label="'+escapeAttr(t("shopBackdrop"))+'">';
+    Shop.pickerBackdrops(owned).forEach(p=>{
+      const bd=Shop.BACKDROPS.filter(x=>x.id===p.id)[0], secret=bd.kind==="secrets";
+      h+='<button class="bd-opt'+(p.unlocked?"":" locked")+'" data-bg="'+escapeAttr(p.id)+'" aria-pressed="'+(p.id===bg?"true":"false")+'"'+(p.unlocked?"":" disabled")+'>'+
+         '<span class="bd-sw" aria-hidden="true"><i class="bg-'+escapeAttr(p.id)+'"></i>'+(p.unlocked?"":Icons.svg("lock"))+'</span>'+
+         '<span class="bd-name">'+escapeHtml(bdName(bd))+'</span>';
+      if(!p.unlocked) h+='<small>'+escapeHtml(t("shopLockedAt",{n:p.n}))+'</small>';
+      else if(secret) h+='<small class="bd-secret">'+Icons.svg("sparkles")+escapeHtml(t("shopSecretReward"))+'</small>';
+      h+='</button>';
     });
     h+='</div></div>';
+  }
+  h+='</section>';
+  // shelves: one per series, tinted with its colour token
+  const have={}; owned.forEach(id=>{have[id]=true;});
+  const cel=u.celebrated||{};
+  let shineSeen=false;
+  Shop.COLLECTIONS.forEach(col=>{
+    const pr=ready?Shop.progress(u, col.id):{have:0,total:6};
+    const done=ready && pr.have>=pr.total;
+    let shine=false;
+    if(done && !cel["shine:"+col.id]){ // one-time light sweep; the key is set even when motion is reduced
+      u.celebrated=u.celebrated||{}; u.celebrated["shine:"+col.id]=today; shineSeen=true;
+      shine=!reducedMotion();
+    }
+    h+='<section class="shelf'+(done?" done":"")+(shine?" shine":"")+'" data-col="'+escapeAttr(col.id)+'" style="--s:var(--s-'+escapeAttr(col.id)+')" aria-label="'+escapeAttr(col.name)+'">';
+    if(done) h+='<span class="shelf-ribbon" aria-hidden="true">'+Icons.svg("award")+'</span>';
+    h+='<div class="shelf-head"><span class="shelf-pill">'+escapeHtml(col.name)+'</span><span class="shelf-count">'+
+       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div>';
+    h+='<div class="shelf-bar"><i style="width:'+Math.round(Math.min(pr.have,pr.total)/pr.total*100)+'%"></i></div>';
+    if(done){ const c2=u.celebrated||{}; // stable after the first render: the shine key holds the first-seen date
+      h+='<div class="shelf-done">'+escapeHtml(t("shopCompleted",{date:fmtAxisDate(c2["collection:"+col.id]||c2["shine:"+col.id]||today)}))+'</div>'; }
+    const chars=Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common");
+    chars.forEach((c,i)=>{
+      if(i%3===0) h+='<div class="shelf-row">';
+      if(have[c.id]) h+='<button class="niche own" data-char="'+escapeAttr(c.id)+'" aria-label="'+escapeAttr(shopName(c))+'"><img src="'+escapeAttr(c.img)+'" width="128" height="128" loading="lazy" alt="'+escapeAttr(shopName(c))+'"></button>';
+      else h+='<span class="niche" aria-hidden="true"><span class="sil" style="-webkit-mask-image:url(\''+escapeAttr(c.img)+'\');mask-image:url(\''+escapeAttr(c.img)+'\')"></span></span>';
+      if(i%3===2 || i===chars.length-1) h+='</div>';
+    });
+    h+='</section>';
   });
-  // secrets: built only from found secrets
+  if(shineSeen) save();
+  // passport: built only from found secrets
   const found=ready?Shop.secretsFound(u):[];
-  h+='<div class="shop-secrets">';
+  h+='<section class="shop-secrets passport'+(found.length?'':' closed')+'">';
   if(found.length){
-    h+='<div class="ch"><b>'+escapeHtml(t("shopSecrets"))+'</b><span>'+escapeHtml(t("shopFound",{n:found.length}))+'</span></div><div class="grid4 shop-grid">';
+    h+='<div class="ch"><b>'+Icons.svg("globe")+' '+escapeHtml(t("passport"))+'</b><span>'+escapeHtml(found.length===1?t("passportStamp1"):t("passportStamps",{n:found.length}))+'</span></div><div class="stamps">';
     found.forEach(id=>{ const c=shopChar(id); if(!c) return;
-      h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>'; });
+      let sum=0; for(let i=0;i<c.id.length;i++) sum+=c.id.charCodeAt(i);
+      const rot=(sum%9)-4;
+      h+='<button class="stamp" data-char="'+escapeAttr(c.id)+'" style="--rot:'+rot+'deg" aria-label="'+escapeAttr(shopName(c))+'"><img src="'+escapeAttr(c.img)+'" width="96" height="96" loading="lazy" alt=""><span>'+escapeHtml(shopName(c))+'</span></button>'; });
     h+='</div>';
-  } else h+='<div class="shop-teaser">'+escapeHtml(t("shopTeaser"))+'</div>';
-  h+='</div>';
+  } else h+='<div class="shop-teaser">'+Icons.svg("globe")+' '+escapeHtml(t("passport"))+'<br>'+Icons.svg("sparkles")+' '+escapeHtml(t("shopTeaser"))+'</div>';
+  h+='</section>';
   if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
   el.innerHTML=h;
+  setPageBackdrop(bg);
+}
+// Paints the Collection backdrop on the whole page; null or "plain" leaves the page as it is.
+function setPageBackdrop(id){
+  const cl=document.body.classList;
+  Array.prototype.slice.call(cl).forEach(c=>{ if(c==="coll-bg" || c.indexOf("bg-")===0) cl.remove(c); });
+  if(id && id!=="plain"){ cl.add("coll-bg"); cl.add("bg-"+id); }
 }
 function openBox(){
   const u=user();
@@ -3018,18 +3243,19 @@ function openBox(){
   const free=Shop.freeAvailable(u);
   if(!free && Shop.balance(u, today, Brain.lifetimePoints(u, today)).balance<Shop.PRICE){ renderCollection(); return; }
   boxBusy=true;
-  let result;
+  let result, prevOwned;
   try{
+    prevOwned=Shop.owned(u).slice();
     result=Shop.draw(Shop.owned(u), Math.random, {noDup:free});
     Shop.addPull(u, result, free, Date.now(), Math.random);
     save();
   }catch(err){ boxBusy=false; renderCollection(); throw err; }
-  try{ showReveal(result, free); }catch(err){ boxBusy=false; renderCollection(); throw err; }
+  try{ showReveal(result, free, prevOwned); }catch(err){ boxBusy=false; renderCollection(); throw err; }
 }
 const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 let rvTimers=[], rvState=null; // rvState: {result, phase:"anim"|"done"}
 function rvLater(fn,ms){ rvTimers.push(setTimeout(fn,ms)); }
-function showReveal(result, free){
+function showReveal(result, free, prevOwned){
   const ov=document.getElementById("revealOverlay"), box=document.getElementById("rvBox");
   const rv=ov.querySelector(".rv"), ch=document.getElementById("rvChar"), cap=document.getElementById("rvCap"), ok=document.getElementById("rvOk");
   const reduced=reducedMotion(), c=shopChar(result.id);
@@ -3038,6 +3264,7 @@ function showReveal(result, free){
   rvTimers.forEach(clearTimeout); rvTimers=[];
   rvState={result:result, phase:"anim"};
   rv.classList.toggle("secret", secret);
+  rv.style.removeProperty("--s"); rv.classList.remove("lit"); // the ray colour must not reveal the result before the box opens
   ch.className="rv-char"; ch.style.opacity=""; ch.style.transition=""; ch.innerHTML=""; cap.className="rv-cap"; cap.innerHTML="";
   document.getElementById("rvSpark").innerHTML="";
   ok.className="btn btn-primary"; ok.textContent=t("shopNice");
@@ -3047,18 +3274,35 @@ function showReveal(result, free){
     rvState.phase="done";
     rvTimers.forEach(clearTimeout); rvTimers=[];
     box.className="rv-box"; box.src="img/box-4.webp";
+    rv.style.setProperty("--s", secret||!c||!c.col ? "var(--tier3)" : "var(--s-"+c.col+")");
+    rv.classList.add("lit");
     if(c){ // the character is only put in the DOM here, at the moment of reveal
       ch.innerHTML='<img src="'+escapeHtml(c.img)+'" alt="'+escapeHtml(shopName(c))+'">';
       ch.className="rv-char show"+(reduced?"":" pop");
       if(reduced) ch.style.opacity="0";
       const nm=escapeHtml(shopName(c));
       let h="";
-      if(result.dup) h='<div class="n">'+escapeHtml(t("shopDup",{name:shopName(c),r:Shop.REFUND}))+'</div>';
+      if(result.dup) h='<div class="n">'+escapeHtml(t("shopDup",{name:shopName(c),r:"\u0001"})).replace("\u0001",Shop.REFUND+" "+Icons.svg("points"))+'</div>';
       else if(secret) h='<div class="k">'+escapeHtml(t("shopSecret"))+'</div><div class="n">'+nm+'</div><div class="s">'+
         escapeHtml(t("shopSecrets")+" · "+t("shopFound",{n:Shop.secretsFound(user()).length}))+'</div>';
       else{
         const col=Shop.COLLECTIONS.filter(x=>x.id===c.col)[0], pr=Shop.progress(user(), c.col);
-        h='<div class="n">'+nm+'</div><div class="s">'+escapeHtml((col?col.name+" · ":"")+t("shopProgress",{have:pr.have,total:pr.total}))+'</div>';
+        const from=reduced?pr.have:Math.max(0,pr.have-1), pct=v=>Math.round(v/pr.total*100);
+        h='<div class="k">'+escapeHtml(t("shopNew"))+'</div><div class="n">'+nm+'</div><div class="s">'+escapeHtml(col?col.name+" · ":"")+
+          '<span id="rvCount">'+escapeHtml(t("shopProgress",{have:from,total:pr.total}))+'</span></div>'+
+          '<div class="rv-bar"><i id="rvFill" style="width:'+pct(from)+'%"></i></div>';
+        if(!reduced) rvLater(()=>{ // count-up: fill the bar, then show the new count
+          const f=document.getElementById("rvFill"), n=document.getElementById("rvCount");
+          if(f) f.style.width=pct(pr.have)+"%";
+          rvLater(()=>{ if(n) n.textContent=t("shopProgress",{have:pr.have,total:pr.total}); },450);
+        },500);
+      }
+      if(!result.dup){ // one line for each backdrop this pull unlocked
+        Shop.newUnlocks(prevOwned||[], Shop.owned(user())).forEach(bid=>{
+          const b=Shop.BACKDROPS.filter(x=>x.id===bid)[0]; if(!b) return;
+          h+='<div class="u">'+escapeHtml(t("shopUnlocked",{name:bdName(b)}))+'</div>';
+          if(b.kind==="secrets") h+='<div class="u2">'+escapeHtml(t("shopSecretReward"))+'</div>';
+        });
       }
       cap.innerHTML=h;
     }
@@ -3095,6 +3339,8 @@ function closeReveal(){
   document.getElementById("rvSpark").innerHTML="";
   boxBusy=false;
   renderCollection();
+  const sh=document.querySelector(".shelf.shine"); // phones: the new shelf is often below the fold
+  if(sh) sh.scrollIntoView({block:"center", behavior: reducedMotion()?"auto":"smooth"});
   const c=shopChar(st.result.id), u=user();
   if(c && c.col && !st.result.dup && Shop.progress(u, c.col).have===6){
     u.celebrated=u.celebrated||{};
@@ -3121,6 +3367,8 @@ function openCharView(id){
 }
 document.getElementById("collectionCard").addEventListener("click", e=>{
   const o=e.target.closest("[data-shop-open]"); if(o){ if(!o.disabled) openBox(); return; }
+  const b=e.target.closest("[data-bg]");
+  if(b){ if(!b.disabled){ user().collectionBg=b.dataset.bg; save(); renderCollection(); } return; }
   const c=e.target.closest("[data-char]"); if(c) openCharView(c.dataset.char);
 });
 (function(){
