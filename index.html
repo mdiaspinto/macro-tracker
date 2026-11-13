@@ -591,7 +591,9 @@
   .weight-form .seg button{flex:1;padding:10px 14px}
   .weight-form .btn{height:45px;white-space:nowrap;justify-content:center}
   .w-log-open{margin-left:auto;padding:7px 14px;font-size:13px;align-self:center}
+  @media(max-width:559px){ .head.has-action .hint{display:none} } /* phones: title and button share one row */
   .macro-block + .macro-block{margin-top:16px}
+  @media(min-width:960px){ #macroCharts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px} .macro-block + .macro-block{margin-top:0} }
   .macro-cap{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;font-variant-numeric:tabular-nums}
   @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:stretch} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} #metricsView > .section{display:flex;flex-direction:column} #metricsView > .section > .body{flex:1} }
   .recent-weights{margin-top:16px}
@@ -854,7 +856,7 @@
 
     <div class="m-range"><div class="seg" id="mRange"></div></div>
 
-    <div class="section">
+    <div class="section wide">
       <div class="head"><h2 data-mk="cal" data-i18n="metricsCalTitle">Calorie intake</h2><span class="hint" data-i18n="metricsCalHint">Calories eaten per day</span></div>
       <div class="body">
         <div class="chart-stats" id="calStats"></div>
@@ -862,7 +864,7 @@
       </div>
     </div>
 
-    <div class="section">
+    <div class="section wide">
       <div class="head"><h2 data-mk="protein" data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
       <div class="body">
         <div id="macroCharts"></div>
@@ -870,7 +872,7 @@
     </div>
 
     <div class="section wide">
-      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span><button class="btn btn-primary w-log-open" id="wLogOpen" type="button" data-i18n="logWeightBtn">Log weight</button></div>
+      <div class="head has-action"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span><button class="btn btn-primary w-log-open" id="wLogOpen" type="button" data-i18n="logWeightBtn">Log weight</button></div>
       <div class="body">
         <div class="chart-stats" id="wStats"></div>
         <div class="chart-wrap" id="wChart"></div>
@@ -3174,7 +3176,7 @@ function renderMacroChart(){
     cap.textContent=t("macroCaption",{name:s.label, avg, target:round(target)});
     if(!inRange.length){ drawTrendChart(el, [], {from:today, to:today, color:s.color, unit:"g", height:130, empty:t(s.points.length?"noRangeData":"noCalData")}); return; }
     const from=Charts.rangeStart(today, range) || s.points[0].date;
-    drawTrendChart(el, inRange, {from, to:today, color:s.color, target, unit:"g", height:130, empty:t("noCalData"), mean:Charts.rollingMean(s.points)});
+    drawTrendChart(el, inRange, {from, to:today, color:s.color, target, unit:"g", height:130, empty:t("noCalData"), mean:Charts.rollingMean(s.points.filter(p=>p.date<today))});
   });
 }
 function renderCalChart(){
@@ -3185,10 +3187,11 @@ function renderCalChart(){
   const inRange=Charts.filterRange(all, range, today);
   if(!inRange.length){ stats.innerHTML=""; drawTrendChart(el, [], {from:today, to:today, color:cssVar("--cal"), unit:t("kcalUnit"), empty:t(all.length?"noRangeData":"noCalData")}); return; }
   const from=Charts.rangeStart(today, range) || all[0].date;
-  const mean=Charts.rollingMean(all);
+  // Today is still being logged, so it shows as a bar but stays out of the 7-day average and days on target.
+  const mean=Charts.rollingMean(all.filter(p=>p.date<today));
   const lastAvg=mean.filter(p=>p.date>=from).pop();
   const tg=targets(), target=CAL(tg.p,tg.c,tg.f);
-  const ot=Charts.onTarget(inRange, target);
+  const ot=Charts.onTarget(inRange.filter(p=>p.date<today), target);
   const avg=inRange.reduce((s,p)=>s+p.value,0)/inRange.length;
   stats.innerHTML =
     statTile(t("statAvg7"),     lastAvg ? `${round(lastAvg.value)}${unitSpan(t("kcalUnit"))}` : "–") +
