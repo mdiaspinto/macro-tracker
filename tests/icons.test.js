@@ -24,3 +24,14 @@ test("data has no emoji", () => {
 test("new icons exist", () => {
   ["gift", "lock", "award", "scale", "zap", "party-popper", "globe", "points"].forEach(n => assert.ok(Icons.NAMES.includes(n), n));
 });
+test("sprite symbols hold only shapes, with no nested svg wrapper", () => {
+  const s = Icons.sprite();
+  assert.equal((s.match(/<svg/g) || []).length, 1);
+  assert.ok(!s.includes("svgclass") && !s.includes("</svg>".repeat(2)));
+  const bodies = s.split("<symbol ").slice(1).map(x => x.slice(x.indexOf(">") + 1, x.indexOf("</symbol>")));
+  assert.equal(bodies.length, Icons.NAMES.length);
+  bodies.forEach((b, i) => {
+    assert.ok(!/<svg|<\/svg>|svgclass/.test(b), Icons.NAMES[i] + " has a wrapper");
+    assert.ok(/^<(path|circle|rect|line|polyline|ellipse|polygon) /.test(b), Icons.NAMES[i] + " does not start with a shape");
+  });
+});
