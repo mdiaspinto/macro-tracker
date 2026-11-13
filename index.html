@@ -631,6 +631,15 @@
   .rv{width:100%;max-width:380px;text-align:center;outline:none}
   .rv-stage{position:relative;width:min(78vw,300px);aspect-ratio:445/520;margin:0 auto}
   .rv-stage>img,.rv-char img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  .rv-rays{position:absolute;left:50%;top:46%;width:150%;aspect-ratio:1;margin:-75% 0 0 -75%;border-radius:50%;pointer-events:none;
+    background:repeating-conic-gradient(from 0deg,var(--s,var(--tier3)) 0 8deg,transparent 8deg 24deg);opacity:.28;
+    -webkit-mask-image:radial-gradient(circle,#000 0,#000 25%,transparent 68%);mask-image:radial-gradient(circle,#000 0,#000 25%,transparent 68%);
+    animation:rvRays 14s linear infinite}
+  @keyframes rvRays{to{transform:rotate(360deg)}}
+  .rv-bar{height:8px;border-radius:4px;background:var(--line);margin:8px auto 0;max-width:200px;overflow:hidden}
+  .rv-bar i{display:block;height:100%;background:var(--s);border-radius:4px;transition:width .45s ease-out}
+  .rv-cap .u{font-size:14px;font-weight:800;color:var(--text);margin-top:8px}
+  .rv-cap .u2{font-size:12px;font-weight:600;color:var(--muted)}
   .rv-char{position:absolute;inset:0;opacity:0}
   .rv-char.show{opacity:1}
   .rv-char.pop img{animation:rvPop .6s cubic-bezier(.2,1.4,.4,1) both}
@@ -1244,7 +1253,7 @@
 <!-- Collection: box opening reveal -->
 <div class="overlay" id="revealOverlay">
   <div class="rv" role="dialog" aria-modal="true" aria-live="polite" tabindex="-1">
-    <div class="rv-stage"><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
+    <div class="rv-stage"><div class="rv-rays" aria-hidden="true"></div><img class="rv-box" id="rvBox" alt=""><div class="rv-char" id="rvChar"></div><div class="rv-spark" id="rvSpark" aria-hidden="true"></div></div>
     <div class="rv-cap" id="rvCap"></div>
     <button class="btn btn-primary" id="rvOk"></button>
   </div>
@@ -3236,18 +3245,19 @@ function openBox(){
   const free=Shop.freeAvailable(u);
   if(!free && Shop.balance(u, today, Brain.lifetimePoints(u, today)).balance<Shop.PRICE){ renderCollection(); return; }
   boxBusy=true;
-  let result;
+  let result, prevOwned;
   try{
+    prevOwned=Shop.owned(u).slice();
     result=Shop.draw(Shop.owned(u), Math.random, {noDup:free});
     Shop.addPull(u, result, free, Date.now(), Math.random);
     save();
   }catch(err){ boxBusy=false; renderCollection(); throw err; }
-  try{ showReveal(result, free); }catch(err){ boxBusy=false; renderCollection(); throw err; }
+  try{ showReveal(result, free, prevOwned); }catch(err){ boxBusy=false; renderCollection(); throw err; }
 }
 const reducedMotion=()=>!!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 let rvTimers=[], rvState=null; // rvState: {result, phase:"anim"|"done"}
 function rvLater(fn,ms){ rvTimers.push(setTimeout(fn,ms)); }
-function showReveal(result, free){
+function showReveal(result, free, prevOwned){
   const ov=document.getElementById("revealOverlay"), box=document.getElementById("rvBox");
   const rv=ov.querySelector(".rv"), ch=document.getElementById("rvChar"), cap=document.getElementById("rvCap"), ok=document.getElementById("rvOk");
   const reduced=reducedMotion(), c=shopChar(result.id);
@@ -3256,6 +3266,7 @@ function showReveal(result, free){
   rvTimers.forEach(clearTimeout); rvTimers=[];
   rvState={result:result, phase:"anim"};
   rv.classList.toggle("secret", secret);
+  rv.style.setProperty("--s", secret||!c||!c.col ? "var(--tier3)" : "var(--s-"+c.col+")");
   ch.className="rv-char"; ch.style.opacity=""; ch.style.transition=""; ch.innerHTML=""; cap.className="rv-cap"; cap.innerHTML="";
   document.getElementById("rvSpark").innerHTML="";
   ok.className="btn btn-primary"; ok.textContent=t("shopNice");
@@ -3276,7 +3287,22 @@ function showReveal(result, free){
         escapeHtml(t("shopSecrets")+" · "+t("shopFound",{n:Shop.secretsFound(user()).length}))+'</div>';
       else{
         const col=Shop.COLLECTIONS.filter(x=>x.id===c.col)[0], pr=Shop.progress(user(), c.col);
-        h='<div class="n">'+nm+'</div><div class="s">'+escapeHtml((col?col.name+" · ":"")+t("shopProgress",{have:pr.have,total:pr.total}))+'</div>';
+        const from=reduced?pr.have:Math.max(0,pr.have-1), pct=v=>Math.round(v/pr.total*100);
+        h='<div class="k">'+escapeHtml(t("shopNew"))+'</div><div class="n">'+nm+'</div><div class="s">'+escapeHtml(col?col.name+" · ":"")+
+          '<span id="rvCount">'+escapeHtml(t("shopProgress",{have:from,total:pr.total}))+'</span></div>'+
+          '<div class="rv-bar"><i id="rvFill" style="width:'+pct(from)+'%"></i></div>';
+        if(!reduced) rvLater(()=>{ // count-up: fill the bar, then show the new count
+          const f=document.getElementById("rvFill"), n=document.getElementById("rvCount");
+          if(f) f.style.width=pct(pr.have)+"%";
+          rvLater(()=>{ if(n) n.textContent=t("shopProgress",{have:pr.have,total:pr.total}); },450);
+        },500);
+      }
+      if(!result.dup){ // one line for each backdrop this pull unlocked
+        Shop.newUnlocks(prevOwned||[], Shop.owned(user())).forEach(bid=>{
+          const b=Shop.BACKDROPS.filter(x=>x.id===bid)[0]; if(!b) return;
+          h+='<div class="u">'+escapeHtml(t("shopUnlocked",{name:bdName(b)}))+'</div>';
+          if(b.kind==="secrets") h+='<div class="u2">'+escapeHtml(t("shopSecretReward"))+'</div>';
+        });
       }
       cap.innerHTML=h;
     }
