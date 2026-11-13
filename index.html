@@ -513,6 +513,57 @@
     .shop-wallet h2{grid-column:1 / -1}
     .shop-goals{margin-top:0}
   }
+  /* Backdrop picker: one swatch per backdrop; each swatch reuses the backdrop class */
+  .shop-bd{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);min-width:0}
+  .shop-bd h3{font-size:13px;font-weight:800;margin:0 0 8px}
+  .bd-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+  .bd-opt{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:4px 2px 6px;border:none;border-radius:12px;
+    background:transparent;color:var(--text);font:inherit;cursor:pointer;text-align:center}
+  .bd-sw{position:relative;display:grid;place-items:center;width:100%;max-width:72px;aspect-ratio:1/1;border-radius:12px;
+    border:1.5px solid var(--line);background-color:var(--bg);overflow:hidden}
+  .bd-opt[aria-pressed="true"] .bd-sw{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
+  .bd-opt:not(:disabled):hover .bd-sw{border-color:var(--line-strong)}
+  .bd-opt:disabled{cursor:default}
+  .bd-opt.locked .bd-sw{opacity:.5}
+  .bd-opt.locked .bd-sw svg{width:20px;height:20px;color:var(--text)}
+  .bd-name{font-size:11.5px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+  .bd-opt small{display:flex;align-items:center;justify-content:center;gap:3px;font-size:10.5px;line-height:1.2;color:var(--muted)}
+  .bd-opt small svg{width:12px;height:12px;flex:none}
+  .bd-opt .bd-secret{color:var(--tier3);font-weight:700}
+  @media(min-width:960px){ .shop-bd{grid-column:1 / -1} .bd-row{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))} }
+  /* Backdrops: CSS gradients on #collectionView. Panels on top stay opaque, so text keeps its contrast. */
+  #collectionView{margin:-10px;padding:10px;border-radius:calc(var(--radius) + 8px)}
+  .bg-plain{background:transparent}
+  .bd-sw.bg-plain{background:var(--bg)}
+  .bg-confetti{background:
+    radial-gradient(circle at 20% 30%,color-mix(in srgb,var(--s-lulu) 75%,transparent) 0 3px,transparent 3.5px) 0 0/56px 56px,
+    radial-gradient(circle at 70% 18%,color-mix(in srgb,var(--s-kiki) 75%,transparent) 0 2.5px,transparent 3px) 0 0/48px 48px,
+    radial-gradient(circle at 42% 72%,color-mix(in srgb,var(--s-momo) 75%,transparent) 0 3px,transparent 3.5px) 0 0/64px 64px,
+    radial-gradient(circle at 85% 62%,color-mix(in srgb,var(--s-nini) 75%,transparent) 0 2.5px,transparent 3px) 0 0/52px 52px,
+    var(--panel-2)}
+  .bg-stripes{background:repeating-linear-gradient(135deg,
+    color-mix(in srgb,var(--s-nini) 22%,var(--bg)) 0 16px,color-mix(in srgb,var(--s-nini) 6%,var(--bg)) 16px 32px)}
+  .bg-ocean{background:
+    radial-gradient(circle at 50% 100%,transparent 15px,color-mix(in srgb,var(--s-momo) 30%,transparent) 16px 18px,transparent 19px) 0 0/40px 20px,
+    radial-gradient(circle at 50% 100%,transparent 15px,color-mix(in srgb,var(--s-momo) 18%,transparent) 16px 18px,transparent 19px) 20px 10px/40px 20px,
+    linear-gradient(180deg,color-mix(in srgb,var(--s-momo) 12%,var(--bg)),color-mix(in srgb,var(--s-momo) 34%,var(--bg)))}
+  .bg-rainbow{background:linear-gradient(160deg,
+    color-mix(in srgb,var(--s-lulu) 30%,var(--bg)),color-mix(in srgb,var(--s-kiki) 30%,var(--bg)) 36%,
+    color-mix(in srgb,var(--s-momo) 30%,var(--bg)) 68%,color-mix(in srgb,var(--s-nini) 30%,var(--bg)))}
+  .bg-gold{background:
+    radial-gradient(90% 70% at 50% 0,color-mix(in srgb,var(--tier3) 55%,transparent),transparent 72%),
+    linear-gradient(180deg,color-mix(in srgb,var(--tier3) 22%,var(--bg)),color-mix(in srgb,var(--tier3) 34%,var(--bg)))}
+  /* Night sky stays dark in light mode too */
+  .bg-night{background:
+    radial-gradient(circle,rgba(255,255,255,.95) 0 1px,transparent 1.6px) 0 0/37px 41px,
+    radial-gradient(circle,rgba(255,255,255,.7) 0 1px,transparent 1.6px) 13px 19px/53px 59px,
+    radial-gradient(circle,rgba(255,241,200,.9) 0 1.4px,transparent 2px) 29px 7px/89px 83px,
+    linear-gradient(180deg,#0B1433,#1C2C5E)}
+  .bg-globe{background:
+    repeating-linear-gradient(0deg,color-mix(in srgb,var(--s-momo) 22%,transparent) 0 1px,transparent 1px 28px),
+    repeating-linear-gradient(90deg,color-mix(in srgb,var(--s-momo) 22%,transparent) 0 1px,transparent 1px 28px),
+    radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--s-kiki) 14%,var(--bg)),color-mix(in srgb,var(--s-momo) 18%,var(--bg)))}
+  #collectionView.bg-night .shop-done{color:#EEF2EC}
   /* Shelves: one per series; every colour reads --s (set inline to the series token) */
   .shelf{--s:var(--accent);--s-strong:color-mix(in srgb,var(--s) 80%,#000);--s-on:#fff;--floor:rgba(22,32,27,.22);
     position:relative;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--s) 30%,var(--line));border-radius:var(--radius);
@@ -1605,7 +1656,7 @@ const T = {
     shopTitle:"Collection", shopBalance:"{n}", shopPoints:"points", shopWeekLabel:"This week: {b} brain points and {w} weigh-in points", shopOpen:"Open a box", shopOpenLabel:"Open a box for {p} points", shopFree:"Open your free box",
     shopShort:"{n} more points for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
     shopTeaser:"Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"Secret!",
-    shopNew:"New", shopCompleted:"Completed {date}", shopNext:"{n} more characters: {name} backdrop", shopAllMilestones:"Every character backdrop unlocked", shopBackdrop:"Backdrop", shopLockedAt:"{n} characters", shopSecretReward:"Secret reward", shopUnlocked:"New backdrop: {name}",
+    shopNew:"New", shopCompleted:"Completed {date}", shopNext:"{n} more characters: {name} backdrop", shopNext1:"One more character: {name} backdrop", shopAllMilestones:"Every character backdrop unlocked", shopBackdrop:"Backdrop", shopLockedAt:"{n} characters", shopSecretReward:"Secret reward", shopUnlocked:"New backdrop: {name}",
     passport:"Passport", passportStamps:"{n} stamps", passportStamp1:"1 stamp",
     shopDup:"You already have {name}! +{r} points back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
@@ -1784,7 +1835,7 @@ const T = {
     shopTitle:"Colección", shopBalance:"{n}", shopPoints:"puntos", shopWeekLabel:"Esta semana: {b} puntos de cerebro y {w} puntos de pesaje", shopOpen:"Abrir una caja", shopOpenLabel:"Abrir una caja por {p} puntos", shopFree:"Abre tu caja gratis",
     shopShort:"Te faltan {n} puntos para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
     shopTeaser:"Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"¡Secreto!",
-    shopNew:"Nuevo", shopCompleted:"Completada el {date}", shopNext:"Te faltan {n} personajes: fondo {name}", shopAllMilestones:"Todos los fondos de personajes desbloqueados", shopBackdrop:"Fondo", shopLockedAt:"{n} personajes", shopSecretReward:"Premio secreto", shopUnlocked:"Nuevo fondo: {name}",
+    shopNew:"Nuevo", shopCompleted:"Completada el {date}", shopNext:"Te faltan {n} personajes: fondo {name}", shopNext1:"Te falta 1 personaje: fondo {name}", shopAllMilestones:"Todos los fondos de personajes desbloqueados", shopBackdrop:"Fondo", shopLockedAt:"{n} personajes", shopSecretReward:"Premio secreto", shopUnlocked:"Nuevo fondo: {name}",
     passport:"Pasaporte", passportStamps:"{n} sellos", passportStamp1:"1 sello",
     shopDup:"¡Ya tienes a {name}! +{r} puntos de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
@@ -3055,6 +3106,7 @@ function ensureShop(u){
 }
 function shopChar(id){ return Shop.byId(id); }
 function shopName(c){ return lang()==="es" ? c.es : c.en; }
+function bdName(b){ return lang()==="es" ? b.es : b.en; }
 function renderCollection(){
   // Only draws while the Collection tab is open, so its images load only there.
   const el=document.getElementById("collectionCard"); if(!el || curTab!=="collection") return;
@@ -3091,12 +3143,32 @@ function renderCollection(){
     const cls=commons>=m?" on":(next && next.need===m?" next":"");
     h+='<span class="ms-step'+cls+'" style="left:'+Math.round(m/last*100)+'%"><span class="dot">'+Icons.svg("gift")+'</span><b>'+escapeHtml(String(m))+'</b></span>';
   });
-  h+='</div><p class="shop-next">';
-  if(next){
-    const bd=Shop.BACKDROPS.filter(x=>x.id===next.backdrop)[0];
-    h+=escapeHtml(t("shopNext",{n:next.need-next.have, name:bd?(lang()==="es"?bd.es:bd.en):""}));
-  } else h+=escapeHtml(t("shopAllMilestones"));
-  h+='</p></div></section>';
+  h+='</div>';
+  if(ready){ // the line waits for the shop data, so it never shows a wrong count
+    h+='<p class="shop-next">';
+    if(next){
+      const bd=Shop.BACKDROPS.filter(x=>x.id===next.backdrop)[0], left=next.need-next.have;
+      h+=escapeHtml(t(left===1?"shopNext1":"shopNext",{n:left, name:bd?bdName(bd):""}));
+    } else h+=escapeHtml(t("shopAllMilestones"));
+    h+='</p>';
+  }
+  h+='</div>';
+  // backdrop picker: locked commons show a lock and their count; secret backdrops appear only once unlocked
+  const bg=Shop.backdropFor(owned, u.collectionBg);
+  if(ready){
+    h+='<div class="shop-bd"><h3>'+escapeHtml(t("shopBackdrop"))+'</h3><div class="bd-row" role="group" aria-label="'+escapeAttr(t("shopBackdrop"))+'">';
+    Shop.pickerBackdrops(owned).forEach(p=>{
+      const bd=Shop.BACKDROPS.filter(x=>x.id===p.id)[0], secret=bd.kind==="secrets";
+      h+='<button class="bd-opt'+(p.unlocked?"":" locked")+'" data-bg="'+escapeAttr(p.id)+'" aria-pressed="'+(p.id===bg?"true":"false")+'"'+(p.unlocked?"":" disabled")+'>'+
+         '<span class="bd-sw bg-'+escapeAttr(p.id)+'" aria-hidden="true">'+(p.unlocked?"":Icons.svg("lock"))+'</span>'+
+         '<span class="bd-name">'+escapeHtml(bdName(bd))+'</span>';
+      if(!p.unlocked) h+='<small>'+escapeHtml(t("shopLockedAt",{n:p.n}))+'</small>';
+      else if(secret) h+='<small class="bd-secret">'+Icons.svg("sparkles")+escapeHtml(t("shopSecretReward"))+'</small>';
+      h+='</button>';
+    });
+    h+='</div></div>';
+  }
+  h+='</section>';
   // shelves: one per series, tinted with its colour token
   const have={}; owned.forEach(id=>{have[id]=true;});
   const cel=u.celebrated||{};
@@ -3114,7 +3186,8 @@ function renderCollection(){
     h+='<div class="shelf-head"><span class="shelf-pill">'+escapeHtml(col.name)+'</span><span class="shelf-count">'+
        escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div>';
     h+='<div class="shelf-bar"><i style="width:'+Math.round(Math.min(pr.have,pr.total)/pr.total*100)+'%"></i></div>';
-    if(done) h+='<div class="shelf-done">'+escapeHtml(t("shopCompleted",{date:fmtAxisDate(cel["collection:"+col.id]||today)}))+'</div>';
+    if(done){ const c2=u.celebrated||{}; // stable after the first render: the shine key holds the first-seen date
+      h+='<div class="shelf-done">'+escapeHtml(t("shopCompleted",{date:fmtAxisDate(c2["collection:"+col.id]||c2["shine:"+col.id]||today)}))+'</div>'; }
     const chars=Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common");
     chars.forEach((c,i)=>{
       if(i%3===0) h+='<div class="shelf-row">';
@@ -3139,6 +3212,7 @@ function renderCollection(){
   h+='</section>';
   if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
   el.innerHTML=h;
+  document.getElementById("collectionView").className="bg-"+bg;
 }
 function openBox(){
   const u=user();
@@ -3250,6 +3324,8 @@ function openCharView(id){
 }
 document.getElementById("collectionCard").addEventListener("click", e=>{
   const o=e.target.closest("[data-shop-open]"); if(o){ if(!o.disabled) openBox(); return; }
+  const b=e.target.closest("[data-bg]");
+  if(b){ if(!b.disabled){ user().collectionBg=b.dataset.bg; save(); renderCollection(); } return; }
   const c=e.target.closest("[data-char]"); if(c) openCharView(c.dataset.char);
 });
 (function(){
