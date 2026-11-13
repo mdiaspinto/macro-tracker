@@ -38,3 +38,33 @@ test("place: a tall target with room beside it gets the bubble to its right, els
   const p = Tour.place({ top: 183, left: 900, width: 340, height: 423 }, s, wide);
   assert.equal(p.side, "left"); assert.equal(p.left, 900 - Tour.GAP - 360);
 });
+
+test("actionsHtml: a middle step has Skip, Back and Next", () => {
+  const h = Tour.actionsHtml({}, 1, 3, {skip:"S", back:"B", next:"N"});
+  assert.match(h, /data-tour="skip"/); assert.match(h, /data-tour="back"/); assert.match(h, /data-tour="next"[^>]*>N</);
+});
+test("actionsHtml: a wait step has Skip and Back but no Next", () => {
+  const h = Tour.actionsHtml({wait:true}, 1, 3, {});
+  assert.match(h, /data-tour="skip"/); assert.doesNotMatch(h, /data-tour="next"/);
+});
+test("actionsHtml: the last step with actions shows them, primary first gets tour-next, no Skip, no Done", () => {
+  const h = Tour.actionsHtml({actions:[{id:"create", label:"Create <me>", primary:true}, {id:"keep", label:"Keep"}]}, 2, 3, {done:"Done"});
+  assert.match(h, /data-tour="act" data-id="create"/); assert.match(h, /Create &lt;me&gt;/);
+  assert.match(h, /<button[^>]*class="[^"]*tour-next[^"]*"[^>]*data-tour="act" data-id="create"/);
+  assert.doesNotMatch(h, /<button[^>]*tour-next[^>]*data-id="keep"/);
+  assert.doesNotMatch(h, /data-tour="skip"/); assert.doesNotMatch(h, />Done</);
+});
+test("actionsHtml: the first step has no Back", () => {
+  assert.doesNotMatch(Tour.actionsHtml({}, 0, 3, {}), /data-tour="back"/);
+});
+test("actionsHtml: a plain step keeps today's buttons (Done on the last, no Skip)", () => {
+  const h = Tour.actionsHtml({}, 2, 3, {done:"Done"});
+  assert.match(h, /data-tour="next"[^>]*>Done</); assert.doesNotMatch(h, /data-tour="skip"/);
+});
+test("holePath: viewport with a hole at the rect", () => {
+  assert.equal(Tour.holePath({top:10, left:20, width:30, height:40}, {w:100, h:200}),
+    'path(evenodd, "M0 0H100V200H0Z M20 10H50V50H20Z")');
+});
+test("suspend and signal are safe with no tour running", () => {
+  assert.equal(Tour.suspend(), false); assert.equal(Tour.signal(), false); assert.equal(Tour.suspended(), false);
+});
