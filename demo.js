@@ -86,7 +86,7 @@ const Demo = (() => {
     const spent = S.balance(demoUser, today, 0).spent;
     user.goal = "lean";
     user.tourSeen = true; user.tourSeenV = tourVersion;
-    user.collectionBg = demoUser.collectionBg || "plain";
+    user.collectionBg = "plain";
     user.shop = { start: today, startPoints: -spent, pulls };
     return stateOf(user);
   }

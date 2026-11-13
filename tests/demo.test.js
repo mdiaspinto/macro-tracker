@@ -95,6 +95,10 @@ test("accountState: balance starts at 0 and later points count in full, even aft
   const a = Demo.accountState(u, TODAY, 2, makeUser).users[0];
   assert.equal(Shop.balance(a, TODAY, 0).balance, 0); assert.equal(Shop.balance(a, TODAY, 120).balance, 120);
 });
+test("accountState: backdrop resets to plain even if the guest picked another", () => {
+  const u = Demo.sampleUser("Ana", "en", TODAY, makeUser); u.collectionBg = "confetti";
+  assert.equal(Demo.accountState(u, TODAY, 2, makeUser).users[0].collectionBg, "plain");
+});
 test("accountState: shop.start is today", () => {
   const u = Demo.sampleUser("Ana", "en", TODAY, makeUser);
   assert.equal(Demo.accountState(u, "2026-11-20", 2, makeUser).users[0].shop.start, "2026-11-20");
