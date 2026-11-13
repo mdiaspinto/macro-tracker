@@ -531,14 +531,14 @@
     border-radius:10px;padding:6px 10px;font-size:12px;opacity:0;transition:opacity .12s;
     transform:translate(-50%,calc(-100% - 12px));white-space:nowrap;box-shadow:var(--shadow);z-index:5}
   .chart-tip b{font-variant-numeric:tabular-nums;font-size:14px}
-  .chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
-  .chart-legend .lg{display:flex;align-items:center;gap:6px;color:var(--muted)}
-  .chart-legend .lg .sw{width:10px;height:10px;border-radius:3px;flex:none}
-  .chart-legend .lg b{color:var(--text);font-weight:600}
-  .weight-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+  .weight-form{display:grid;gap:14px}
   .weight-form .field{gap:6px}
-  .weight-form .btn{height:45px;white-space:nowrap}
-  @media(max-width:560px){.weight-form{grid-template-columns:1fr 1fr}.weight-form .btn{grid-column:1 / -1;justify-content:center}}
+  .weight-form .seg{display:flex}
+  .weight-form .seg button{flex:1;padding:10px 14px}
+  .weight-form .btn{height:45px;white-space:nowrap;justify-content:center}
+  .w-log-open{margin-left:auto;padding:7px 14px;font-size:13px;align-self:center}
+  .macro-block + .macro-block{margin-top:16px}
+  .macro-cap{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;font-variant-numeric:tabular-nums}
   @media(min-width:960px){ #metricsView{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start} #metricsView > .section.wide, #metricsView > .m-range{grid-column:1 / -1} }
   .recent-weights{margin-top:16px}
   .rw-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
@@ -811,32 +811,13 @@
     <div class="section">
       <div class="head"><h2 data-mk="protein" data-i18n="metricsMacroTitle">Macros</h2><span class="hint" data-i18n="metricsMacroHint">Protein, carbs & fat eaten per day</span></div>
       <div class="body">
-        <div class="chart-legend" id="macroLegend"></div>
-        <div class="chart-wrap" id="macroChart"></div>
+        <div id="macroCharts"></div>
       </div>
     </div>
 
     <div class="section wide">
-      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span></div>
+      <div class="head"><h2 data-mk="weight" data-i18n="metricsWeightTitle">Weight</h2><span class="hint" data-i18n="metricsWeightHint">Log your weight to track it over time</span><button class="btn btn-primary w-log-open" id="wLogOpen" type="button" data-i18n="logWeightBtn">Log weight</button></div>
       <div class="body">
-        <div class="weight-form">
-          <div class="field">
-            <label data-i18n="weightDate">Date</label>
-            <input type="date" id="wDate">
-          </div>
-          <div class="field">
-            <label data-i18n="weightLabel">Weight</label>
-            <input type="number" id="wVal" inputmode="decimal" min="0" step="any" placeholder="0">
-          </div>
-          <div class="field">
-            <label data-i18n="units">Units</label>
-            <select id="wUnit" class="unit-select">
-              <option value="kg" data-i18n="unitKg">kg</option>
-              <option value="lb" data-i18n="unitLb">lb</option>
-            </select>
-          </div>
-          <button class="btn btn-primary" id="wLogBtn" data-i18n="logWeightBtn">Log weight</button>
-        </div>
         <div class="chart-stats" id="wStats"></div>
         <div class="chart-wrap" id="wChart"></div>
         <div class="insight" id="wInsight"></div>
@@ -991,6 +972,31 @@
   <div class="modal">
     <div class="head"><h3 id="brainPickTitle"></h3><button class="x" data-close-brain>×</button></div>
     <div class="body" id="brainPickBody"></div>
+  </div>
+</div>
+
+<!-- Weight log sheet -->
+<div class="overlay" id="weightOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="weightSheetTitle">
+    <div class="head"><h3 id="weightSheetTitle" data-i18n="logWeightBtn">Log weight</h3><button class="x" type="button" data-close-weight aria-label="×">×</button></div>
+    <div class="body weight-form">
+      <div class="field">
+        <label for="wDate" data-i18n="weightDate">Date</label>
+        <input type="date" id="wDate">
+      </div>
+      <div class="field">
+        <label for="wVal" data-i18n="weightLabel">Weight</label>
+        <input type="number" id="wVal" inputmode="decimal" min="0" step="any" placeholder="0">
+      </div>
+      <div class="field">
+        <label data-i18n="units">Units</label>
+        <div class="seg" id="wUnitSeg">
+          <button type="button" data-unit="kg" data-i18n="unitKg">kg</button>
+          <button type="button" data-unit="lb" data-i18n="unitLb">lb</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="wLogBtn" type="button" data-i18n="logWeightBtn">Log weight</button>
+    </div>
   </div>
 </div>
 
@@ -1393,6 +1399,7 @@ const T = {
     metricsMacroTitle:"Macros", metricsMacroHint:"Protein, carbs & fat eaten per day",
     metricsWeightTitle:"Weight", metricsWeightHint:"Log your weight to track it over time",
     weightDate:"Date", weightLabel:"Weight", logWeightBtn:"Log weight",
+    macroCaption:"{name} · avg {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"No calories logged yet. Add eaten foods on the Tracker tab and they'll show up here.",
     noWeightData:"No weight logged yet. Add your first entry above.",
@@ -1571,6 +1578,7 @@ const T = {
     metricsMacroTitle:"Macros", metricsMacroHint:"Proteína, carbohidratos y grasa por día",
     metricsWeightTitle:"Peso", metricsWeightHint:"Registra tu peso para seguirlo con el tiempo",
     weightDate:"Fecha", weightLabel:"Peso", logWeightBtn:"Registrar peso",
+    macroCaption:"{name} · media {avg} g / {target} g",
     unitKg:"kg", unitLb:"lb",
     noCalData:"Aún no hay calorías registradas. Agrega alimentos comidos en la pestaña Registro y aparecerán aquí.",
     noWeightData:"Aún no hay peso registrado. Agrega tu primera entrada arriba.",
@@ -2233,7 +2241,7 @@ const TOUR_STEPS=[
   {key:"Log",     tab:"tracker",    target:[()=>document.getElementById("fName").closest(".section"), ()=>document.getElementById("fName").closest(".field")]},
   {key:"Totals",  tab:"tracker",    target:"#cards"},
   {key:"Brain",   tab:"tracker",    target:"#brainCard"},
-  {key:"Weight",  tab:"metrics",    target:"#metricsView .weight-form"},
+  {key:"Weight",  tab:"metrics",    target:"#wLogOpen"},
   {key:"Level",   tab:"brain",      target:()=>document.getElementById("bvLevel").closest(".section")},
   {key:"Collect", tab:"collection", target:"#collectionCard .shop-wallet"},
   {key:"End",                       target:"#usersBtn"}
@@ -3022,8 +3030,7 @@ document.getElementById("mRange").addEventListener("click", e=>{
 });
 function renderMetrics(){
   renderRangeControl();
-  document.getElementById("wUnit").value = weightUnit();
-  if(!document.getElementById("wDate").value) document.getElementById("wDate").value = todayStr();
+  renderWeightUnitSeg();
   renderCalChart();
   renderMacroChart();
   renderWeightChart();
@@ -3031,13 +3038,21 @@ function renderMetrics(){
   renderRecentWeights();
 }
 function renderMacroChart(){
-  const series=macroSeries();
-  const legend=document.getElementById("macroLegend");
-  const el=document.getElementById("macroChart");
-  if(!series.some(s=>s.points.length)){ legend.innerHTML=""; drawMultiLineChart(el, series, {empty:t("noCalData")}); return; }
-  legend.innerHTML = series.map(s=>
-    `<span class="lg"><span class="sw" style="background:${s.color}"></span><b>${escapeHtml(s.label)}</b></span>`).join("");
-  drawMultiLineChart(el, series, { ytick:v=>round(v), unit:"g" });
+  const series=macroSeries(), tg=targets();
+  const today=todayStr(), range=metricsRange();
+  const host=document.getElementById("macroCharts");
+  host.innerHTML = series.map(s=>`<div class="macro-block"><div class="macro-cap" id="macroCap_${s.key}"></div><div class="chart-wrap" id="macroChart_${s.key}"></div></div>`).join("");
+  series.forEach(s=>{
+    const inRange=Charts.filterRange(s.points, range, today);
+    const target=tg[s.key];
+    const el=document.getElementById("macroChart_"+s.key);
+    const cap=document.getElementById("macroCap_"+s.key);
+    const avg=inRange.length ? round(inRange.reduce((a,p)=>a+p.value,0)/inRange.length) : "–";
+    cap.textContent=t("macroCaption",{name:s.label, avg, target:round(target)});
+    if(!inRange.length){ drawTrendChart(el, [], {from:today, to:today, color:s.color, unit:"g", height:130, empty:t("noCalData")}); return; }
+    const from=Charts.rangeStart(today, range) || s.points[0].date;
+    drawTrendChart(el, inRange, {from, to:today, color:s.color, target, unit:"g", height:130, empty:t("noCalData"), mean:Charts.rollingMean(s.points)});
+  });
 }
 function renderCalChart(){
   const all=calorieSeries();
@@ -3090,15 +3105,32 @@ function renderRecentWeights(){
 }
 
 /* ---- weight logging ---- */
+function renderWeightUnitSeg(){
+  const cur=weightUnit();
+  document.querySelectorAll("#wUnitSeg [data-unit]").forEach(b=>{
+    const on=b.dataset.unit===cur;
+    b.classList.toggle("active",on); b.setAttribute("aria-pressed",on);
+  });
+}
+function openWeightSheet(){
+  if(!document.getElementById("wDate").value) document.getElementById("wDate").value=todayStr();
+  renderWeightUnitSeg();
+  document.getElementById("weightOverlay").classList.add("on");
+  document.getElementById("wVal").focus();
+}
+function closeWeightSheet(){
+  document.getElementById("weightOverlay").classList.remove("on");
+  document.getElementById("wLogOpen").focus();
+}
 function logWeight(){
   const val=parseFloat(document.getElementById("wVal").value);
   const date=document.getElementById("wDate").value||todayStr();
-  const unit=document.getElementById("wUnit").value==="lb" ? "lb" : "kg";
-  user().weightUnit=unit;
+  const unit=weightUnit();
   if(!(val>0)){ toast(t("weightNeedVal")); return; }
   userWeights()[date] = unit==="lb" ? val*KG_PER_LB : val;
   save();
   document.getElementById("wVal").value="";
+  closeWeightSheet();
   renderMetrics();
   toast(t("weightLogged"));
   requestAiInsight();
@@ -3512,102 +3544,22 @@ function drawTrendChart(container, daily, opts){
   svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); });
 }
 
-/* ---- multi-series line chart (macros: protein / carbs / fat) ---- */
-function drawMultiLineChart(container, series, opts){
-  opts=opts||{};
-  const active=series.filter(s=>s.points && s.points.length);
-  if(!active.length){
-    container.innerHTML=`<div class="chart-empty">${escapeHtml(opts.empty||"")}</div>`;
-    return;
-  }
-  const W=Math.max(260, Math.round(container.clientWidth || container.getBoundingClientRect().width || 320));
-  const H=240, padL=46, padR=34, padT=16, padB=26;
-  const plotW=W-padL-padR, plotH=H-padT-padB;
-
-  const allDates=[...new Set(active.flatMap(s=>s.points.map(p=>p.date)))].sort((a,b)=> a<b ? -1 : 1);
-  const times=allDates.map(dateToNum);
-  const minT=Math.min(...times), maxT=Math.max(...times);
-  const vals=active.flatMap(s=>s.points.map(p=>p.value));
-  let minV=Math.min(0, ...vals), maxV=Math.max(...vals);   // macros read best from a 0 baseline
-  if(minV===maxV){ maxV=minV+1; } else { maxV += (maxV-minV)*0.12; }
-  const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
-  const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
-
-  const ticks=niceTicks(minV,maxV,4);
-
-  let g="";
-  ticks.forEach(v=>{
-    const y=yOf(v);
-    g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
-    g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
-  });
-  const xIdx=(function(n){
-    if(n<=1) return [0];
-    if(n<=4) return allDates.map((_,i)=>i);
-    return [0, Math.round((n-1)/3), Math.round(2*(n-1)/3), n-1].filter((v,i,a)=>a.indexOf(v)===i);
-  })(allDates.length);
-  xIdx.forEach(i=>{
-    const x=xOf(times[i]);
-    const anchor = i===0 ? "start" : i===allDates.length-1 ? "end" : "middle";
-    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(allDates[i]))}</text>`;
-  });
-  // one polyline + dots + a direct end-label per series
-  const perSeries=active.map(s=>{
-    const coords=s.points.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
-    if(coords.length>1)
-      g+=`<polyline points="${coords.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    if(coords.length<=45) coords.forEach(c=> g+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.3" fill="${s.color}"/>`);
-    const last=coords[coords.length-1];
-    g+=`<text x="${Math.min(W-2,last[0]+6).toFixed(1)}" y="${(last[1]+4).toFixed(1)}" style="fill:${s.color};font-size:11px;font-weight:700">${escapeHtml(s.short)}</text>`;
-    const map={}; s.points.forEach((p,i)=> map[p.date]=coords[i]);
-    return {s, map};
-  });
-  g+=`<line class="cx-line" x1="0" y1="${padT}" x2="0" y2="${padT+plotH}" style="stroke:var(--cross)" stroke-width="1" opacity="0"/>`;
-  active.forEach((s,i)=> g+=`<circle class="cx-dot cx-dot-${i}" r="4.5" fill="${s.color}" stroke="var(--panel)" stroke-width="2" opacity="0"/>`);
-  g+=`<rect class="cx-hit" x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
-
-  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="chart">${g}</svg><div class="chart-tip"></div>`;
-
-  const svg=container.querySelector("svg"), tip=container.querySelector(".chart-tip");
-  const cxLine=svg.querySelector(".cx-line"), hit=svg.querySelector(".cx-hit");
-  const dots=active.map((s,i)=> svg.querySelector(".cx-dot-"+i));
-  const xsByDate=allDates.map(d=>xOf(dateToNum(d)));
-  function onMove(ev){
-    const rect=svg.getBoundingClientRect();
-    const sx=(ev.clientX-rect.left)*(W/rect.width);
-    let bi=0, bd=Infinity;
-    xsByDate.forEach((x,i)=>{ const dd=Math.abs(x-sx); if(dd<bd){ bd=dd; bi=i; } });
-    const date=allDates[bi], px=xsByDate[bi];
-    cxLine.setAttribute("x1",px); cxLine.setAttribute("x2",px); cxLine.setAttribute("opacity","1");
-    let topY=Infinity, rows="";
-    perSeries.forEach((ps,i)=>{
-      const c=ps.map[date];
-      if(c){
-        dots[i].setAttribute("cx",c[0]); dots[i].setAttribute("cy",c[1]); dots[i].setAttribute("opacity","1");
-        topY=Math.min(topY, c[1]);
-        const pt=ps.s.points.find(p=>p.date===date);
-        rows+=`<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${ps.s.color};display:inline-block"></span>${escapeHtml(ps.s.label)}: <b>${round(pt.value)}${opts.unit||""}</b></div>`;
-      } else { dots[i].setAttribute("opacity","0"); }
-    });
-    if(!isFinite(topY)) topY=padT;
-    tip.style.left = (px*(rect.width/W)) + "px";
-    tip.style.top  = (topY*(rect.height/H)) + "px";
-    tip.style.opacity="1";
-    tip.innerHTML = `<div style="color:var(--muted);font-size:11px;margin-bottom:2px">${escapeHtml(fmtAxisDate(date))}</div>${rows}`;
-  }
-  hit.addEventListener("pointermove",onMove);
-  hit.addEventListener("pointerdown",onMove);
-  svg.addEventListener("pointerleave",()=>{ tip.style.opacity="0"; cxLine.setAttribute("opacity","0"); dots.forEach(d=>d.setAttribute("opacity","0")); });
-}
-
 /* ---------- Events ---------- */
 document.getElementById("tabs").addEventListener("click",e=>{
   const b=e.target.closest("[data-tab]"); if(b) switchTab(b.dataset.tab);
 });
 document.getElementById("wLogBtn").addEventListener("click",logWeight);
 document.getElementById("wVal").addEventListener("keydown",e=>{ if(e.key==="Enter") logWeight(); });
-document.getElementById("wUnit").addEventListener("change",e=>{
-  user().weightUnit = e.target.value==="lb" ? "lb" : "kg";
+document.getElementById("wLogOpen").addEventListener("click",openWeightSheet);
+document.getElementById("weightOverlay").addEventListener("click",e=>{
+  if(e.target.id==="weightOverlay"||e.target.closest("[data-close-weight]")) closeWeightSheet();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape" && document.getElementById("weightOverlay").classList.contains("on")) closeWeightSheet();
+});
+document.getElementById("wUnitSeg").addEventListener("click",e=>{
+  const b=e.target.closest("[data-unit]"); if(!b) return;
+  user().weightUnit = b.dataset.unit==="lb" ? "lb" : "kg";
   save(); renderMetrics();
 });
 document.getElementById("wRecent").addEventListener("click",e=>{
