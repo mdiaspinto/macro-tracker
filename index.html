@@ -1541,7 +1541,7 @@ const T = {
     tourDemoCollectB:"Tap Open your free box to get your first character.",
     tourDemoEndT:"Like it, {name}?", tourDemoEndB:"Create a free account to keep your name and your new character, and start tracking for real.",
     demoCreate:"Create my account", demoKeep:"Keep exploring", demoBanner:"Demo · sample data", demoBannerCreate:"Create account", demoExit:"Exit demo",
-    demoCarry:"Your demo name and character come with you.", demoBackToDemo:"Back to the demo",
+    demoCarry:"Your demo name and character come with you.", demoBackToDemo:"Back to the demo", demoBackupErr:"We could not keep a copy of the data on this device, so nothing changed. Free up some storage and try again.",
     lean:"Lean", bulk:"Bulk", prevDay:"Previous day", nextDay:"Next day", today:"Today",
     addFood:"Add food", addFoodHint:"Enter macros per reference amount, then how much you ate",
     foodName:"Food name", foodNamePh:"Start typing… e.g. Chicken breast",
@@ -1726,7 +1726,7 @@ const T = {
     tourDemoCollectB:"Toca Abre tu caja gratis para conseguir tu primer personaje.",
     tourDemoEndT:"¿Te gusta, {name}?", tourDemoEndB:"Crea una cuenta gratis para conservar tu nombre y tu nuevo personaje, y empezar a registrar de verdad.",
     demoCreate:"Crear mi cuenta", demoKeep:"Seguir explorando", demoBanner:"Demo · datos de ejemplo", demoBannerCreate:"Crear cuenta", demoExit:"Salir de la demo",
-    demoCarry:"Tu nombre y tu personaje de la demo vienen contigo.", demoBackToDemo:"Volver a la demo",
+    demoCarry:"Tu nombre y tu personaje de la demo vienen contigo.", demoBackToDemo:"Volver a la demo", demoBackupErr:"No pudimos guardar una copia de los datos de este dispositivo, así que no cambió nada. Libera espacio e inténtalo de nuevo.",
     lean:"Definición", bulk:"Volumen", prevDay:"Día anterior", nextDay:"Día siguiente", today:"Hoy",
     addFood:"Agregar alimento", addFoodHint:"Ingresa los macros por cantidad de referencia y cuánto comiste",
     foodName:"Nombre del alimento", foodNamePh:"Escribe… p. ej. Pechuga de pollo",
@@ -3709,7 +3709,7 @@ Coach.init({ url:INSIGHTS_URL, getToken:idToken, hasSession:()=>cloudEnabled() &
   onChange:()=>{ save(); renderBrainCard(); renderChat(); maybeShowMeetCoach(); } });
 // Note area on the brain card: today's note (model text, escaped) + the chat button. The nextHint line above always stays.
 function coachBlock(u){
-  if(!INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
+  if(demoMode || !INSIGHTS_URL || !cloudEnabled() || profile(u).coachOn===false) return "";
   if(!session) return `<button class="btn br-ask" data-coach-login>${t("coachLogin")}</button>`;
   const today=todayStr(), note=curDate===today ? Coach.noteFor(u,today) : null;
   const noteHtml = note ? `<div class="br-note"><p class="br-note-head" data-mk="brain">${t("coachNoteHead")}</p><p>${escapeHtml(note.note)}</p>${note.tip ? `<p class="tip">${Icons.svg("lightbulb")} ${escapeHtml(note.tip)}</p>` : ""}</div>` : "";
@@ -4411,14 +4411,24 @@ async function doCreate(){
   const f=authForm(); if(!f) return;
   authBusy(true);
   try{
+    let acc=null;
+    if(demoMode){   // data safety first: confirm a copy of real device data exists BEFORE any network call
+      try{
+        const raw=localStorage.getItem(KEY);
+        if(raw){
+          let parsed=null, ok=true;
+          try{ parsed=JSON.parse(raw); }catch(e){ ok=false; }   // unreadable data is kept too
+          if(!ok || Demo.hasRealData(parsed)){
+            localStorage.setItem(Demo.BACKUP_KEY, raw);
+            if(localStorage.getItem(Demo.BACKUP_KEY)!==raw) throw new Error("backup");
+          }
+        }
+        acc=Demo.accountState(user(), todayStr(), TOUR_VERSION, makeUser);
+      }catch(e){ authError(t("demoBackupErr")); authBusy(false); return; }
+    }
     const session0=await authCall("signUp", f.u, f.pw);
     if(demoMode){   // the demo never merges: the account starts fresh with the demo name and character
       saveSession(session0);
-      try{ // data safety: keep a copy of real device data before the account state replaces it
-        const raw=localStorage.getItem(KEY);
-        if(raw && Demo.hasRealData(JSON.parse(raw))) localStorage.setItem(Demo.BACKUP_KEY, raw);
-      }catch(e){}
-      const acc=Demo.accountState(user(), todayStr(), TOUR_VERSION, makeUser);
       if(Tour.active()) Tour.end(false);
       try{ localStorage.removeItem(Demo.KEY); }catch(e){}
       demoMode=false; document.body.classList.remove("demo");
