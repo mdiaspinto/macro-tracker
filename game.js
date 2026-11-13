@@ -40,10 +40,24 @@ const Game = (() => {
     return Math.abs(kcal - target) <= 0.1 * target && p >= 0.9 * t.p;
   }
 
-  const BADGES = [
-    ["firstLog", "star"], ["streak7", "flame"], ["streak30", "flame"], ["fishWeek", "fish"], ["fullBrain", "brain-circuit"], ["cleanWeek", "shield-check"],
-    ["strongWeek", "dumbbell"], ["berryLover", "cherry"], ["greenMachine", "salad"], ["socialButterfly", "heart-handshake"], ["macroMaster", "target"],
-  ].map(([id, icon]) => ({ id, icon })).concat(B.LEVELS.slice(1).map(l => ({ id: "level:" + l.id, icon: l.icon })));
+  // Badge families: each tier is its own badge key (keys double as celebration keys, so old saves keep matching).
+  const weekFam = (id, icon, kind, tiers, keys, test) => ({ id, icon, kind, tiers, keys, test });
+  const cat = c => w => w.fill[c] >= 1, W = [1, 4, 12];
+  const FAMILIES = [
+    { id: "firstLog", icon: "star", kind: "once", tiers: [1], keys: ["firstLog"] },
+    { id: "streak", icon: "flame", kind: "run", tiers: [7, 30, 100], keys: ["streak7", "streak30", "streak100"] },
+    { id: "stars", icon: "target", kind: "starRun", tiers: [7, 14, 30], keys: ["macroMaster", "stars14", "stars30"] },
+    weekFam("fullBrain", "brain-circuit", "weeks", W, ["fullBrain", "fullBrain4", "fullBrain12"], w => w.full),
+    weekFam("clean", "shield-check", "weeks", W, ["cleanWeek", "clean4", "clean12"], w => w.clean),
+    weekFam("fish", "fish", "weeks", W, ["fishWeek", "fish4", "fish12"], cat("fish")),
+    weekFam("strength", "dumbbell", "weeks", W, ["strongWeek", "strength4", "strength12"], cat("strength")),
+    weekFam("berries", "cherry", "weeks", W, ["berries1", "berryLover", "berries12"], cat("berries")),
+    weekFam("greens", "salad", "weeks", W, ["greens1", "greenMachine", "greens12"], cat("greens")),
+    weekFam("social", "heart-handshake", "weeks", W, ["social1", "socialButterfly", "social12"], cat("social")),
+  ];
+  const LEGACY_KEYS = ["firstLog", "streak7", "streak30", "fishWeek", "fullBrain", "cleanWeek", "strongWeek", "berryLover", "greenMachine", "socialButterfly", "macroMaster"];
+  const BADGES = [].concat(...FAMILIES.map(f => f.keys.map((id, i) => ({ id, family: f.id, tier: f.kind === "once" ? 0 : i + 1, icon: f.icon }))))
+    .concat(B.LEVELS.slice(1).map(l => ({ id: "level:" + l.id, family: "level", tier: 0, icon: l.icon })));
 
   // Mon-Sun weekScores from the first week with any data through today's week (computed once per call).
   function weekScores(user, today) {
@@ -54,36 +68,70 @@ const Game = (() => {
     return out;
   }
 
-  // Same backward rule as streak(), but stops once the count reaches n (so scanning every day stays linear).
-  function reaches(user, from, n, first) {
+  // Same backward rule as streak(), but stops once the count reaches cap (so scanning every day stays linear).
+  function runCount(user, from, cap, first) {
     let c = 0, gapWeek = null;
     for (let d = from; d >= first; d = addDays(d, -1)) {
-      if (logged(user, d)) { if (++c >= n) return true; continue; }
+      if (logged(user, d)) { if (++c >= cap) return c; continue; }
       const w = B.weekStart(d);
-      if (gapWeek === w) return false;
+      if (gapWeek === w) return c;
       gapWeek = w;
     }
-    return false;
+    return c;
   }
 
-  function badges(user, today) {
-    const ws = weekScores(user, today), first = earliest(user), days = [];
-    const firstWeek = f => { const w = ws.find(f); return w ? w.start : null; };
-    const fourth = id => { const q = ws.filter(w => w.fill[id] >= 1); return q.length >= 4 ? q[3].start : null; };
+  // One scan: badge list plus the longest run / qualifying-week count per family (have).
+  function scan(user, today) {
+    const ws = weekScores(user, today), first = earliest(user), days = [], date = {}, have = {};
     if (first) for (let d = first; d <= today; d = addDays(d, 1)) days.push(d);
-    const reach = n => days.find(d => logged(user, d) && reaches(user, d, n, first)) || null;
-    let run = 0, master = null;
-    for (const d of days) { run = dayStar(user, d) ? run + 1 : 0; if (run === 7) { master = d; break; } }
+    const top = n => n[n.length - 1];
+    const streakF = FAMILIES[1], starF = FAMILIES[2];
+    // streak: first day whose (capped) run count reaches each tier
+    have.streak = 0;
+    for (const d of days) {
+      if (!logged(user, d)) continue;
+      const c = runCount(user, d, top(streakF.tiers), first);
+      if (c > have.streak) { for (let i = 0; i < streakF.tiers.length; i++) if (!date[streakF.keys[i]] && c >= streakF.tiers[i]) date[streakF.keys[i]] = d; have.streak = c; }
+    }
+    let run = 0; have.stars = 0;
+    for (const d of days) {
+      run = dayStar(user, d) ? run + 1 : 0;
+      if (run > have.stars) { have.stars = run; for (let i = 0; i < starF.tiers.length; i++) if (!date[starF.keys[i]] && run >= starF.tiers[i]) date[starF.keys[i]] = d; }
+    }
+    have.firstLog = first && first <= today ? 1 : 0;
+    if (have.firstLog) date.firstLog = first;
+    FAMILIES.filter(f => f.kind === "weeks").forEach(f => {
+      const q = ws.filter(f.test); have[f.id] = q.length;
+      f.tiers.forEach((n, i) => { if (q.length >= n) date[f.keys[i]] = q[n - 1].start; });
+    });
     let cum = 0; const levelAt = {};
     ws.forEach(w => { cum += w.points; B.LEVELS.forEach(l => { if (l.min > 0 && cum >= l.min && !levelAt[l.id]) levelAt[l.id] = w.start; }); });
-    const date = {
-      firstLog: first && first <= today ? first : null, streak7: reach(7), streak30: reach(30),
-      fishWeek: firstWeek(w => w.fill.fish >= 1), strongWeek: firstWeek(w => w.fill.strength >= 1),
-      fullBrain: firstWeek(w => w.full), cleanWeek: firstWeek(w => w.clean),
-      berryLover: fourth("berries"), greenMachine: fourth("greens"), socialButterfly: fourth("social"), macroMaster: master,
-    };
     B.LEVELS.forEach(l => { date["level:" + l.id] = levelAt[l.id] || null; });
-    return BADGES.map(b => ({ id: b.id, earned: !!date[b.id], date: date[b.id] || null }));
+    return { list: BADGES.map(b => ({ id: b.id, earned: !!date[b.id], date: date[b.id] || null })), have };
+  }
+
+  const badges = (user, today) => scan(user, today).list;
+
+  // Per family: highest earned tier (a celebrated key counts), longest run / weeks so far, next threshold.
+  function familyStatus(user, today, badgeList, celebrated) {
+    const done = celebrated || {}, by = {}, have = scan(user, today).have;
+    (badgeList || []).forEach(b => { by[b.id] = b; });
+    return FAMILIES.map(f => {
+      const tiers = f.keys.map((key, i) => ({ key, need: f.tiers[i], earned: !!((by[key] && by[key].earned) || done[key]), date: (by[key] && by[key].date) || null }));
+      let tier = 0; tiers.forEach((t, i) => { if (t.earned) tier = i + 1; });
+      return { id: f.id, icon: f.icon, tier, have: have[f.id] || 0, need: tier < tiers.length ? tiers[tier].need : null, tiers };
+    });
+  }
+
+  // First load after the tier release: mark already-earned NEW family keys celebrated so no toast burst appears.
+  function seedNewTiers(user, today, badgeList) {
+    if (!user) return false;
+    if (user.celebrated && user.celebrated["tiers:v1"]) return false;
+    if (!user.celebrated) user.celebrated = {};
+    const fam = {}; FAMILIES.forEach(f => f.keys.forEach(k => { fam[k] = true; }));
+    (badgeList || []).forEach(b => { if (b.earned && fam[b.id] && LEGACY_KEYS.indexOf(b.id) < 0) user.celebrated[b.id] = today; });
+    user.celebrated["tiers:v1"] = today;
+    return true;
   }
 
   const celebrationKey = c => c.type === "level" ? "level:" + c.id : c.type === "fullWeek" ? "week:" + c.id : c.id;
@@ -97,6 +145,6 @@ const Game = (() => {
     return out.filter(c => !done[celebrationKey(c)]);
   }
 
-  return { streak, streakHistory, dayStar, BADGES, badges, newCelebrations, celebrationKey };
+  return { streak, streakHistory, dayStar, FAMILIES, LEGACY_KEYS, BADGES, badges, familyStatus, seedNewTiers, newCelebrations, celebrationKey };
 })();
 if (typeof module !== "undefined") module.exports = Game; else window.Game = Game;

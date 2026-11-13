@@ -64,10 +64,15 @@ const byId = (u, today = "2026-11-11") => Object.fromEntries(Game.badges(u, toda
 const empty = () => mk([]);
 const mondays = ["2026-09-14", "2026-09-28", "2026-10-12", "2026-10-26"]; // non-consecutive weeks
 
-test("BADGES: ids in order, one level badge per level above sprout", () => {
-  assert.deepEqual(Game.BADGES.map(b => b.id), ["firstLog", "streak7", "streak30", "fishWeek", "fullBrain", "cleanWeek", "strongWeek", "berryLover", "greenMachine", "socialButterfly", "macroMaster", "level:growing", "level:sharp", "level:brilliant", "level:genius", "level:legend"]);
-  assert.deepEqual(Game.badges(empty(), "2026-11-11").map(b => b.id), Game.BADGES.map(b => b.id));
+test("BADGES: family keys in order, then levels", () => {
+  const ids = ["firstLog", "streak7", "streak30", "streak100", "macroMaster", "stars14", "stars30", "fullBrain", "fullBrain4", "fullBrain12", "cleanWeek", "clean4", "clean12", "fishWeek", "fish4", "fish12", "strongWeek", "strength4", "strength12", "berries1", "berryLover", "berries12", "greens1", "greenMachine", "greens12", "social1", "socialButterfly", "social12", "level:growing", "level:sharp", "level:brilliant", "level:genius", "level:legend"];
+  assert.deepEqual(Game.BADGES.map(b => b.id), ids);
+  assert.deepEqual(Game.badges(empty(), "2026-11-11").map(b => b.id), ids);
   assert.ok(Game.badges(empty(), "2026-11-11").every(b => !b.earned && b.date === null));
+  assert.deepEqual(Game.BADGES.slice(0, 5).map(b => [b.family, b.tier]), [["firstLog", 0], ["streak", 1], ["streak", 2], ["streak", 3], ["stars", 1]]);
+  assert.deepEqual(Game.BADGES[28], { id: "level:growing", family: "level", tier: 0, icon: Game.BADGES[28].icon });
+  assert.deepEqual(Game.FAMILIES.map(f => f.id), ["firstLog", "streak", "stars", "fullBrain", "clean", "fish", "strength", "berries", "greens", "social"]);
+  assert.equal(Game.LEGACY_KEYS.length, 11);
 });
 test("badge firstLog", () => {
   const u = mk(["2026-11-05", "2026-11-03"]); u.days["2026-11-01"] = [meal({ eaten: false })];
@@ -183,4 +188,85 @@ test("streak badges: a logged-day-only start, gaps forgiven like streak()", () =
 test("newCelebrations with a precomputed badge list matches omitting it", () => {
   const u = fullWeek(empty(), "2026-11-09");
   assert.deepEqual(Game.newCelebrations(u, "2026-11-11", Game.badges(u, "2026-11-11")), Game.newCelebrations(u, "2026-11-11"));
+});
+
+test("badges: legacy keys keep their ids and dates", () => {
+  const u = empty(); mondays.forEach(m => { addMeals(u, m, 2, ["berries", "fish"]); addHabit(u, m, ["strength"]); addHabit(u, addDays0(m, 1), ["strength"]); });
+  range("2026-11-01", "2026-11-07").forEach(d => { u.days[d] = [meal({ ap: 100, ac: 220, af: 80 })]; });
+  const b = byId(u);
+  assert.deepEqual(b.streak7, { id: "streak7", earned: true, date: "2026-11-07" });
+  assert.deepEqual(b.macroMaster, { id: "macroMaster", earned: true, date: "2026-11-07" });
+  assert.deepEqual(b.fishWeek, { id: "fishWeek", earned: true, date: "2026-09-14" });
+  assert.deepEqual(b.berryLover, { id: "berryLover", earned: true, date: "2026-10-26" });
+  assert.equal(byId(mk(range("2026-10-01", "2026-11-11"))).streak30.date, "2026-10-30");
+});
+test("badges: week tiers date to the nth qualifying Monday", () => {
+  const u = empty(); mondays.forEach(m => { addMeals(u, m, 2, ["fish"]); });
+  const b = byId(u);
+  assert.equal(b.fishWeek.date, "2026-09-14");
+  assert.equal(b.fish4.date, "2026-10-26");
+  assert.equal(b.fish12.earned, false);
+});
+test("badges: berries1 earned after one berry week", () => {
+  const u = empty(); addMeals(u, "2026-11-03", 2, ["berries"]);
+  const b = byId(u);
+  assert.equal(b.berries1.earned, true);
+  assert.equal(b.berryLover.earned, false);
+});
+test("badges: streak100 and stars tiers", () => {
+  const u = mk(range("2026-07-01", "2026-11-11"));
+  assert.equal(byId(u).streak100.date, "2026-10-08");
+  const v = empty(); range("2026-10-01", "2026-10-30").forEach(d => { v.days[d] = [meal({ ap: 100, ac: 220, af: 80 })]; });
+  const b = byId(v);
+  assert.equal(b.macroMaster.date, "2026-10-07");
+  assert.equal(b.stars14.date, "2026-10-14");
+  assert.equal(b.stars30.date, "2026-10-30");
+});
+test("familyStatus: progress to next tier", () => {
+  const u = empty(); mondays.slice(0, 2).forEach(m => addMeals(u, m, 2, ["fish"]));
+  const f = Game.familyStatus(u, "2026-11-11", Game.badges(u, "2026-11-11"), {}).find(x => x.id === "fish");
+  assert.equal(f.tier, 1); assert.equal(f.have, 2); assert.equal(f.need, 4);
+  assert.deepEqual(f.tiers.map(t => [t.key, t.need, t.earned]), [["fishWeek", 1, true], ["fish4", 4, false], ["fish12", 12, false]]);
+  assert.equal(f.tiers[0].date, "2026-09-14");
+});
+test("familyStatus: celebrated keeps a tier earned", () => {
+  const u = empty(), s = Game.familyStatus(u, "2026-11-11", Game.badges(u, "2026-11-11"), { streak30: "2026-10-01" }).find(x => x.id === "streak");
+  assert.equal(s.tier, 2); assert.equal(s.need, 100);
+});
+test("familyStatus: top tier has no need; firstLog once earned", () => {
+  const u = empty(), l = Game.familyStatus(u, "2026-11-11", Game.badges(u, "2026-11-11"), { streak100: "2026-10-01" });
+  assert.equal(l.find(x => x.id === "streak").need, null);
+  assert.equal(l.find(x => x.id === "firstLog").need, 1);
+  const v = mk(["2026-11-05"]), f = Game.familyStatus(v, "2026-11-11", Game.badges(v, "2026-11-11"), {}).find(x => x.id === "firstLog");
+  assert.equal(f.tier, 1); assert.equal(f.need, null);
+});
+test("familyStatus: have is the longest run", () => {
+  const days = range("2026-10-01", "2026-10-10").concat(range("2026-10-14", "2026-10-15"), range("2026-11-02", "2026-11-04"));
+  const u = mk(days), s = Game.familyStatus(u, "2026-11-11", Game.badges(u, "2026-11-11"), {}).find(x => x.id === "streak");
+  assert.equal(s.have, 10); assert.equal(s.tier, 1); assert.equal(s.need, 30);
+});
+test("seedNewTiers: marks earned new keys once, never legacy keys", () => {
+  const u = empty(); addMeals(u, "2026-11-03", 2, ["berries", "fish"]);
+  const list = Game.badges(u, "2026-11-11");
+  assert.equal(Game.seedNewTiers(u, "2026-11-11", list), true);
+  assert.equal(u.celebrated.berries1, "2026-11-11");
+  assert.equal(u.celebrated.fishWeek, undefined);
+  assert.equal(u.celebrated["tiers:v1"], "2026-11-11");
+  const snap = JSON.stringify(u.celebrated);
+  assert.equal(Game.seedNewTiers(u, "2026-11-12", list), false);
+  assert.equal(JSON.stringify(u.celebrated), snap);
+});
+test("newCelebrations: no burst after seeding", () => {
+  const u = empty(); addMeals(u, "2026-11-03", 2, ["berries", "fish"]);
+  Game.seedNewTiers(u, "2026-11-11", Game.badges(u, "2026-11-11"));
+  const c = Game.newCelebrations(u, "2026-11-11").filter(x => x.type === "badge").map(x => x.id);
+  assert.deepEqual(c, ["firstLog", "fishWeek"]);
+});
+test("familyStatus/seedNewTiers tolerate null user and missing celebrated", () => {
+  assert.doesNotThrow(() => Game.familyStatus(null, "2026-11-11", Game.badges(null, "2026-11-11")));
+  assert.doesNotThrow(() => Game.familyStatus(undefined, "2026-11-11", Game.badges(undefined, "2026-11-11"), null));
+  assert.doesNotThrow(() => Game.seedNewTiers(null, "2026-11-11", Game.badges(null, "2026-11-11")));
+  const u = empty(); assert.equal(u.celebrated, undefined);
+  assert.equal(Game.seedNewTiers(u, "2026-11-11", Game.badges(u, "2026-11-11")), true);
+  assert.deepEqual(Object.keys(u.celebrated), ["tiers:v1"]);
 });
