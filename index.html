@@ -458,7 +458,8 @@
   .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .shop-wallet img{width:56px;height:56px;border-radius:14px;flex:none;object-fit:cover}
   .shop-wallet .wtxt{flex:1;min-width:120px}
-  .shop-bal{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .shop-bal{display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .shop-week .ic{margin:0 2px}
   .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
   .shop-short{margin-top:12px}
   .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
@@ -1178,13 +1179,13 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261113"></script>
-<script src="charts.js?v=20261113"></script>
-<script src="brain.js?v=20261113"></script>
-<script src="game.js?v=20261113"></script>
-<script src="coach.js?v=20261113"></script>
-<script src="shop.js?v=20261113"></script>
-<script src="tour.js?v=20261113"></script>
+<script src="icons.js?v=20261114"></script>
+<script src="charts.js?v=20261114"></script>
+<script src="brain.js?v=20261114"></script>
+<script src="game.js?v=20261114"></script>
+<script src="coach.js?v=20261114"></script>
+<script src="shop.js?v=20261114"></script>
+<script src="tour.js?v=20261114"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -1328,8 +1329,8 @@ function initialUsers(){
 }
 /* ---------- Profile (About me) ---------- */
 // Declared before load() runs. Lazily fills missing fields too, since Firebase drops nulls and empty arrays.
-const PROFILE_GOALS = [["loseWeight","⚖️"],["strength","💪"],["brainHealth","🧠"],["energy","⚡"]];
-const PROFILE_TONES = [["cheer","🎉"],["straight","🎯"]];
+const PROFILE_GOALS = [["loseWeight","scale"],["strength","dumbbell"],["brainHealth","brain"],["energy","zap"]];
+const PROFILE_TONES = [["cheer","party-popper"],["straight","target"]];
 function ensureProfile(u){
   const p = Object.assign({age:null, sex:"", heightCm:null, activity:"", goals:[], likes:"", avoids:"",
     familyHistory:false, tone:"cheer", notes:u.profile ? "" : (u.bio||""), coachOn:true}, u.profile);
@@ -1513,10 +1514,12 @@ const T = {
     celebBadge:"New badge: {list}", celebBadges:"New badges: {list}", celebMore:"+{n} more in Brain",
     lvlUpTitle:"Level up!", lvlUpMsg:"Every brain-friendly meal and habit counts. Keep it up!", lvlUpOk:"Keep going",
 
-    shopTitle:"Collection", shopBalance:"{n} ⭐", shopWeek:"This week: +{b} 🧠 · +{w} ⚖️", shopOpen:"Open a box ({p} ⭐)", shopFree:"Open your free box",
-    shopShort:"{n} more ⭐ for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
-    shopTeaser:"✨ Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"✨ Secret! ✨",
-    shopDup:"You already have {name}! +{r} ⭐ back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
+    shopTitle:"Collection", shopBalance:"{n}", shopPoints:"points", shopWeekLabel:"This week: {b} brain points and {w} weigh-in points", shopOpen:"Open a box", shopOpenLabel:"Open a box for {p} points", shopFree:"Open your free box",
+    shopShort:"{n} more points for your next box", shopProgress:"{have} / {total}", shopSecrets:"Secrets", shopFound:"{n} found",
+    shopTeaser:"Secrets hide in some boxes…", shopAllDone:"You've collected everything!", shopSecret:"Secret!",
+    shopNew:"New", shopCompleted:"Completed {date}", shopNext:"{n} more characters: {name} backdrop", shopAllMilestones:"Every character backdrop unlocked", shopBackdrop:"Backdrop", shopLockedAt:"{n} characters", shopSecretReward:"Secret reward", shopUnlocked:"New backdrop: {name}",
+    passport:"Passport", passportStamps:"{n} stamps", passportStamp1:"1 stamp",
+    shopDup:"You already have {name}! +{r} points back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
     undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
   },
   es: {
@@ -1690,10 +1693,12 @@ const T = {
     celebBadge:"Nueva insignia: {list}", celebBadges:"Nuevas insignias: {list}", celebMore:"+{n} más en Cerebro",
     lvlUpTitle:"¡Subiste de nivel!", lvlUpMsg:"Cada comida y cada hábito para tu cerebro cuentan. ¡Sigue así!", lvlUpOk:"¡A seguir!",
 
-    shopTitle:"Colección", shopBalance:"{n} ⭐", shopWeek:"Esta semana: +{b} 🧠 · +{w} ⚖️", shopOpen:"Abrir una caja ({p} ⭐)", shopFree:"Abre tu caja gratis",
-    shopShort:"Te faltan {n} ⭐ para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
-    shopTeaser:"✨ Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"✨ ¡Secreto! ✨",
-    shopDup:"¡Ya tienes a {name}! +{r} ⭐ de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
+    shopTitle:"Colección", shopBalance:"{n}", shopPoints:"puntos", shopWeekLabel:"Esta semana: {b} puntos de cerebro y {w} puntos de pesaje", shopOpen:"Abrir una caja", shopOpenLabel:"Abrir una caja por {p} puntos", shopFree:"Abre tu caja gratis",
+    shopShort:"Te faltan {n} puntos para la próxima caja", shopProgress:"{have} / {total}", shopSecrets:"Secretos", shopFound:"{n} encontrados",
+    shopTeaser:"Hay secretos escondidos en algunas cajas…", shopAllDone:"¡Lo tienes todo!", shopSecret:"¡Secreto!",
+    shopNew:"Nuevo", shopCompleted:"Completada el {date}", shopNext:"Te faltan {n} personajes: fondo {name}", shopAllMilestones:"Todos los fondos de personajes desbloqueados", shopBackdrop:"Fondo", shopLockedAt:"{n} personajes", shopSecretReward:"Premio secreto", shopUnlocked:"Nuevo fondo: {name}",
+    passport:"Pasaporte", passportStamps:"{n} sellos", passportStamp1:"1 sello",
+    shopDup:"¡Ya tienes a {name}! +{r} puntos de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
     undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
   }
 };
@@ -2214,9 +2219,9 @@ function profileFields(part){
         ${["sedentary","light","moderate","active","very"].map(a=>opt(a,t("act"+a[0].toUpperCase()+a.slice(1)),p.activity)).join("")}</select></label></div>
     </div>`;
   if(part==="goals") return `<p class="pf-label">${t("pfGoals")}</p>
-    <div class="bp-grid">${PROFILE_GOALS.map(([g,em])=>`<button type="button" class="bp-chip" data-goal="${g}" aria-pressed="${p.goals.includes(g)}"><span class="em" aria-hidden="true">${em}</span>${t("goal_"+g)}</button>`).join("")}</div>
+    <div class="bp-grid">${PROFILE_GOALS.map(([g,ic])=>`<button type="button" class="bp-chip" data-goal="${g}" aria-pressed="${p.goals.includes(g)}"><span class="em" aria-hidden="true">${Icons.svg(ic)}</span>${t("goal_"+g)}</button>`).join("")}</div>
     <p class="pf-label">${t("pfTone")}</p>
-    <div class="bp-grid">${PROFILE_TONES.map(([v,em])=>`<button type="button" class="bp-chip" data-tone="${v}" aria-pressed="${p.tone===v}"><span class="em" aria-hidden="true">${em}</span><span>${t("tone_"+v)}<small>${t("tone_"+v+"Hint")}</small></span></button>`).join("")}</div>`;
+    <div class="bp-grid">${PROFILE_TONES.map(([v,ic])=>`<button type="button" class="bp-chip" data-tone="${v}" aria-pressed="${p.tone===v}"><span class="em" aria-hidden="true">${Icons.svg(ic)}</span><span>${t("tone_"+v)}<small>${t("tone_"+v+"Hint")}</small></span></button>`).join("")}</div>`;
   if(part==="food") return txt("likes","pfLikes",200) + txt("avoids","pfAvoids",200);
   return `<label class="setting-row"><span><b>${t("pfFamily")}</b><small>${t("pfFamilyHint")}</small></span>
       <input type="checkbox" data-pf="familyHistory" ${p.familyHistory?"checked":""}></label>`
@@ -2975,13 +2980,14 @@ function renderCollection(){
     canOpen=free || bal.balance>=Shop.PRICE;
   }
   h+='<div class="shop-wallet"><img src="img/box-1.webp" width="56" height="56" alt="" loading="lazy"><div class="wtxt">';
-  h+='<div class="shop-bal">'+(ready?escapeHtml(t("shopBalance",{n:bal.balance})):"…")+'</div>';
+  h+='<div class="shop-bal">'+(ready?Icons.svg("points")+'<span>'+escapeHtml(t("shopBalance",{n:bal.balance}))+'</span>':"…")+'</div>';
   if(ready){
     const b=Math.min(Brain.weekScore(u, Brain.weekStart(today)).points, bal.brain);
-    h+='<div class="shop-week">'+escapeHtml(t("shopWeek",{b:b, w:Shop.weightPoints(u, today).thisWeek}))+'</div>';
+    const wp=Shop.weightPoints(u, today).thisWeek;
+    h+='<div class="shop-week" role="img" aria-label="'+escapeAttr(t("shopWeekLabel",{b:b, w:wp}))+'">'+Icons.svg("brain")+'+'+escapeHtml(String(b))+' · '+Icons.svg("scale")+'+'+escapeHtml(String(wp))+'</div>';
   }
-  h+='</div><button class="btn btn-primary" data-shop-open'+((canOpen&&!boxBusy)?"":" disabled")+'>'+
-     escapeHtml(free?t("shopFree"):t("shopOpen",{p:Shop.PRICE}))+'</button></div>';
+  h+='</div><button class="btn btn-primary" data-shop-open'+(free?"":' aria-label="'+escapeAttr(t("shopOpenLabel",{p:Shop.PRICE}))+'"')+((canOpen&&!boxBusy)?"":" disabled")+'>'+
+     (free?escapeHtml(t("shopFree")):escapeHtml(t("shopOpen"))+' '+Icons.svg("points")+escapeHtml(String(Shop.PRICE)))+'</button></div>';
   if(ready && !canOpen){
     const need=Shop.PRICE-bal.balance, pct=Math.max(0,Math.min(100,Math.round(bal.balance/Shop.PRICE*100)));
     h+='<div class="shop-short"><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+escapeHtml(t("shopShort",{n:need}))+'</small></div>';
@@ -3006,7 +3012,7 @@ function renderCollection(){
     found.forEach(id=>{ const c=shopChar(id); if(!c) return;
       h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>'; });
     h+='</div>';
-  } else h+='<div class="shop-teaser">'+escapeHtml(t("shopTeaser"))+'</div>';
+  } else h+='<div class="shop-teaser">'+Icons.svg("sparkles")+' '+escapeHtml(t("shopTeaser"))+'</div>';
   h+='</div>';
   if(ready && owned.length>=Shop.CHARACTERS.length) h+='<div class="shop-done">'+escapeHtml(t("shopAllDone"))+'</div>';
   el.innerHTML=h;

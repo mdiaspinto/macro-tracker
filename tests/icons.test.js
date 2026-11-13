@@ -21,3 +21,6 @@ test("sprite has one symbol per name and no script", () => {
 test("data has no emoji", () => {
   ["brain.js", "game.js"].forEach(f => assert.ok(!EMOJI.test(fs.readFileSync(path.join(__dirname, "..", f), "utf8")), f));
 });
+test("new icons exist", () => {
+  ["gift", "lock", "award", "scale", "zap", "party-popper", "globe", "points"].forEach(n => assert.ok(Icons.NAMES.includes(n), n));
+});
