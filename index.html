@@ -3334,6 +3334,20 @@ document.getElementById("chatOverlay").addEventListener("click",e=>{
   if(y) answerMemory(Number(y.dataset.memYes), true); else if(n) answerMemory(Number(n.dataset.memNo), false);
 });
 
+/* ---- shared chart helpers ---- */
+function niceTicks(min,max,n){
+  const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
+  const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
+}
+// SVG text for calendar-date x ticks; xOf maps a time (ms) to x
+function xTickLabels(dates, xOf, H){
+  return dates.map((d,i)=>{
+    const anchor = i===0 ? "start" : i===dates.length-1 && dates.length>1 ? "end" : "middle";
+    return `<text x="${xOf(dateToNum(d)).toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
+  }).join("");
+}
+
 /* ---- the chart renderer ---- */
 function drawLineChart(container, points, opts){
   opts=opts||{};
@@ -3360,11 +3374,7 @@ function drawLineChart(container, points, opts){
   const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
 
   // y ticks — pick a round step
-  const ticks=(function(min,max,n){
-    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
-    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
-    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
-  })(minV,maxV,4);
+  const ticks=niceTicks(minV,maxV,4);
 
   const gid=(container.id||"c")+"-grad";
   let g="";
@@ -3378,12 +3388,7 @@ function drawLineChart(container, points, opts){
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${opts.ytick?opts.ytick(v):Math.round(v)}</text>`;
   });
   // x labels: even calendar ticks
-  const ticksX=Charts.dateTicks(points[0].date, points[points.length-1].date);
-  ticksX.forEach((d,i)=>{
-    const x=xOf(dateToNum(d));
-    const anchor = i===0 ? "start" : i===ticksX.length-1 && ticksX.length>1 ? "end" : "middle";
-    g+=`<text x="${x.toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
-  });
+  g+=xTickLabels(Charts.dateTicks(points[0].date, points[points.length-1].date), xOf, H);
   // reference line
   if(opts.refLine!=null){
     const y=yOf(opts.refLine);
@@ -3456,11 +3461,7 @@ function drawTrendChart(container, daily, opts){
   const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
   const yOf=v=> padT + (1-v/maxV)*plotH;
 
-  const ticks=(function(max,n){
-    const step0=max/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
-    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
-    const out=[]; for(let v=0; v<=max+1e-6; v+=step) out.push(v); return out;
-  })(maxV,4);
+  const ticks=niceTicks(0,maxV,4);
 
   let g="";
   ticks.forEach(v=>{
@@ -3468,21 +3469,17 @@ function drawTrendChart(container, daily, opts){
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" style="stroke:var(--grid)" stroke-width="1"/>`;
     g+=`<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" style="fill:var(--faint);font-size:11px">${round(v)}</text>`;
   });
-  const dt=Charts.dateTicks(opts.from, opts.to);
-  dt.forEach((d,i)=>{
-    const anchor = i===0 ? "start" : i===dt.length-1 && dt.length>1 ? "end" : "middle";
-    g+=`<text x="${xOf(dateToNum(d)).toFixed(1)}" y="${H-8}" text-anchor="${anchor}" style="fill:var(--faint);font-size:11px">${escapeHtml(fmtAxisDate(d))}</text>`;
-  });
+  g+=xTickLabels(Charts.dateTicks(opts.from, opts.to), xOf, H);
   if(opts.target!=null){
     const y1=yOf(opts.target*1.1), y2=yOf(opts.target*0.9), y=yOf(opts.target);
-    g+=`<rect x="${padL}" y="${y1.toFixed(1)}" width="${plotW}" height="${(y2-y1).toFixed(1)}" fill="color-mix(in srgb, ${color} 10%, transparent)"/>`;
+    g+=`<rect x="${padL}" y="${y1.toFixed(1)}" width="${plotW}" height="${(y2-y1).toFixed(1)}" fill="${color}" fill-opacity=".1"/>`;
     g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`;
   }
   const slot=plotW/(days+1);
   const barW=Math.max(2, Math.min(18, slot*0.7));
   daily.forEach(p=>{
     const x=xOf(dateToNum(p.date)), y=yOf(p.value);
-    g+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${(padT+plotH-y).toFixed(1)}" rx="1.5" fill="color-mix(in srgb, ${color} 30%, transparent)"/>`;
+    g+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${(padT+plotH-y).toFixed(1)}" rx="1.5" fill="${color}" fill-opacity=".3"/>`;
   });
   const mc=mean.map(p=>[xOf(dateToNum(p.date)), yOf(p.value)]);
   if(mc.length>1) g+=`<polyline points="${mc.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -3536,11 +3533,7 @@ function drawMultiLineChart(container, series, opts){
   const xOf=tv=> maxT===minT ? padL+plotW/2 : padL + ((tv-minT)/(maxT-minT))*plotW;
   const yOf=v=> padT + (1-(v-minV)/(maxV-minV))*plotH;
 
-  const ticks=(function(min,max,n){
-    const span=(max-min)||1, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
-    const norm=step0/mag, mult=norm<1.5?1:norm<3?2:norm<7?5:10, step=mult*mag;
-    const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-6; v+=step) out.push(v); return out;
-  })(minV,maxV,4);
+  const ticks=niceTicks(minV,maxV,4);
 
   let g="";
   ticks.forEach(v=>{
