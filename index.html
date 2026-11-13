@@ -228,11 +228,12 @@
   .br-hab[aria-pressed="true"]::after{content:"✓";position:absolute;top:3px;right:6px;font-size:12px;font-weight:900;color:var(--brain)}
 
   /* Brain chips on each meal + chip picker */
-  .mchips{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-height:44px;margin:2px 0 -8px -8px;padding:4px 8px;
+  .mchips{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-height:32px;margin:-6px 0 -6px -4px;padding:2px 8px;
     border-radius:10px;background:transparent;font-size:19px;line-height:1.2;text-align:left;max-width:100%}
   .mchips:hover{background:color-mix(in srgb,var(--brain) 12%,transparent)}
-  .mchips.empty{font-size:15px;color:var(--muted)}
-  .mchips.empty span{border:1.5px dashed var(--line-strong);border-radius:8px;padding:4px 8px}
+  .mchips.empty{display:inline-flex;align-items:center;gap:2px;padding:2px 8px;text-align:left;font-size:14px;font-weight:600;color:var(--muted);min-width:32px;opacity:.75}
+  .mchips.empty svg{width:16px;height:16px}
+  .mchips.empty:hover{opacity:1}
   .mchips .lt{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
   .bp-hint{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.5}
   .bp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -426,21 +427,21 @@
   @media(max-width:480px){.qty-row.triple{grid-template-columns:1fr 1fr}.qty-row.triple .unit-field{grid-column:1 / -1}}
 
   /* ---------- Meals ---------- */
-  .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  .meal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;
     padding:12px 18px;border-bottom:1px solid var(--line)}
   .meal:last-of-type{border-bottom:none}
   .meal.whatif{background:repeating-linear-gradient(-45deg,transparent,transparent 8px,var(--accent-soft) 8px,var(--accent-soft) 9px)}
-  .meal .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-strong);background:transparent;display:grid;place-items:center;color:transparent;font-size:13px;font-weight:900;flex:none}
+  .meal .chk{margin-top:-1px;width:24px;height:24px;border-radius:7px;border:2px solid var(--line-strong);background:transparent;display:grid;place-items:center;color:transparent;font-size:13px;font-weight:900;flex:none}
   .meal .chk:hover{border-color:var(--good)}
   .meal .chk.on{background:var(--good);border-color:var(--good);color:var(--panel)}
   .meal .info{cursor:pointer;border-radius:8px;transition:background .15s;padding:3px 8px;margin:-3px -8px;min-width:0}
   .meal .info:hover{background:var(--panel-2)}
   .meal .info .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .meal .info .macros{font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .meal .info .macros{display:flex;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
   .meal .info .macros .m{margin-right:10px;font-weight:600}
   .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
   .badge.whatif{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
-  .meal .right{display:flex;align-items:center;gap:6px}
+  .meal .right{display:flex;align-items:center;gap:6px;align-self:center}
   .meal .del{background:transparent;color:var(--faint);width:32px;height:32px;border-radius:8px;display:grid;place-items:center}
   .meal .del svg{width:16px;height:16px}
   .meal .del:hover{color:var(--over);background:var(--panel-2)}
@@ -2082,8 +2083,8 @@ function renderMeals(){
           <span class="m m-c">${round(m.ac)}C</span>
           <span class="m m-f">${round(m.af)}F</span>
           <span class="m m-cal">${round(cal)} kcal</span>
+          ${mealChips(m)}
         </div>
-        ${mealChips(m)}
       </div>
       <div class="right"><button class="del" data-del="${m.id}" title="Remove" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button></div>
     </div>`;
@@ -2250,7 +2251,7 @@ function mealChips(m){
   const names=BRAIN_FOODS.concat(LIMITS).filter(x=>tags.includes(x)).map(x=>t((LIMITS.includes(x)?"tag_":"cat_")+x)).join(", ");
   const label=t("brainEditFor",{name:m.name})+": "+(names||t("brainNone"));
   const inner=(em?`<span>${em}</span>`:"")+lim.map(x=>`<span class="lt">${t("tag_"+x)}</span>`).join("");
-  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`<span>＋${Icons.svg("brain")}</span>`}</button>`;
+  return `<button class="mchips${inner?"":" empty"}" data-brain="${m.id}" aria-label="${escapeAttr(label)}">${inner||`+${Icons.svg("brain")}`}</button>`;
 }
 let pickerMealId = null;
 function openChipPicker(mealId){
