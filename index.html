@@ -859,7 +859,7 @@
   @media(max-width:380px){ .tour-media .tour-guide{width:72px;height:72px} }
   @media (prefers-color-scheme: dark){ .tour-media .logo{box-shadow:0 0 0 1.5px var(--line-strong)} }
   .tour-count{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 0 4px;font-variant-numeric:tabular-nums}
-  .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px}
+  .tour-title{font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
   .tour-body{font-size:14.5px;line-height:1.5;margin:0}
   .tour-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px}
   .tour-skip{margin-right:auto;min-height:44px;padding:0 6px;background:transparent;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:2px}
@@ -1612,7 +1612,7 @@ const T = {
     tourWeightT:"Weigh in", tourWeightB:"Tap Log weight to add a weigh-in. Regular weigh-ins earn points too.",
     tourLevelT:"Levels and badges", tourLevelB:"Your brain points raise your level and earn bronze, silver and gold badges.",
     tourCollectT:"Your collection", tourCollectB:"Points buy mystery boxes. Fill each shelf, unlock backdrops, and stamp secret characters in your passport. Your first box is free!",
-    tourEndT:"You're all set, {name}", tourEndB:"Replay this tour any time from settings, here.",
+    tourEndT:"You're all set, {name}", tourEndB:"Replay this tour any time from Users & targets, here.",
     tourNext:"Next", tourBack:"Back", tourSkip:"Skip", tourDone:"Done", tourCount:"{n} of {total}", tourReplay:"Replay tour",
     insByClaude:"Explanation written by an AI model from the numbers above.", insWriting:"Writing a detailed explanation…",
     authPassword:"Password", authPasswordPh:"At least 6 characters",
@@ -1783,7 +1783,7 @@ const T = {
     mcFoodIntro:"¿Qué te gusta comer y qué prefieres evitar?",
     mcMoreIntro:"La última — las dos son opcionales. Puedes cambiar todo esto cuando quieras en Usuarios y objetivos.",
     mcSkip:"Saltar", mcBack:"Atrás", mcNext:"Siguiente", mcDone:"Listo", mcDoneToast:"¡Listo! Tu coach ya te conoce un poco mejor.",
-    tourWelcomeT:"¡Hola, {name}! Te damos la bienvenida", tourWelcomeB:"Seré tu guía. Te enseño a registrar lo que comes, cuidar tu cerebro y llenar tu colección. Dura más o menos un minuto.",
+    tourWelcomeT:"¡Hola, {name}! Esto es Macro Tracker", tourWelcomeB:"Seré tu guía. Te enseño a registrar lo que comes, cuidar tu cerebro y llenar tu colección. Dura más o menos un minuto.",
     tourGoalT:"Tu objetivo y tu día", tourGoalB:"Aquí cambias entre Definición y Volumen y pasas de un día a otro.",
     tourLogT:"Registra una comida", tourLogB:"Escribe qué comiste y cuánto. La app puede estimar los macros por ti.",
     tourTotalsT:"Tu día de un vistazo", tourTotalsB:"Calorías, proteínas, carbohidratos y grasas frente a tus objetivos.",
@@ -1791,7 +1791,7 @@ const T = {
     tourWeightT:"Pésate", tourWeightB:"Toca Registrar peso para añadir un pesaje. Pesarte con regularidad también suma puntos.",
     tourLevelT:"Niveles e insignias", tourLevelB:"Tus puntos de cerebro suben tu nivel y te dan insignias de bronce, plata y oro.",
     tourCollectT:"Tu colección", tourCollectB:"Con tus puntos abres cajas sorpresa. Llena cada estante, desbloquea fondos y sella personajes secretos en tu pasaporte. ¡La primera caja es gratis!",
-    tourEndT:"¡Todo listo, {name}!", tourEndB:"Repite este tour cuando quieras desde los ajustes, aquí.",
+    tourEndT:"¡Todo listo, {name}!", tourEndB:"Repite este tour cuando quieras desde Usuarios y objetivos, aquí.",
     tourNext:"Siguiente", tourBack:"Atrás", tourSkip:"Saltar", tourDone:"Listo", tourCount:"{n} de {total}", tourReplay:"Repetir el tour",
     insByClaude:"Explicación redactada por un modelo de IA a partir de las cifras de arriba.", insWriting:"Redactando una explicación detallada…",
     authPassword:"Contraseña", authPasswordPh:"Al menos 6 caracteres",
@@ -1870,7 +1870,7 @@ function lang(){ return (user().lang==="es") ? "es" : "en"; }
 function t(key, params){
   const L=lang();
   let s = (T[L] && T[L][key]!=null) ? T[L][key] : (T.en[key]!=null ? T.en[key] : key);
-  if(params) for(const k in params) s = s.replace("{"+k+"}", params[k]);
+  if(params) for(const k in params) s = s.replace("{"+k+"}", ()=>params[k]);   // a function, so "$" in a value (e.g. a name) stays literal
   return s;
 }
 function applyI18n(){
