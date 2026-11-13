@@ -23,6 +23,7 @@
     --good:#1C8A4E; --warn:#B87503; --over:#C93838;
     --brain:#7A4FD6; --streak:#D9480F;
     --tier1:#A8642B; --tier2:#7E878C; --tier3:#B98A12;
+    --s-lulu:#D85A30; --s-kiki:#1D9E75; --s-momo:#378ADD; --s-nini:#D4537E;
     --grid:rgba(22,32,27,.08); --cross:rgba(22,32,27,.3);
     --focus:#2F6FD6;
     --radius:22px; --radius-sm:14px;
@@ -41,6 +42,7 @@
       --good:#4ADE80; --warn:#FBBF24; --over:#F87171;
       --brain:#B79CFF; --streak:#FF8A4C;
       --tier1:#D08B4E; --tier2:#C3CBD0; --tier3:#F2C14E;
+      --s-lulu:#F0997B; --s-kiki:#5DCAA5; --s-momo:#85B7EB; --s-nini:#ED93B1;
       --grid:rgba(238,242,236,.07); --cross:rgba(238,242,236,.3);
       --focus:#7DB8FF;
       --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
@@ -464,35 +466,99 @@
 
 
   /* ---------- Collection ---------- */
-  .card{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:16px;padding:16px 18px 18px}
-  .shop-wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .shop-wallet img{width:56px;height:56px;border-radius:14px;flex:none;object-fit:cover}
-  .shop-wallet .wtxt{flex:1;min-width:120px}
+  .shop-page{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  /* Wide screens: full content width; hero, secrets and the final message span both columns, shelves form a 2 x 2 grid */
+  @media(min-width:960px){
+    .shop-page{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+    .shop-wallet,.shop-secrets,.shop-done{grid-column:1 / -1}
+  }
+  /* Wallet hero: the box, the points, the open button and the milestone track */
+  .shop-wallet{position:relative;border:1.5px solid var(--line);border-radius:var(--radius);padding:16px 18px 18px;
+    background:radial-gradient(120% 150% at 0 0,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),var(--panel)}
+  .shop-wallet h2{font-size:17px;font-weight:800;margin-bottom:10px}
+  .shop-main{min-width:0}
+  .shop-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .shop-box{position:relative;flex:none;width:72px;height:72px}
+  .shop-box::before{content:"";position:absolute;inset:-10px;border-radius:50%;
+    background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 40%,transparent),transparent)}
+  .shop-box img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+  .shop-box img.wiggle{transform-origin:50% 92%;animation:boxWig 4s ease-in-out 1s infinite}
+  @keyframes boxWig{0%,14%,100%{transform:rotate(0)}2%{transform:rotate(-7deg)}5%{transform:rotate(6deg)}8%{transform:rotate(-4deg)}11%{transform:rotate(2deg)}}
+  .shop-wallet .wtxt{flex:1;min-width:0}
   .shop-bal{display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.02em}
   .shop-week .ic{margin:0 2px}
   .shop-week{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .shop-top .btn{min-height:44px;justify-content:center}
+  @media(max-width:559px){ .shop-top .btn{flex:1 1 100%} }
+  @media(min-width:560px){ .shop-box{width:96px;height:96px} }
   .shop-short{margin-top:12px}
   .shop-short .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
   .shop-short .bar i{display:block;height:100%;background:var(--accent)}
   .shop-short small{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
-  .shop-col{margin-top:16px;border:1.5px solid var(--line);border-radius:18px;padding:12px}
-  .shop-col.done{border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
-  .shop-col .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .shop-col .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
-  .shop-col .ch span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-  /* Wide screens: keep the collection a readable column so character tiles stay small and sharp */
-  @media(min-width:960px){ #collectionView{max-width:520px} } /* lines up with the tab bar above it */
+  /* Milestone track: steps at 6 / 12 / 18 / 24 commons (secrets never count) */
+  .shop-goals{margin-top:18px;min-width:0}
+  .ms-track{position:relative;height:50px;margin:0 16px}
+  .ms-line{position:absolute;left:0;right:0;top:13px;height:6px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+  .ms-line i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+  .ms-step{position:absolute;top:0;width:32px;margin-left:-16px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .ms-step .dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:15px;
+    background:var(--panel);border:2px solid color-mix(in srgb,var(--line-strong) 50%,var(--line));color:var(--faint)}
+  .ms-step.on .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .ms-step.next .dot{border-color:var(--accent);color:var(--accent-text)}
+  .ms-step b{font-size:11.5px;font-weight:700;line-height:1;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ms-step.on b{color:var(--text)}
+  .shop-next{margin:4px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}
+  @media(min-width:960px){
+    .shop-wallet{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;align-items:center;padding:20px 24px 22px}
+    .shop-wallet h2{grid-column:1 / -1}
+    .shop-goals{margin-top:0}
+  }
+  /* Shelves: one per series; every colour reads --s (set inline to the series token) */
+  .shelf{--s:var(--accent);--s-strong:color-mix(in srgb,var(--s) 80%,#000);--s-on:#fff;--floor:rgba(22,32,27,.22);
+    position:relative;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--s) 30%,var(--line));border-radius:var(--radius);
+    padding:14px 16px 16px;background:color-mix(in srgb,var(--s) 10%,var(--panel))}
+  @media (prefers-color-scheme: dark){ .shelf{--s-strong:var(--s);--s-on:#111713;--floor:rgba(0,0,0,.45)} }
+  .shelf.done{border:2px solid var(--tier3);box-shadow:0 0 0 4px color-mix(in srgb,var(--tier3) 16%,transparent)}
+  .shelf-head{display:flex;align-items:center;gap:10px;min-height:30px}
+  .shelf.done .shelf-head{padding-right:40px}
+  .shelf-pill{background:var(--s-strong);color:var(--s-on);font-family:var(--font-display);font-size:15px;font-weight:800;
+    letter-spacing:-.01em;padding:4px 12px;border-radius:999px}
+  .shelf-count{font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .shelf-bar{height:5px;border-radius:99px;background:color-mix(in srgb,var(--s) 18%,transparent);overflow:hidden;margin:10px 0 12px}
+  .shelf-bar i{display:block;height:100%;border-radius:99px;background:var(--s)}
+  .shelf-done{font-size:12.5px;font-weight:700;color:var(--accent-text);margin:-4px 0 10px}
+  .shelf-ribbon{position:absolute;top:0;right:16px;width:30px;height:40px;display:flex;justify-content:center;padding-top:7px;
+    font-size:16px;background:var(--tier3);color:var(--accent-ink);clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}
+  .shelf-row{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 2px 6px}
+  .shelf-row + .shelf-row{margin-top:12px}
+  .shelf-row::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:2px;
+    background:color-mix(in srgb,var(--s) 35%,transparent);box-shadow:0 3px 6px -2px color-mix(in srgb,var(--s) 40%,transparent)}
+  .niche{position:relative;display:block;aspect-ratio:1/1;min-width:0;padding:0;border:none;border-radius:12px 12px 4px 4px;
+    background:radial-gradient(70% 55% at 50% 0,color-mix(in srgb,var(--s) 24%,transparent),transparent 72%),color-mix(in srgb,var(--panel) 70%,transparent)}
+  .niche::before{content:"";position:absolute;top:0;left:32%;right:32%;height:3px;border-radius:0 0 3px 3px;
+    background:color-mix(in srgb,var(--s) 70%,#fff);box-shadow:0 0 10px 2px color-mix(in srgb,var(--s) 45%,transparent)}
+  .niche img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:contain;padding:8%;transition:transform .2s}
+  button.niche{cursor:pointer}
+  button.niche:hover img{transform:translateY(-3px)}
+  .niche.own::after{content:"";position:absolute;left:25%;right:25%;bottom:6%;height:9%;border-radius:50%;
+    background:radial-gradient(closest-side,var(--floor),transparent)}
+  .niche .sil{position:absolute;inset:8%;background:color-mix(in srgb,var(--s) 30%,transparent);
+    -webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+  /* One-time light sweep the first time a completed shelf renders */
+  .shelf.shine::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;transform:translateX(-110%);
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.6) 47%,rgba(255,255,255,.2) 54%,transparent 70%);
+    animation:shelfShine 1.5s .35s ease-in-out both}
+  @media (prefers-color-scheme: dark){ .shelf.shine::after{background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.28) 47%,rgba(255,255,255,.1) 54%,transparent 70%)} }
+  @keyframes shelfShine{to{transform:translateX(110%)}}
   .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .shop-grid .tile{display:block;aspect-ratio:1/1;min-width:64px;border-radius:14px;overflow:hidden;background:var(--panel-2);padding:0;border:1.5px solid var(--line)}
   .shop-grid button.tile{cursor:pointer}
   .shop-grid .tile img{display:block;width:100%;height:100%;object-fit:cover}
-  .shop-grid .sil{filter:brightness(0);opacity:.12}
-  @media (prefers-color-scheme: dark){ .shop-grid .sil{filter:brightness(0) invert(1);opacity:.14} }
-  .shop-secrets{margin-top:16px}
+  .shop-secrets{border:1.5px solid var(--line);border-radius:var(--radius);padding:14px 16px 16px;background:var(--panel)}
   .shop-secrets .ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
   .shop-secrets .ch b{font-family:var(--font-display);font-size:16px;font-weight:800}
   .shop-secrets .ch span{font-size:13px;color:var(--muted)}
-  .shop-secrets .grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .shop-secrets .grid4{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
   .shop-teaser{font-size:13.5px;color:var(--muted);text-align:center;padding:8px 0}
   .shop-done{font-size:14px;font-weight:700;text-align:center;margin-top:12px}
   .rv{width:100%;max-width:380px;text-align:center;outline:none}
@@ -920,7 +986,7 @@
 
   <!-- Collection: wallet, box opening, characters -->
   <div id="collectionView" style="display:none">
-    <div class="card" id="collectionCard"></div>
+    <div class="shop-page" id="collectionCard"></div>
   </div><!-- /collectionView -->
 
 </div>
@@ -2987,15 +3053,16 @@ function renderCollection(){
   const u=user(), today=todayStr();
   const ready=ensureShop(u);
   const owned=ready ? Shop.owned(u) : [];
-  let h='<div class="head"><h2 data-mk="accent" style="font-size:17px;font-weight:800;margin-bottom:12px">'+escapeHtml(t("shopTitle"))+'</h2></div>';
-  // wallet
+  // wallet hero: box, balance, open button, milestone track
   let bal=null, canOpen=false, free=false;
   if(ready){
     bal=Shop.balance(u, today, Brain.lifetimePoints(u, today));
     free=Shop.freeAvailable(u);
     canOpen=free || bal.balance>=Shop.PRICE;
   }
-  h+='<div class="shop-wallet"><img src="img/box-1.webp" width="56" height="56" alt="" loading="lazy"><div class="wtxt">';
+  const wiggle=ready && canOpen && !boxBusy && !reducedMotion();
+  let h='<section class="shop-wallet"><h2 data-mk="accent">'+escapeHtml(t("shopTitle"))+'</h2><div class="shop-main"><div class="shop-top">';
+  h+='<div class="shop-box"><img'+(wiggle?' class="wiggle"':'')+' src="img/box-1.webp" width="96" height="96" alt="" loading="lazy"></div><div class="wtxt">';
   h+='<div class="shop-bal">'+(ready?Icons.svg("points")+'<span>'+escapeHtml(t("shopBalance",{n:bal.balance}))+'</span>':"…")+'</div>';
   if(ready){
     const b=Math.min(Brain.weekScore(u, Brain.weekStart(today)).points, bal.brain);
@@ -3008,18 +3075,48 @@ function renderCollection(){
     const need=Shop.PRICE-bal.balance, pct=Math.max(0,Math.min(100,Math.round(bal.balance/Shop.PRICE*100)));
     h+='<div class="shop-short"><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+escapeHtml(t("shopShort",{n:need}))+'</small></div>';
   }
-  // collections
+  h+='</div>';
+  // milestone track: counts only the 24 commons, never secrets
+  const commons=Shop.commonsCount(owned), last=Shop.MILESTONES[Shop.MILESTONES.length-1], next=Shop.nextMilestone(owned);
+  h+='<div class="shop-goals"><div class="ms-track" aria-hidden="true"><div class="ms-line"><i style="width:'+Math.round(Math.min(commons,last)/last*100)+'%"></i></div>';
+  Shop.MILESTONES.forEach(m=>{
+    const cls=commons>=m?" on":(next && next.need===m?" next":"");
+    h+='<span class="ms-step'+cls+'" style="left:'+Math.round(m/last*100)+'%"><span class="dot">'+Icons.svg("gift")+'</span><b>'+escapeHtml(String(m))+'</b></span>';
+  });
+  h+='</div><p class="shop-next">';
+  if(next){
+    const bd=Shop.BACKDROPS.filter(x=>x.id===next.backdrop)[0];
+    h+=escapeHtml(t("shopNext",{n:next.need-next.have, name:bd?(lang()==="es"?bd.es:bd.en):""}));
+  } else h+=escapeHtml(t("shopAllMilestones"));
+  h+='</p></div></section>';
+  // shelves: one per series, tinted with its colour token
   const have={}; owned.forEach(id=>{have[id]=true;});
+  const cel=u.celebrated||{};
+  let shineSeen=false;
   Shop.COLLECTIONS.forEach(col=>{
     const pr=ready?Shop.progress(u, col.id):{have:0,total:6};
-    h+='<div class="shop-col'+(pr.have>=pr.total?" done":"")+'"><div class="ch"><b>'+escapeHtml(col.name)+'</b><span>'+
-       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div><div class="shop-grid">';
-    Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common").forEach(c=>{
-      if(have[c.id]) h+='<button class="tile" data-char="'+escapeHtml(c.id)+'" aria-label="'+escapeHtml(shopName(c))+'"><img src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="'+escapeHtml(shopName(c))+'"></button>';
-      else h+='<span class="tile"><img class="sil" src="'+escapeHtml(c.img)+'" width="96" height="96" loading="lazy" alt="" aria-hidden="true"></span>';
+    const done=ready && pr.have>=pr.total;
+    let shine=false;
+    if(done && !cel["shine:"+col.id]){ // one-time light sweep; the key is set even when motion is reduced
+      u.celebrated=u.celebrated||{}; u.celebrated["shine:"+col.id]=today; shineSeen=true;
+      shine=!reducedMotion();
+    }
+    h+='<section class="shelf'+(done?" done":"")+(shine?" shine":"")+'" data-col="'+escapeAttr(col.id)+'" style="--s:var(--s-'+escapeAttr(col.id)+')" aria-label="'+escapeAttr(col.name)+'">';
+    if(done) h+='<span class="shelf-ribbon" aria-hidden="true">'+Icons.svg("award")+'</span>';
+    h+='<div class="shelf-head"><span class="shelf-pill">'+escapeHtml(col.name)+'</span><span class="shelf-count">'+
+       escapeHtml(t("shopProgress",{have:pr.have,total:pr.total}))+'</span></div>';
+    h+='<div class="shelf-bar"><i style="width:'+Math.round(Math.min(pr.have,pr.total)/pr.total*100)+'%"></i></div>';
+    if(done) h+='<div class="shelf-done">'+escapeHtml(t("shopCompleted",{date:fmtAxisDate(cel["collection:"+col.id]||today)}))+'</div>';
+    const chars=Shop.CHARACTERS.filter(c=>c.col===col.id && c.tier==="common");
+    chars.forEach((c,i)=>{
+      if(i%3===0) h+='<div class="shelf-row">';
+      if(have[c.id]) h+='<button class="niche own" data-char="'+escapeAttr(c.id)+'" aria-label="'+escapeAttr(shopName(c))+'"><img src="'+escapeAttr(c.img)+'" width="128" height="128" loading="lazy" alt="'+escapeAttr(shopName(c))+'"></button>';
+      else h+='<span class="niche" aria-hidden="true"><span class="sil" style="-webkit-mask-image:url(\''+escapeAttr(c.img)+'\');mask-image:url(\''+escapeAttr(c.img)+'\')"></span></span>';
+      if(i%3===2 || i===chars.length-1) h+='</div>';
     });
-    h+='</div></div>';
+    h+='</section>';
   });
+  if(shineSeen) save();
   // secrets: built only from found secrets
   const found=ready?Shop.secretsFound(u):[];
   h+='<div class="shop-secrets">';
