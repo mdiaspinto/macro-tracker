@@ -218,3 +218,13 @@ test("uploadGuest without guest data does nothing", async () => {
   await api.uploadGuest("ana");
   assert.strictEqual(calls.length, 0);
 });
+
+test("a profile named with a dot gets a Firebase-safe key and path", async () => {
+  const { api, calls } = rig({ "/users/U1.json": reply({ state: { users: [{ name: "Ana M." }] } }), "/brain/": reply({}) }, live);
+  const [p] = await api.profiles();
+  assert.strictEqual(p.key, "ana m_");
+  await api.saveProgress(p.key, { stars: 1 });
+  const seg = dbPath(calls[1]).split("/")[3];
+  assert.strictEqual(seg, "ana%20m_");
+  assert.ok(seg.indexOf(".") < 0);
+});

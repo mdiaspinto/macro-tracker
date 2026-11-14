@@ -178,7 +178,7 @@ const Brain = (() => {
     });
     return out;
   }
-  const profileKey = name => String(name || "").trim().toLowerCase();
+  const profileKey = name => String(name || "").trim().toLowerCase().replace(/[.$#\[\]\/]/g, "_");
   // Tick "mind" for completed brain-game sessions in last week..today, unless a newer manual change exists. Returns count ticked.
   function applyGameSessions(user, profileData, today) {
     const sessions = (profileData && profileData.sessions) || {}, from = addDays(weekStart(today), -7);

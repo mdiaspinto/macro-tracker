@@ -1,6 +1,11 @@
 const test = require("node:test"); const assert = require("node:assert/strict");
 const Brain = require("../brain.js");
 const T0 = 1763100000000;
+test("profileKey is Firebase-safe", () => {
+  assert.equal(Brain.profileKey("Ana M."), "ana m_");
+  assert.equal(Brain.profileKey("a/b#c"), "a_b_c");
+});
+
 test("profileKey trims and lowercases", () => {
   assert.equal(Brain.profileKey(" Leonor "), "leonor");
   assert.equal(Brain.profileKey(undefined), "");
