@@ -3,7 +3,7 @@ const assert = require("node:assert");
 const Peek = require("../brain/peek.js");
 
 const mk = () => { let s = 1; return () => (s = s * 16807 % 2147483647) / 2147483647; };
-const IDS = ["coco", "teo", "rosa", "luna"];
+const IDS = ["coco", "teo", "flor", "hugo"];
 const st = (o) => Object.assign(Peek.init(), o);
 
 test("init values", () => {
