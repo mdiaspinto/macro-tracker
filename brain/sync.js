@@ -39,6 +39,7 @@ const Sync = (() => {
       } catch (e) { throw new Error("net"); }
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((j.error && j.error.message) || "net");
+      if (!j.idToken) throw new Error("net");
       const s = { username: u, uid: j.localId, idToken: j.idToken, refreshToken: j.refreshToken, expiresAt: now() + j.expiresIn * 1000 };
       write(SESSION, s);
       return s;
@@ -48,8 +49,10 @@ const Sync = (() => {
       const s = session();
       if (!s) throw new Error("signed-out");
       if (s.expiresAt - 60000 > now()) return s.idToken;
-      if (!refreshing) {
-        refreshing = (async () => {
+      if (!refreshing || refreshing.rt !== s.refreshToken) {
+        const p = (async () => {
+          // The stored session must still be the one we refresh; else a sign-out or sign-in raced us.
+          const same = () => { const c = session(); return !!c && c.uid === s.uid && c.refreshToken === s.refreshToken; };
           let r;
           try {
             r = await fetch("https://securetoken.googleapis.com/v1/token?key=" + firebase.apiKey, {
@@ -57,15 +60,21 @@ const Sync = (() => {
               body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(s.refreshToken),
             });
           } catch (e) { throw new Error("net"); }
+          if (!same()) throw new Error("signed-out");
           if (r.status === 400) { signOut(); throw new Error("signed-out"); }
           if (!r.ok) throw new Error("net");
-          const j = await r.json();
+          let j;
+          try { j = await r.json(); } catch (e) { throw new Error("net"); }
+          if (!j || !j.id_token) throw new Error("net");
+          if (!same()) throw new Error("signed-out");
           const next = Object.assign({}, s, { idToken: j.id_token, refreshToken: j.refresh_token, expiresAt: now() + j.expires_in * 1000 });
           write(SESSION, next);
           return next.idToken;
-        })().finally(() => { refreshing = null; });
+        })();
+        refreshing = { rt: s.refreshToken, p };
+        p.then(() => {}, () => {}).then(() => { if (refreshing && refreshing.p === p) refreshing = null; });
       }
-      return refreshing;
+      return refreshing.p;
     }
 
     async function dbFetch(path, opts) {
@@ -74,10 +83,18 @@ const Sync = (() => {
       try { r = await fetch(db + path + ".json?auth=" + encodeURIComponent(token), Object.assign({ cache: "no-store" }, opts)); }
       catch (e) { throw new Error("net"); }
       if (!r.ok) throw new Error("net");
-      return r.json();
+      try { return await r.json(); } catch (e) { throw new Error("net"); }
     }
     const patch = (path, value) => dbFetch(path, { method: "PATCH", headers: JSON_HEAD, body: JSON.stringify(value) });
-    const base = (key) => "/brain/" + session().uid + "/" + encodeURIComponent(key);
+    // Only well-formed profile keys and dates reach a URL: no empty or nested segments.
+    const goodKey = (k) => typeof k === "string" && k !== "" && B.profileKey(k) === k;
+    const goodDate = (d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    function base(key) {
+      if (!goodKey(key)) throw new Error("bad-path");
+      const s = session();
+      if (!s) throw new Error("signed-out");
+      return "/brain/" + s.uid + "/" + encodeURIComponent(key);
+    }
 
     async function profiles() {
       const s = session();
@@ -89,18 +106,24 @@ const Sync = (() => {
     }
 
     async function load(key) {
-      await idToken();
       const d = await dbFetch(base(key));
       return { sessions: (d && d.sessions) || {}, progress: (d && d.progress) || null };
     }
-    const saveDay = async (key, date, day) => { await idToken(); await patch(base(key) + "/sessions/" + date, day); };
-    const saveProgress = async (key, progress) => { await idToken(); await patch(base(key) + "/progress", progress); };
+    async function saveDay(key, date, day) {
+      const path = base(key);
+      if (!goodDate(date)) throw new Error("bad-path");
+      const body = Object.assign({}, day);
+      if (body.completedAt == null) delete body.completedAt;   // PATCH null would delete a remote completion
+      await patch(path + "/sessions/" + date, body);
+    }
+    const saveProgress = async (key, progress) => patch(base(key) + "/progress", progress);
 
     async function uploadGuest(key) {
       const g = read(GUEST);
       if (!g) return;
-      const remote = await load(key);
       const days = g.days || {};
+      if (!Object.keys(days).every(goodDate)) throw new Error("bad-path");
+      const remote = await load(key);
       for (const date of Object.keys(days)) {
         const have = remote.sessions[date];
         await saveDay(key, date, have ? S.mergeDay(have, days[date]) : days[date]);

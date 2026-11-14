@@ -193,7 +193,7 @@ test("uploadGuest merges with remote and clears guest", async () => {
   await api.uploadGuest("ana");
   const body = (d) => JSON.parse(calls.find((c) => dbPath(c) === "/brain/U1/ana/sessions/" + d).body);
   assert.deepStrictEqual([body("2026-11-14").modes.peek, body("2026-11-14").completedAt], [700, 5]);
-  assert.deepStrictEqual(body("2026-11-13"), guest.days["2026-11-13"]);
+  assert.deepStrictEqual(body("2026-11-13"), { modes: guest.days["2026-11-13"].modes, minutes: 0, _ms: guest.days["2026-11-13"]._ms });   // null completedAt omitted
   assert.deepStrictEqual(JSON.parse(calls.find((c) => dbPath(c) === "/brain/U1/ana/progress").body), { stars: 2 });
   assert.strictEqual(store.has("brainGames.guest"), false);
 });
@@ -203,7 +203,7 @@ test("uploadGuest keeps remote progress and saves a missing remote day as is", a
   const { api, calls } = rig({ "/brain/U1/ana.json": reply({ progress: { stars: 1 }, sessions: {} }) }, live, { "brainGames.guest": guest });
   await api.uploadGuest("ana");
   assert.strictEqual(calls.some((c) => /progress$/.test(dbPath(c)) && c.method === "PATCH"), false);
-  assert.deepStrictEqual(JSON.parse(calls.find((c) => c.method === "PATCH").body), guest.days["2026-11-14"]);
+  assert.deepStrictEqual(JSON.parse(calls.find((c) => c.method === "PATCH").body), { modes: guest.days["2026-11-14"].modes, minutes: 0, _ms: guest.days["2026-11-14"]._ms });
 });
 
 test("uploadGuest keeps the guest data if a write fails", async () => {
@@ -227,4 +227,76 @@ test("a profile named with a dot gets a Firebase-safe key and path", async () =>
   const seg = dbPath(calls[1]).split("/")[3];
   assert.strictEqual(seg, "ana%20m_");
   assert.ok(seg.indexOf(".") < 0);
+});
+
+const expired = Object.assign({}, live, { expiresAt: NOW });
+const slowRefresh = (ms) => ({
+  "securetoken": async () => { await new Promise((r) => setTimeout(r, ms)); return reply({ id_token: "n", refresh_token: "r2", expires_in: 3600 }); },
+  "/brain/": reply({}),
+});
+
+test("signOut during a refresh is not undone by the refresh", async () => {
+  const { api, store } = rig(slowRefresh(10), expired);
+  const p = api.saveProgress("ana", {});
+  api.signOut();
+  await assert.rejects(() => p, /signed-out/);
+  assert.strictEqual(store.has("brainGames.session"), false);
+});
+
+test("a different user signing in during a refresh keeps the new session", async () => {
+  const { api, store, calls } = rig(slowRefresh(10), expired);
+  const p = api.saveProgress("ana", {});
+  const other = { username: "bo", uid: "U2", idToken: "t2", refreshToken: "ref-b", expiresAt: NOW + 3600000 };
+  store.set("brainGames.session", JSON.stringify(other));
+  await assert.rejects(() => p, /signed-out/);
+  assert.deepStrictEqual(JSON.parse(store.get("brainGames.session")), other);
+  assert.strictEqual(calls.some((c) => c.method === "PATCH"), false);
+});
+
+test("a refresh 400 does not remove a session created during the refresh", async () => {
+  const { api, store } = rig({ "securetoken": async () => { await new Promise((r) => setTimeout(r, 10)); return reply({}, 400); } }, expired);
+  const p = api.saveProgress("ana", {});
+  const other = { username: "bo", uid: "U2", idToken: "t2", refreshToken: "ref-b", expiresAt: NOW + 3600000 };
+  store.set("brainGames.session", JSON.stringify(other));
+  await assert.rejects(() => p, /signed-out/);
+  assert.ok(store.has("brainGames.session"));
+});
+
+test("bad keys and dates throw bad-path before any fetch", async () => {
+  const { api, calls } = rig({}, live);
+  for (const k of ["", "Ana", " ana", "a.b", "a/b", undefined]) {
+    await assert.rejects(() => api.load(k), /bad-path/);
+    await assert.rejects(() => api.saveProgress(k, {}), /bad-path/);
+    await assert.rejects(() => api.saveDay(k, "2026-11-14", day(1)), /bad-path/);
+  }
+  for (const d of ["", "2026-1-14", "2026-11-14/x", "../x", undefined]) {
+    await assert.rejects(() => api.saveDay("ana", d, day(1)), /bad-path/);
+  }
+  assert.strictEqual(calls.length, 0);
+});
+
+test("uploadGuest with a bad guest date writes nothing and keeps the guest", async () => {
+  const guest = { days: { "2026-11-14": day(1), "x/y": day(2) } };
+  const { api, calls, store } = rig({}, live, { "brainGames.guest": guest });
+  await assert.rejects(() => api.uploadGuest("ana"), /bad-path/);
+  assert.strictEqual(calls.length, 0);
+  assert.ok(store.has("brainGames.guest"));
+});
+
+test("saveDay omits a null completedAt but keeps a set one", async () => {
+  const { api, calls } = rig({ "/brain/": reply({}) }, live);
+  await api.saveDay("ana", "2026-11-14", day(5, null));
+  await api.saveDay("ana", "2026-11-13", day(5, 77));
+  const a = JSON.parse(calls[0].body), b = JSON.parse(calls[1].body);
+  assert.strictEqual("completedAt" in a, false);
+  assert.strictEqual(b.completedAt, 77);
+});
+
+test("a 200 reply with invalid JSON throws net", async () => {
+  const bad = { ok: true, status: 200, json: async () => { throw new SyntaxError("x"); } };
+  const a = rig({ "/brain/": bad }, live);
+  await assert.rejects(() => a.api.load("ana"), /^Error: net$/);
+  const b = rig({ "securetoken": bad }, expired);
+  await assert.rejects(() => b.api.load("ana"), /^Error: net$/);
+  assert.ok(b.store.has("brainGames.session"));
 });
