@@ -20,6 +20,6 @@ const Score = {
     return ok ? (choices === 6 ? 15 : 10) : 0;
   },
   bestId: (game, len) => game + "_" + len,
-  isBetter: (score, rec) => typeof score === "number" && isFinite(score) && (!rec || score > rec.score),
+  isBetter: (score, rec) => typeof score === "number" && isFinite(score) && (!rec || !(typeof rec.score === "number" && isFinite(rec.score)) || score > rec.score),
 };
 if (typeof module !== "undefined") module.exports = Score; else window.Score = Score;

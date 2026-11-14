@@ -52,4 +52,8 @@ test("isBetter", () => {
   assert.strictEqual(Score.isBetter(51, { score: 50 }), true);
   assert.strictEqual(Score.isBetter(NaN, { score: 50 }), false);
   assert.strictEqual(Score.isBetter(NaN, undefined), false);
+  assert.strictEqual(Score.isBetter(0, { score: "high" }), true);
+  assert.strictEqual(Score.isBetter(0, { score: NaN }), true);
+  assert.strictEqual(Score.isBetter(0, {}), true);
+  assert.strictEqual(Score.isBetter(NaN, {}), false);
 });
