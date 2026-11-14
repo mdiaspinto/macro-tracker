@@ -11,9 +11,9 @@ test("newDay shape", () => {
     modes: { peek: 0, parade: 0, names: 0 }, minutes: 0, completedAt: null,
     _ms: { peek: 0, parade: 0, names: 0 },
   });
-  assert.strictEqual(Session.PEEK_GOAL_S, 600);
-  assert.strictEqual(Session.PARADE_S, 180);
-  assert.strictEqual(Session.NAMES_MAX_S, 180);
+  assert.strictEqual(Session.DAY_GOAL_S, 600);
+  assert.strictEqual(Session.PEEK_GOAL_S, undefined);
+  assert.strictEqual(Session.nextPart, undefined);
   assert.strictEqual(Session.MAX_DELTA_MS, 2000);
   assert.strictEqual(Session.WEEK_TARGET, 3);
 });
@@ -46,33 +46,48 @@ test("unknown mode is ignored", () => {
   assert.strictEqual(Session.addTime(d, "chess", 1000, 1), d);
 });
 
-test("completes at 600 s of peek and keeps first completedAt", () => {
-  let d = Session.newDay();
-  for (let i = 0; i < 299; i++) d = Session.addTime(d, "peek", 2000, 100);
-  assert.strictEqual(d.modes.peek, 598);
+test("completes at 600 s of total play across modes", () => {
+  const play = (d, mode, sec, at) => {
+    for (let i = 0; i < sec / 2; i++) d = Session.addTime(d, mode, 2000, at);
+    return d;
+  };
+  let d = play(Session.newDay(), "peek", 240, 1);
+  d = play(d, "parade", 180, 2);
+  d = play(d, "names", 178, 3);
+  assert.strictEqual(Session.total(d), 598);
   assert.strictEqual(d.completedAt, null);
-  d = Session.addTime(d, "peek", 2000, 200);
-  assert.strictEqual(d.modes.peek, 600);
+  d = play(d, "names", 2, 4);
+  assert.strictEqual(Session.total(d), 600);
+  assert.strictEqual(d.completedAt, 4);
+});
+
+test("keeps first completedAt", () => {
+  let d = Session.newDay();
+  for (let i = 0; i < 300; i++) d = Session.addTime(d, "peek", 2000, 200);
   assert.strictEqual(d.completedAt, 200);
-  d = Session.addTime(d, "peek", 2000, 300);
+  d = Session.addTime(d, "parade", 2000, 300);
   assert.strictEqual(d.completedAt, 200);
 });
 
-test("parade time alone never completes", () => {
-  let d = Session.newDay();
-  for (let i = 0; i < 400; i++) d = Session.addTime(d, "parade", 2000, 5);
-  assert.strictEqual(d.completedAt, null);
+test("a v1 day with 600 s of peek is complete", () => {
+  const v1 = { modes: { peek: 600, parade: 0, names: 0 }, minutes: 10, completedAt: null };
+  assert.strictEqual(Session.total(v1), 600);
+  assert.strictEqual(Session.addTime(v1, "peek", 0, 50).completedAt, 50);
 });
 
-test("nextPart order peek -> parade -> names -> done", () => {
-  const mk = (peek, parade, names) => ({ modes: { peek, parade, names } });
-  assert.strictEqual(Session.nextPart(mk(0, 0, 0), true, 3), "peek");
-  assert.strictEqual(Session.nextPart(mk(599, 180, 0), true, 3), "peek");
-  assert.strictEqual(Session.nextPart(mk(600, 179, 0), true, 3), "parade");
-  assert.strictEqual(Session.nextPart(mk(600, 180, 0), true, 3), "names");
-  assert.strictEqual(Session.nextPart(mk(600, 180, 180), true, 3), "done");
-  assert.strictEqual(Session.nextPart(mk(600, 180, 0), false, 3), "done");
-  assert.strictEqual(Session.nextPart(mk(600, 180, 0), true, 0), "done");
+test("total sums modes and treats missing modes as 0", () => {
+  assert.strictEqual(Session.total({ modes: { peek: 5, parade: 6, names: 7 } }), 18);
+  assert.strictEqual(Session.total({ modes: { peek: 5 } }), 5);
+  assert.strictEqual(Session.total({ modes: {} }), 0);
+});
+
+test("clampLen rounds, clamps to 1..5, defaults to 3", () => {
+  assert.strictEqual(Session.clampLen("9"), 5);
+  assert.strictEqual(Session.clampLen("0"), 1);
+  assert.strictEqual(Session.clampLen("abc"), 3);
+  assert.strictEqual(Session.clampLen(undefined), 3);
+  assert.strictEqual(Session.clampLen("2"), 2);
+  assert.strictEqual(Session.clampLen(4.6), 5);
 });
 
 test("weekCount counts only this Mon-Sun week", () => {
