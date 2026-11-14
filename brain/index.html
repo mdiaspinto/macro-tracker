@@ -43,7 +43,7 @@
   html,body{margin:0;padding:0}
   body{
     font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:18px;line-height:1.45;background:var(--bg);color:var(--text);
+    font-size:20px;line-height:1.45;background:var(--bg);color:var(--text);
     -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;min-height:100vh;
   }
   /* Playroom behind every screen; a veil darkens it in dark mode. */
@@ -102,7 +102,7 @@
   .streak{color:var(--streak);font-weight:600}
   .mins{color:var(--muted);font-weight:600}
   .gcard{display:grid;grid-template-columns:72px 1fr;gap:10px 14px;align-items:center}
-  .gcard img{width:72px;height:72px;object-fit:contain}
+  .gcard img{width:96px;height:96px;object-fit:contain}
   .gcard h2{margin:0}
   .gcard .btn{grid-column:1/-1}
   .lenpick{display:flex;gap:6px}
@@ -124,39 +124,39 @@
     top:max(10px,env(safe-area-inset-top));display:flex;gap:10px;align-items:center;
     background:var(--panel);border-radius:var(--radius-sm);padding:6px;box-shadow:var(--shadow)}
   .gprog{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;padding-right:6px}
-  .gname{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .gleft{color:var(--muted);font-size:15px;white-space:nowrap}
+  .gname{font-weight:700;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gleft{color:var(--muted);font-size:17px;white-space:nowrap}
   .gprog .bar{height:10px}
-  .meter{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:700;color:var(--brain);min-height:18px}
-  .meter i{width:11px;height:11px;border-radius:50%;background:var(--brain-soft)}
+  .meter{display:flex;align-items:center;gap:5px;font-size:17px;font-weight:700;color:var(--brain);min-height:18px}
+  .meter i{width:13px;height:13px;border-radius:50%;background:var(--brain-soft)}
   .meter i.f{background:var(--brain)}
   .meter b{margin-right:4px}
-  .gscore{font-size:15px;font-weight:700;white-space:nowrap}
+  .gscore{font-size:17px;font-weight:700;white-space:nowrap}
   .toast{position:absolute;z-index:2;left:50%;top:1%;transform:translateX(-50%);padding:6px 20px;pointer-events:none;border-radius:999px;
     background:var(--accent);color:var(--accent-ink);font:700 21px var(--font-display);box-shadow:var(--shadow);white-space:nowrap}
   .ask{position:absolute;left:3%;right:3%;top:15%;background:var(--panel);border-radius:var(--radius);
     padding:14px 12px 16px;box-shadow:var(--shadow);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
-  .q{font-family:var(--font-display);font-size:23px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-  .qimg{width:44px;height:44px}
+  .q{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+  .qimg{width:60px;height:60px}
   .choices{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
-  .cbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:74px;padding:6px 2px 8px;min-height:48px;
+  .cbtn{display:flex;flex-direction:column;align-items:center;gap:4px;width:96px;padding:6px 2px 8px;min-height:48px;
     border-radius:var(--radius-sm);border:2px solid var(--line);background:var(--panel-solid);color:var(--text);
-    font:700 17px "Archivo",sans-serif;cursor:pointer;touch-action:manipulation}
-  .cbtn img{width:60px;height:60px;object-fit:contain}
+    font:700 19px "Archivo",sans-serif;cursor:pointer;touch-action:manipulation}
+  .cbtn img{width:80px;height:80px;object-fit:contain}
   .cbtn:active{border-color:var(--brain)}
   .names{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
-  .slots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;min-height:46px}
-  .slots span{width:46px;height:46px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;overflow:hidden}
+  .slots{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:62px}
+  .slots span{width:62px;height:62px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;overflow:hidden}
   .slots span.f{border-style:solid;border-color:var(--brain);background:var(--panel-solid)}
-  .slots img{width:40px;height:40px;object-fit:contain}
+  .slots img{width:56px;height:56px;object-fit:contain}
 
   /* The rug: box over the cloud rug in the image (percent of the stage). */
   .rug{position:absolute;left:1.5%;width:97%;top:67.5%;height:24.2%}
   .it{position:absolute;transform:translate(-50%,-50%);visibility:hidden;pointer-events:none;user-select:none}
   .it.on{visibility:visible}
-  .it.center{left:50%;top:50%;width:23%;aspect-ratio:1;object-fit:contain}
-  .it.edge{width:14%}
-  .walker{left:50%;top:44%;width:30%;aspect-ratio:1;object-fit:contain}
+  .it.center{left:50%;top:50%;width:32%;aspect-ratio:1;object-fit:contain}
+  .it.edge{width:17%;aspect-ratio:1;object-fit:contain}
+  .walker{left:50%;top:44%;width:44%;aspect-ratio:1;object-fit:contain}
   @media (prefers-reduced-motion: no-preference){
     .walker.go{animation:walk 1s linear both}
     .fb.pop{animation:pop .6s ease-out both}
@@ -171,21 +171,21 @@
   .pos:active{background:var(--brain);border-color:var(--brain)}
   .mask{position:absolute;left:2%;top:-6%;width:96%;height:112%;border-radius:50%;image-rendering:pixelated;visibility:hidden}
   .mask.on{visibility:visible}
-  .fb{position:absolute;left:50%;top:40%;width:36%;transform:translate(-50%,-50%);pointer-events:none}
+  .fb{position:absolute;left:50%;top:40%;width:46%;transform:translate(-50%,-50%);pointer-events:none}
   .live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261124"></script>
-<script src="cast.js?v=20261124"></script>
-<script src="peek.js?v=20261124"></script>
-<script src="parade.js?v=20261124"></script>
-<script src="names.js?v=20261124"></script>
-<script src="session.js?v=20261124"></script>
-<script src="score.js?v=20261124"></script>
-<script src="sync.js?v=20261124"></script>
+<script src="../brain.js?v=20261125"></script>
+<script src="cast.js?v=20261125"></script>
+<script src="peek.js?v=20261125"></script>
+<script src="parade.js?v=20261125"></script>
+<script src="names.js?v=20261125"></script>
+<script src="session.js?v=20261125"></script>
+<script src="score.js?v=20261125"></script>
+<script src="sync.js?v=20261125"></script>
 <script>
 const T = {
   en: {
@@ -338,7 +338,7 @@ const CAST_IDS = Cast.MEMBERS.map((m) => m.id);
 // Game name key and card art per game.
 const GAMES = { peek: ["partPeek", Cast.TARGETS[0].img], parade: ["partParade", "img/teo.webp"], names: ["partNames", "img/flor.webp"] };
 // 8 edge positions on an ellipse inside the rug box, clockwise from the top (percent of the rug box).
-const POS = [0, 1, 2, 3, 4, 5, 6, 7].map((p) => ({ x: 50 + 41 * Math.sin(p * Math.PI / 4), y: 50 - 44 * Math.cos(p * Math.PI / 4) }));
+const POS = [0, 1, 2, 3, 4, 5, 6, 7].map((p) => ({ x: 50 + 41 * Math.sin(p * Math.PI / 4), y: 50 - 62 * Math.cos(p * Math.PI / 4) }));
 
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
