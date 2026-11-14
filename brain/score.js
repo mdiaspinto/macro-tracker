@@ -1,9 +1,10 @@
 // Brain games points (pure, no DOM). A wrong answer is always 0 points.
 const Score = {
-  // 10 at or under the low limit, straight line to 0 at the high limit.
+  // 0 under the minimum time (a tap that fast is a guess), 10 up to the low limit, straight line to 0 at the high limit.
   speedBonus(answerMs, twoQuestions) {
     if (typeof answerMs !== "number" || !isFinite(answerMs)) return 0;
-    const lo = twoQuestions ? 2000 : 1000, hi = twoQuestions ? 10000 : 5000;
+    const min = twoQuestions ? 1000 : 500, lo = twoQuestions ? 2000 : 1000, hi = twoQuestions ? 10000 : 5000;
+    if (answerMs < min) return 0;
     if (answerMs <= lo) return 10;
     if (answerMs >= hi) return 0;
     return Math.round(10 * (hi - answerMs) / (hi - lo));
