@@ -32,3 +32,11 @@ test("already ticked with same time is not counted again", () => {
 test("missing data is a no-op", () => {
   assert.equal(Brain.applyGameSessions({}, null, "2026-11-14"), 0);
 });
+test("skips bad date keys and non-finite completedAt", () => {
+  const u = {};
+  const n = Brain.applyGameSessions(u, { sessions: {
+    "2026-11-14x": { completedAt: T0 }, "2026-11-1": { completedAt: T0 }, "2026-11-13": { completedAt: "5" },
+    "2026-11-12": { completedAt: Infinity }, "2026-11-11": { completedAt: {} }, "2026-11-10": { completedAt: T0 } } }, "2026-11-14");
+  assert.equal(n, 1);
+  assert.deepEqual(Object.keys(u.habits), ["2026-11-10"]);
+});

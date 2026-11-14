@@ -185,7 +185,7 @@ const Brain = (() => {
     let n = 0;
     Object.keys(sessions).forEach(d => {
       const at = sessions[d] && sessions[d].completedAt;
-      if (!at || d < from || d > today) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || typeof at !== "number" || !isFinite(at) || !at || d < from || d > today) return;
       const have = ((user.habitsAt || {})[d] || {}).mind;
       if (have != null && have >= at) return;
       user.habits = user.habits || {}; user.habitsAt = user.habitsAt || {};

@@ -1397,14 +1397,14 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261118"></script>
-<script src="charts.js?v=20261118"></script>
-<script src="brain.js?v=20261118"></script>
-<script src="game.js?v=20261118"></script>
-<script src="coach.js?v=20261118"></script>
-<script src="shop.js?v=20261118"></script>
-<script src="demo.js?v=20261118"></script>
-<script src="tour.js?v=20261118"></script>
+<script src="icons.js?v=20261119"></script>
+<script src="charts.js?v=20261119"></script>
+<script src="brain.js?v=20261119"></script>
+<script src="game.js?v=20261119"></script>
+<script src="coach.js?v=20261119"></script>
+<script src="shop.js?v=20261119"></script>
+<script src="demo.js?v=20261119"></script>
+<script src="tour.js?v=20261119"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -4399,8 +4399,8 @@ function scheduleCloudSync(){
 async function pullBrain(){
   if(demoMode || !cloudEnabled() || !session) return;
   try{
-    const data=await dbFetch("/brain/"+session.uid);
-    if(demoMode || !session || !data) return;
+    const uid=session.uid, data=await dbFetch("/brain/"+uid);
+    if(demoMode || !session || session.uid!==uid || !data) return;   // the account changed while this was in flight
     let n=0;
     state.users.forEach(u=>{ n+=Brain.applyGameSessions(u, data[Brain.profileKey(u.name)], todayStr()); });
     if(n>0){ save(); renderAll(); }
@@ -4563,6 +4563,8 @@ async function doLogin(){
   }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 function doLogout(){
+  // The brain site copies this session; sign it out too so the next person does not play as this account.
+  try{ const b=JSON.parse(localStorage.getItem("brainGames.session")||"null"); if(session && b && b.uid===session.uid){ localStorage.removeItem("brainGames.session"); localStorage.removeItem("brainGames.profile"); } }catch(e){}
   session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
   authEl("usersOverlay").classList.remove("on");
   openAuth();

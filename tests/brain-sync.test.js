@@ -19,7 +19,7 @@ function rig(routes, session, extra) {
   };
   const fetch = async (url, opts) => {
     const o = opts || {};
-    calls.push({ url, method: o.method || "GET", body: o.body });
+    calls.push({ url, method: o.method || "GET", body: o.body, keepalive: o.keepalive });
     const hit = Object.keys(routes).find((k) => url.indexOf(k) >= 0);
     if (!hit) return reply(null);
     const r = routes[hit];
@@ -299,4 +299,28 @@ test("a 200 reply with invalid JSON throws net", async () => {
   const b = rig({ "securetoken": bad }, expired);
   await assert.rejects(() => b.api.load("ana"), /^Error: net$/);
   assert.ok(b.store.has("brainGames.session"));
+});
+
+test("writes use keepalive; reads do not", async () => {
+  const { api, calls } = rig({ "/brain/": reply({}) }, live);
+  await api.load("ana");
+  await api.saveDay("ana", "2026-11-14", day(5, null));
+  await api.saveProgress("ana", { stars: 1 });
+  assert.strictEqual(calls[0].keepalive, undefined);
+  assert.strictEqual(calls[1].keepalive, true);
+  assert.strictEqual(calls[2].keepalive, true);
+});
+
+test("after pin, a write under a different signed-in uid throws signed-out without fetching", async () => {
+  const { api, calls, store } = rig({ "/brain/": reply({}) }, live);
+  api.pin();
+  await api.saveDay("ana", "2026-11-14", day(5, null));
+  store.set("brainGames.session", JSON.stringify(Object.assign({}, live, { uid: "U2" })));
+  const n = calls.length;
+  await assert.rejects(() => api.saveDay("ana", "2026-11-14", day(6, null)), /^Error: signed-out$/);
+  await assert.rejects(() => api.saveProgress("ana", { stars: 1 }), /^Error: signed-out$/);
+  assert.strictEqual(calls.length, n);
+  api.pin();
+  await api.saveProgress("ana", { stars: 1 });
+  assert.ok(dbPath(calls[calls.length - 1]).startsWith("/brain/U2/"));
 });

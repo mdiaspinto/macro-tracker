@@ -167,13 +167,13 @@
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261118"></script>
-<script src="cast.js?v=20261118"></script>
-<script src="peek.js?v=20261118"></script>
-<script src="parade.js?v=20261118"></script>
-<script src="names.js?v=20261118"></script>
-<script src="session.js?v=20261118"></script>
-<script src="sync.js?v=20261118"></script>
+<script src="../brain.js?v=20261119"></script>
+<script src="cast.js?v=20261119"></script>
+<script src="peek.js?v=20261119"></script>
+<script src="parade.js?v=20261119"></script>
+<script src="names.js?v=20261119"></script>
+<script src="session.js?v=20261119"></script>
+<script src="sync.js?v=20261119"></script>
 <script>
 const T = {
   en: {
@@ -527,7 +527,7 @@ async function enterAccount(upload) {
 let pendingUpload = false;
 async function openProfile(p, upload) {
   resetAccount();
-  store.set(K.profile, p.key);
+  store.set(K.profile, p.key); sync.pin();   // writes from now on refuse any other signed-in uid
   Object.assign(state, { key: p.key, name: p.name, guest: false, lang: pickLang(p.lang) });
   showLoading();
   try {
@@ -564,16 +564,19 @@ async function submitAuth(form) {
 }
 
 /* ---------- Game loop: one rAF loop per game screen counts foreground time and drives timed displays ---------- */
-const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null };
+const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null, active: 0 };
+const IDLE_MS = 20000, WAITS = /^(ask|ask2|meet)$/;   // a screen that waits for the player pauses the clock after 20 s idle
 let cur = null, fbTimer = 0;
-function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.raf = requestAnimationFrame(tick); } }
+function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.active = performance.now(); game.raf = requestAnimationFrame(tick); } }
 function loopStop() { cancelAnimationFrame(game.raf); game.raf = 0; }
 function tick(ts) {
+  if (today() !== state.date) return goHome();   // a new day: save the old one, never add play to it
   game.raf = requestAnimationFrame(tick);
+  if (!cur || !WAITS.test(cur.phase)) game.active = ts;   // timed displays and feedback count as play
   if (game.last) {
     const d = ts - game.last;
     if (d > 4 && d < 100) game.frameMs = game.frameMs * 0.9 + d * 0.1;   // measured frame interval
-    state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true;
+    if (ts - game.active < IDLE_MS) { state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true; }
   }
   game.last = ts;
   if (game.onFrame) game.onFrame(ts);
@@ -596,10 +599,12 @@ document.addEventListener("visibilitychange", () => {
     if (cur && /setup|show|mask|walk/.test(cur.phase)) { game.onFrame = null; cur = null; clearStage(); }
     saveNow(); saveProgress();
   } else {
+    if (today() !== state.date) return goHome();
     loopStart();
     if (!cur) ROUND[game.mode]();
   }
 });
+["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => { game.active = performance.now(); }, true));
 addEventListener("pagehide", () => { if (game.mode) { saveNow(); saveProgress(); } else saveNow(); });
 
 function updateClock() {

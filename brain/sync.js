@@ -13,7 +13,7 @@ const Sync = (() => {
     const read = (k) => { try { return JSON.parse(storage.getItem(k) || "null"); } catch (e) { return null; } };
     const write = (k, v) => storage.setItem(k, JSON.stringify(v));
     const db = firebase.databaseURL.replace(/\/+$/, "");
-    let refreshing = null;
+    let refreshing = null, pinned = null;   // pinned: uid of the open profile; writes refuse any other uid
 
     const session = () => read(SESSION);
     const trackerSession = () => {
@@ -77,10 +77,11 @@ const Sync = (() => {
       return refreshing.p;
     }
 
+    // Writes use keepalive so a save sent on pagehide is not cancelled.
     async function dbFetch(path, opts) {
       const token = await idToken();
       let r;
-      try { r = await fetch(db + path + ".json?auth=" + encodeURIComponent(token), Object.assign({ cache: "no-store" }, opts)); }
+      try { r = await fetch(db + path + ".json?auth=" + encodeURIComponent(token), Object.assign({ cache: "no-store" }, opts && opts.method ? { keepalive: true } : null, opts)); }
       catch (e) { throw new Error("net"); }
       if (!r.ok) throw new Error("net");
       try { return await r.json(); } catch (e) { throw new Error("net"); }
@@ -92,7 +93,7 @@ const Sync = (() => {
     function base(key) {
       if (!goodKey(key)) throw new Error("bad-path");
       const s = session();
-      if (!s) throw new Error("signed-out");
+      if (!s || (pinned && s.uid !== pinned)) throw new Error("signed-out");
       return "/brain/" + s.uid + "/" + encodeURIComponent(key);
     }
 
@@ -133,7 +134,7 @@ const Sync = (() => {
     }
 
     return {
-      session, trackerSession, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, uploadGuest,
+      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, uploadGuest,
       signUp: (u, pw) => authCall("signUp", u, pw),
       signIn: (u, pw) => authCall("signInWithPassword", u, pw),
     };
