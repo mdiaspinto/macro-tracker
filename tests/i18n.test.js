@@ -38,3 +38,6 @@ test("demo copy", () => {
   assert.equal(T.en.demoBackupErr, "We could not keep a copy of the data on this device, so nothing changed. Free up some storage and try again.");
   assert.equal(T.es.demoBackupErr, "No pudimos guardar una copia de los datos de este dispositivo, así que no cambió nada. Libera espacio e inténtalo de nuevo.");
 });
+test("brain play link copy", () => {
+  assert.equal(T.en.playBrain, "Play brain games"); assert.equal(T.es.playBrain, "Jugar juegos mentales");
+});
