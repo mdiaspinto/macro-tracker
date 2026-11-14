@@ -116,3 +116,50 @@ test("grade does not mutate input state", () => {
   Peek.grade(s, r.t, r.a);
   assert.strictEqual(JSON.stringify(s), snap);
 });
+
+const Cast = require("../brain/cast.js");
+const CAST_IDS = Cast.MEMBERS.map((m) => m.id);
+
+test("levels 1-3 choices are from different groups", () => {
+  const rng = mk();
+  for (let lv = 1; lv <= 3; lv++) {
+    for (let i = 0; i < 200; i++) {
+      const t = Peek.makeTrial(st({ level: lv }), rng, CAST_IDS, Cast.GROUPS);
+      const g = t.choices.map((id) => Cast.GROUPS[id]);
+      assert.strictEqual(new Set(g).size, g.length);
+      assert.ok(t.choices.includes(t.center));
+    }
+  }
+});
+
+test("level 4 may repeat a group", () => {
+  const rng = mk();
+  let repeat = false;
+  for (let i = 0; i < 500 && !repeat; i++) {
+    const t = Peek.makeTrial(st({ level: 4 }), rng, CAST_IDS, Cast.GROUPS);
+    const g = t.choices.map((id) => Cast.GROUPS[id]);
+    if (new Set(g).size < g.length) repeat = true;
+  }
+  assert.ok(repeat);
+});
+
+test("falls back when groups run out", () => {
+  const groups = { a: "x", b: "x", c: "x" };
+  const t = Peek.makeTrial(st(), mk(), ["a", "b", "c"], groups);
+  assert.strictEqual(t.choices.length, 2);
+  assert.ok(t.choices.includes(t.center));
+  assert.strictEqual(new Set(t.choices).size, 2);
+});
+
+test("no groups argument keeps v1 behavior", () => {
+  const t = Peek.makeTrial(st(), mk(), IDS);
+  assert.strictEqual(t.choices.length, 2);
+  assert.ok(t.choices.includes(t.center));
+});
+
+test("speedStep boundaries", () => {
+  const cases = [[500, 1], [499, 2], [250, 2], [249, 3], [120, 3], [119, 4], [60, 4], [59, 5], [17, 5], [1000, 1]];
+  for (const [ms, step] of cases) assert.strictEqual(Peek.speedStep(ms), step, String(ms));
+  assert.strictEqual(Peek.speedStep("x"), 1);
+  assert.strictEqual(Peek.speedStep(undefined), 1);
+});
