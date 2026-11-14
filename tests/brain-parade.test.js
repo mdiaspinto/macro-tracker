@@ -3,7 +3,7 @@ const assert = require("node:assert");
 const Parade = require("../brain/parade.js");
 
 const mk = () => { let s = 1; return () => (s = s * 16807 % 2147483647) / 2147483647; };
-const IDS = ["coco", "teo", "flor", "hugo"];
+const IDS = ["pepe", "teo", "flor", "hugo"];
 const st = (o) => Object.assign(Parade.init(), o);
 
 test("init values", () => {
@@ -48,7 +48,7 @@ test("reverse only from span 6 on odd rounds", () => {
 });
 
 test("two correct grow span", () => {
-  const round = { seq: ["coco", "teo", "flor"], reverse: false };
+  const round = { seq: ["pepe", "teo", "flor"], reverse: false };
   const a = Parade.grade(st(), round, round.seq);
   assert.strictEqual(a.ok, true);
   assert.deepStrictEqual(a.state, { span: 3, okRun: 1, badRun: 0, count: 1 });
@@ -57,7 +57,7 @@ test("two correct grow span", () => {
 });
 
 test("two wrong shrink span, min 2", () => {
-  const round = { seq: ["coco", "teo", "flor"], reverse: false };
+  const round = { seq: ["pepe", "teo", "flor"], reverse: false };
   const bad = ["hugo", "hugo", "hugo"];
   const a = Parade.grade(st(), round, bad);
   assert.strictEqual(a.ok, false);
@@ -69,8 +69,8 @@ test("two wrong shrink span, min 2", () => {
 });
 
 test("a wrong answer resets okRun and a correct one resets badRun", () => {
-  const round = { seq: ["coco", "teo", "flor"], reverse: false };
-  const bad = ["teo", "coco", "flor"];
+  const round = { seq: ["pepe", "teo", "flor"], reverse: false };
+  const bad = ["teo", "pepe", "flor"];
   const a = Parade.grade(st({ okRun: 1 }), round, bad);
   assert.strictEqual(a.state.okRun, 0);
   assert.strictEqual(a.state.badRun, 1);
@@ -80,16 +80,16 @@ test("a wrong answer resets okRun and a correct one resets badRun", () => {
 });
 
 test("reverse answer graded against reversed seq", () => {
-  const round = { seq: ["coco", "teo", "flor"], reverse: true };
-  assert.strictEqual(Parade.grade(st(), round, ["flor", "teo", "coco"]).ok, true);
-  assert.strictEqual(Parade.grade(st(), round, ["coco", "teo", "flor"]).ok, false);
+  const round = { seq: ["pepe", "teo", "flor"], reverse: true };
+  assert.strictEqual(Parade.grade(st(), round, ["flor", "teo", "pepe"]).ok, true);
+  assert.strictEqual(Parade.grade(st(), round, ["pepe", "teo", "flor"]).ok, false);
 });
 
 test("answer of different length is wrong; grade does not mutate", () => {
-  const round = { seq: ["coco", "teo", "flor"], reverse: false };
+  const round = { seq: ["pepe", "teo", "flor"], reverse: false };
   const s = st(), copy = JSON.stringify(s);
-  assert.strictEqual(Parade.grade(s, round, ["coco", "teo"]).ok, false);
-  assert.strictEqual(Parade.grade(s, round, ["coco", "teo", "flor", "hugo"]).ok, false);
+  assert.strictEqual(Parade.grade(s, round, ["pepe", "teo"]).ok, false);
+  assert.strictEqual(Parade.grade(s, round, ["pepe", "teo", "flor", "hugo"]).ok, false);
   assert.strictEqual(JSON.stringify(s), copy);
-  assert.deepStrictEqual(round.seq, ["coco", "teo", "flor"]);
+  assert.deepStrictEqual(round.seq, ["pepe", "teo", "flor"]);
 });

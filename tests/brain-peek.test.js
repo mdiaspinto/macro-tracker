@@ -3,7 +3,7 @@ const assert = require("node:assert");
 const Peek = require("../brain/peek.js");
 
 const mk = () => { let s = 1; return () => (s = s * 16807 % 2147483647) / 2147483647; };
-const IDS = ["coco", "teo", "flor", "hugo"];
+const IDS = ["pepe", "teo", "flor", "hugo"];
 const st = (o) => Object.assign(Peek.init(), o);
 
 test("init values", () => {
@@ -49,7 +49,7 @@ test("level 4 has 4 choices including center", () => {
 });
 
 test("level 4 with fewer ids uses all ids", () => {
-  const t = Peek.makeTrial(st({ level: 4 }), mk(), ["coco", "teo"]);
+  const t = Peek.makeTrial(st({ level: 4 }), mk(), ["pepe", "teo"]);
   assert.strictEqual(t.choices.length, 2);
 });
 
