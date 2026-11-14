@@ -178,14 +178,14 @@
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261123"></script>
-<script src="cast.js?v=20261123"></script>
-<script src="peek.js?v=20261123"></script>
-<script src="parade.js?v=20261123"></script>
-<script src="names.js?v=20261123"></script>
-<script src="session.js?v=20261123"></script>
-<script src="score.js?v=20261123"></script>
-<script src="sync.js?v=20261123"></script>
+<script src="../brain.js?v=20261124"></script>
+<script src="cast.js?v=20261124"></script>
+<script src="peek.js?v=20261124"></script>
+<script src="parade.js?v=20261124"></script>
+<script src="names.js?v=20261124"></script>
+<script src="session.js?v=20261124"></script>
+<script src="score.js?v=20261124"></script>
+<script src="sync.js?v=20261124"></script>
 <script>
 const T = {
   en: {
@@ -375,8 +375,8 @@ Cast.MEMBERS.concat(Cast.TARGETS, Cast.DISTRACTORS).map((x) => x.img).concat([Ca
 /* ---------- Data ---------- */
 const dayFor = (date) => (state.sessions[date] ? Session.mergeDay(Session.newDay(), state.sessions[date]) : Session.newDay());
 function setProgress(p) {
-  // Parade.upgrade runs once on a saved v2 state (no ms); the next progress save stores the result.
-  state.progress = { peek: (p && p.peek) || Peek.init(), parade: Parade.upgrade(p && p.parade), names: (p && p.names) || {} };
+  // Parade.upgrade eases a saved v2 state once: paradeV = 2 marks it done and the next progress save stores both.
+  state.progress = { peek: (p && p.peek) || Peek.init(), parade: Parade.upgrade(p && p.parade, p && p.paradeV), paradeV: 2, names: (p && p.names) || {} };
 }
 // Convert old guest records ("<game>_<len>") to one record per game and store them beside the old keys.
 // Run it before sync.uploadGuest, which skips old ids.
@@ -580,6 +580,12 @@ async function openProfile(p, upload) {
     if (upload) { migrateGuestBest(); try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
     const d = await sync.load(p.key);
     state.sessions = d.sessions; state.best = Score.migrateBest(d.best); setProgress(d.progress);
+    // A pending record (same account and profile, game id) that is higher than the loaded best shows at once.
+    const s0 = sync.session(), pm = pendingMap();
+    if (s0) Object.keys(pm).forEach((pk) => {
+      const pre = s0.uid + "/" + p.key + "/", id = pk.slice(pre.length);
+      if (pk.indexOf(pre) === 0 && /^(peek|parade|names)$/.test(id) && Score.isBetter(pm[pk].score, state.best[id])) state.best[id] = pm[pk];
+    });
     // A converted record higher than the remote new-id record joins the pending list, so each id is sent once.
     const s = sync.session(), m = pendingMap();
     if (s) Object.keys(state.best).forEach((id) => {

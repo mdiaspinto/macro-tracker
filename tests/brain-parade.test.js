@@ -122,12 +122,31 @@ test("gridSize is span + 1, max 6", () => {
   assert.strictEqual(Parade.gridSize(9), 6);
 });
 
-test("upgrade is applied once", () => {
+test("upgrade without marker cuts span once", () => {
   const v2 = { span: 5, okRun: 1, badRun: 0, count: 7 };
   const a = Parade.upgrade(v2);
   assert.deepStrictEqual(a, { span: 4, ms: 1800, okRun: 1, badRun: 0, count: 7 });
-  assert.strictEqual(Parade.upgrade(a), a);
   assert.strictEqual(Parade.upgrade({ span: 2 }).span, 2);
-  assert.deepStrictEqual(Parade.upgrade(null), Parade.init());
+  assert.deepStrictEqual(Parade.upgrade(null, 2), Parade.init());
   assert.deepStrictEqual(Parade.upgrade(undefined), Parade.init());
+});
+
+test("upgrade with marker and no ms sets ms only", () => {
+  const old = { span: 4, okRun: 0, badRun: 1, count: 9 };
+  assert.deepStrictEqual(Parade.upgrade(old, 2), { span: 4, ms: 1800, okRun: 0, badRun: 1, count: 9 });
+});
+
+test("upgrade with marker and ms changes nothing", () => {
+  const cur = { span: 4, ms: 1200, okRun: 0, badRun: 0, count: 9 };
+  assert.strictEqual(Parade.upgrade(cur, 2), cur);
+});
+
+test("upgrade twice with the marker changes nothing more", () => {
+  const a = Parade.upgrade({ span: 5, okRun: 0, badRun: 0, count: 3 });
+  const b = Parade.upgrade(a, 2);
+  assert.strictEqual(b, a);
+  assert.strictEqual(b.span, 4);
+  // an old tab drops ms and keeps the marker: the next load restores ms and keeps the span
+  const { ms, ...old } = a;
+  assert.deepStrictEqual(Parade.upgrade(old, 2), a);
 });
