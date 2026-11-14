@@ -4,9 +4,7 @@ const Session = (() => {
   const B = typeof require !== "undefined" ? require("../brain.js") : window.Brain;
   const MODES = ["peek", "parade", "names"];
   return {
-    PEEK_GOAL_S: 600,
-    PARADE_S: 180,
-    NAMES_MAX_S: 180,
+    DAY_GOAL_S: 600,
     MAX_DELTA_MS: 2000,
     WEEK_TARGET: 3,
     newDay: () => ({
@@ -35,14 +33,16 @@ const Session = (() => {
       const ms = {};
       MODES.forEach((m) => { ms[m] = Session._msOf(day, m) + (m === mode ? add : 0); });
       const next = Session._fromMs(ms, day.completedAt);
-      if (next.completedAt == null && next.modes.peek >= Session.PEEK_GOAL_S) next.completedAt = now;
+      if (next.completedAt == null && Session.total(next) >= Session.DAY_GOAL_S) next.completedAt = now;
       return next;
     },
-    nextPart(day, namesAvailable, namesDue) {
-      if (day.modes.peek < Session.PEEK_GOAL_S) return "peek";
-      if (day.modes.parade < Session.PARADE_S) return "parade";
-      if (namesAvailable && namesDue > 0 && day.modes.names < Session.NAMES_MAX_S) return "names";
-      return "done";
+    // Total play seconds across modes; a missing mode counts as 0.
+    total: (day) => MODES.reduce((n, m) => n + (day.modes[m] || 0), 0),
+    // Game length in whole minutes: 1..5, default 3.
+    clampLen(value) {
+      const blank = value == null || (typeof value === "string" && value.trim() === "");
+      const n = blank ? NaN : Number(value);
+      return Number.isFinite(n) ? Math.min(5, Math.max(1, Math.round(n))) : 3;
     },
     // Completed days from start to end, both inclusive.
     _countRange(days, start, end) {

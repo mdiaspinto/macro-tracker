@@ -100,14 +100,17 @@
   .ring img{position:absolute;inset:26px;width:98px;height:98px}
   .ringtxt{font-family:var(--font-display);font-size:22px;font-weight:700}
   .streak{color:var(--streak);font-weight:600}
-  .parts{display:flex;flex-direction:column;gap:14px;margin-top:6px}
-  .part{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
-  .part b{font-size:19px}
-  .part .t{color:var(--muted);font-size:17px}
+  .mins{color:var(--muted);font-weight:600}
+  .gcard{display:grid;grid-template-columns:72px 1fr;gap:10px 14px;align-items:center}
+  .gcard img{width:72px;height:72px;object-fit:contain}
+  .gcard h2{margin:0}
+  .gcard .btn{grid-column:1/-1}
+  .lenpick{display:flex;gap:6px}
+  .lenpick button{flex:1;min-width:0;min-height:52px;padding:0;white-space:nowrap;border-radius:var(--radius-sm);border:2px solid var(--line);
+    background:var(--panel-solid);color:var(--text);font:700 17px "Archivo",sans-serif;cursor:pointer;touch-action:manipulation}
+  .lenpick button[aria-pressed="true"]{background:var(--brain);border-color:var(--brain);color:#fff}
   .bar{grid-column:1/-1;height:12px;border-radius:999px;background:var(--brain-soft);overflow:hidden}
   .bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--brain)}
-  .ok{color:var(--good);font-weight:700;display:inline-flex;align-items:center;gap:4px}
-  .ok svg{width:20px;height:20px}
   .who{color:var(--muted);font-size:17px}
   .cheer{width:168px;height:168px;margin:0 auto}
 
@@ -123,6 +126,12 @@
   .gname{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gleft{color:var(--muted);font-size:15px;white-space:nowrap}
   .gprog .bar{height:10px}
+  .meter{grid-column:1/-1;display:flex;align-items:center;gap:5px;font-size:15px;font-weight:700;color:var(--brain);min-height:18px}
+  .meter i{width:11px;height:11px;border-radius:50%;background:var(--brain-soft)}
+  .meter i.f{background:var(--brain)}
+  .meter b{margin-right:4px}
+  .toast{position:absolute;z-index:2;left:50%;top:1%;transform:translateX(-50%);padding:6px 20px;pointer-events:none;border-radius:999px;
+    background:var(--accent);color:var(--accent-ink);font:700 21px var(--font-display);box-shadow:var(--shadow);white-space:nowrap}
   .ask{position:absolute;left:3%;right:3%;top:15%;background:var(--panel);border-radius:var(--radius);
     padding:14px 12px 16px;box-shadow:var(--shadow);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
   .q{font-family:var(--font-display);font-size:23px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
@@ -131,21 +140,21 @@
   .cbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:74px;padding:6px 2px 8px;min-height:48px;
     border-radius:var(--radius-sm);border:2px solid var(--line);background:var(--panel-solid);color:var(--text);
     font:700 17px "Archivo",sans-serif;cursor:pointer;touch-action:manipulation}
-  .cbtn img{width:60px;height:60px}
+  .cbtn img{width:60px;height:60px;object-fit:contain}
   .cbtn:active{border-color:var(--brain)}
   .names{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
   .slots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;min-height:46px}
   .slots span{width:46px;height:46px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;overflow:hidden}
   .slots span.f{border-style:solid;border-color:var(--brain);background:var(--panel-solid)}
-  .slots img{width:40px;height:40px}
+  .slots img{width:40px;height:40px;object-fit:contain}
 
   /* The rug: box over the cloud rug in the image (percent of the stage). */
   .rug{position:absolute;left:1.5%;width:97%;top:67.5%;height:24.2%}
   .it{position:absolute;transform:translate(-50%,-50%);visibility:hidden;pointer-events:none;user-select:none}
   .it.on{visibility:visible}
-  .it.center{left:50%;top:50%;width:23%}
+  .it.center{left:50%;top:50%;width:23%;aspect-ratio:1;object-fit:contain}
   .it.edge{width:14%}
-  .walker{left:50%;top:44%;width:30%}
+  .walker{left:50%;top:44%;width:30%;aspect-ratio:1;object-fit:contain}
   @media (prefers-reduced-motion: no-preference){
     .walker.go{animation:walk 1s linear both}
     .fb.pop{animation:pop .6s ease-out both}
@@ -167,26 +176,35 @@
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261119"></script>
-<script src="cast.js?v=20261119"></script>
-<script src="peek.js?v=20261119"></script>
-<script src="parade.js?v=20261119"></script>
-<script src="names.js?v=20261119"></script>
-<script src="session.js?v=20261119"></script>
-<script src="sync.js?v=20261119"></script>
+<script src="../brain.js?v=20261120"></script>
+<script src="cast.js?v=20261120"></script>
+<script src="peek.js?v=20261120"></script>
+<script src="parade.js?v=20261120"></script>
+<script src="names.js?v=20261120"></script>
+<script src="session.js?v=20261120"></script>
+<script src="sync.js?v=20261120"></script>
 <script>
 const T = {
   en: {
     title: "Brain games",
     tagline: "Short daily games linked to a sharper mind",
-    play: "Play today's games",
+    play: "Play",
     ring: "{n} of 3 this week",
     back: "Back to tracker",
     peekQ1: "Who peeked out?",
     peekQ2: "Where was the {thing}?",
     paradeQ: "Tap them in the same order",
     paradeQRev: "Tap them in reverse order",
-    done: "Done for today. See you next time!",
+    done: "Well played!",
+    chooseGame: "Choose a game",
+    length: "Length",
+    lenN: "{n} min",
+    minutesToday: "{n} of 10 minutes today",
+    todayCounts: "Today counts!",
+    playAgain: "Play again",
+    played: "You played {m} min",
+    level: "Level {n}",
+    choicesN: "{n} choices",
     continueAs: "Continue as {name}",
     signIn: "Sign in",
     signUp: "Create account",
@@ -210,20 +228,14 @@ const T = {
     errSignedOut: "Please sign in again.",
     errTooMany: "Too many tries. Wait a few minutes and try again.",
     errAuth: "Something went wrong. Please try again.",
-    today: "Today",
     streak0: "Play 3 days this week to start a streak",
     streak1: "1 week in a row",
     streakN: "{n} weeks in a row",
     partPeek: "Peek-a-boo",
     partParade: "Toy parade",
     partNames: "Name that friend",
-    partTime: "{m} of {goal} min",
-    partDone: "Done",
     minLeft: "{m} min left",
     home: "Home",
-    nice: "Nice work!",
-    next: "Next: {part}",
-    continue: "Continue",
     posN: "position {n}",
     thing_balloon: "balloon",
     thing_star: "star",
@@ -241,14 +253,23 @@ const T = {
   es: {
     title: "Juegos mentales",
     tagline: "Juegos cortos para cada día, ligados a una mente más ágil",
-    play: "Jugar hoy",
+    play: "Jugar",
     ring: "{n} de 3 esta semana",
     back: "Volver al tracker",
     peekQ1: "¿Quién se asomó?",
     peekQ2: "¿Dónde apareció {thing}?",
     paradeQ: "Tócalos en el mismo orden",
     paradeQRev: "Tócalos al revés",
-    done: "¡Listo por hoy! ¡Hasta la próxima!",
+    done: "¡Bien jugado!",
+    chooseGame: "Elige un juego",
+    length: "Duración",
+    lenN: "{n} min",
+    minutesToday: "{n} de 10 minutos hoy",
+    todayCounts: "¡Hoy cuenta!",
+    playAgain: "Jugar otra vez",
+    played: "Jugaste {m} min",
+    level: "Nivel {n}",
+    choicesN: "{n} opciones",
     continueAs: "Continuar como {name}",
     signIn: "Iniciar sesión",
     signUp: "Crear cuenta",
@@ -272,20 +293,14 @@ const T = {
     errSignedOut: "Vuelve a iniciar sesión, por favor.",
     errTooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
     errAuth: "Algo salió mal. Inténtalo de nuevo.",
-    today: "Hoy",
     streak0: "Juega 3 días esta semana para empezar una racha",
     streak1: "1 semana seguida",
     streakN: "{n} semanas seguidas",
     partPeek: "Cucú",
     partParade: "Desfile de juguetes",
     partNames: "¿Cómo se llama?",
-    partTime: "{m} de {goal} min",
-    partDone: "Listo",
     minLeft: "Quedan {m} min",
     home: "Inicio",
-    nice: "¡Muy bien!",
-    next: "Ahora: {part}",
-    continue: "Seguir",
     posN: "posición {n}",
     thing_balloon: "el globo",
     thing_star: "la estrella",
@@ -307,9 +322,10 @@ const FIREBASE = {
   apiKey: "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ",
   emailDomain: "macro-tracker-d8908.firebaseapp.com",
 };
-const K = { profile: "brainGames.profile", guest: "brainGames.guest", lang: "brainGames.lang" };
+const K = { profile: "brainGames.profile", guest: "brainGames.guest", lang: "brainGames.lang", len: "brainGames.len" };
 const CAST_IDS = Cast.MEMBERS.map((m) => m.id);
-const PARTS = { peek: ["partPeek", Session.PEEK_GOAL_S], parade: ["partParade", Session.PARADE_S], names: ["partNames", Session.NAMES_MAX_S] };
+// Game name key and card art per game.
+const GAMES = { peek: ["partPeek", Cast.TARGETS[0].img], parade: ["partParade", "img/teo.webp"], names: ["partNames", "img/flor.webp"] };
 // 8 edge positions on an ellipse inside the rug box, clockwise from the top (percent of the rug box).
 const POS = [0, 1, 2, 3, 4, 5, 6, 7].map((p) => ({ x: 50 + 41 * Math.sin(p * Math.PI / 4), y: 50 - 44 * Math.cos(p * Math.PI / 4) }));
 
@@ -351,6 +367,9 @@ function setProgress(p) {
   state.progress = { peek: (p && p.peek) || Peek.init(), parade: (p && p.parade) || Parade.init(), names: (p && p.names) || {} };
 }
 const namesOn = () => Names.available(CAST_IDS);
+// Game length in minutes, stored as a plain string.
+function getLen() { try { return Session.clampLen(localStorage.getItem(K.len)); } catch (e) { return 3; } }
+function setLen(n) { try { localStorage.setItem(K.len, String(Session.clampLen(n))); } catch (e) {} }
 function namesQueue(date) { const p = Names.plan(state.progress.names, CAST_IDS, date); return p.review.concat(p.intro); }
 
 // Save pipeline. Guests write localStorage at once. Accounts queue dates and progress; one PATCH is in
@@ -417,7 +436,6 @@ const backLink = () => (sync.trackerSession() ? `<a class="back" href="../">${es
 const langToggle = () => `<div class="lang" role="group" aria-label="${esc(t("langLabel"))}">` +
   ["en", "es"].map((l) => `<button data-act="lang" data-v="${l}" aria-pressed="${state.lang === l}">${esc(t(l === "en" ? "langEn" : "langEs"))}</button>`).join("") + `</div>`;
 const topBar = () => `<div class="top">${backLink()}${langToggle()}</div>`;
-const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function arc(a0, a1) {
   const p = (a) => [60 + 50 * Math.sin(a * Math.PI / 180), 60 - 50 * Math.cos(a * Math.PI / 180)].map((v) => v.toFixed(2)).join(" ");
@@ -477,22 +495,21 @@ function showPicker() {
     <div class="card stack">${state.profiles.map((p, i) => `<button class="btn ghost wide" data-act="profile" data-i="${i}">${esc(p.name)}</button>`).join("")}
     <button class="btn link" data-act="signout">${esc(t("signOut"))}</button></div></div>`, showPicker);
 }
-function partsHTML(day) {
-  return Object.keys(PARTS).filter((m) => m !== "names" || namesOn()).map((m) => {
-    const goal = PARTS[m][1], s = Math.min(goal, day.modes[m]), full = s >= goal;
-    return `<div class="part"><b>${esc(t(PARTS[m][0]))}</b>
-      ${full ? `<span class="ok">${CHECK}${esc(t("partDone"))}</span>` : `<span class="t">${esc(t("partTime", { m: Math.floor(s / 60), goal: goal / 60 }))}</span>`}
-      <div class="bar"><i style="width:${(100 * s / goal).toFixed(1)}%"></i></div></div>`;
-  }).join("");
+function gamesHTML() {
+  const len = getLen();
+  const lens = [1, 2, 3, 4, 5].map((n) => `<button data-act="len" data-v="${n}" aria-pressed="${n === len}">${esc(t("lenN", { n }))}</button>`).join("");
+  const cards = Object.keys(GAMES).filter((m) => m !== "names" || namesOn()).map((m) =>
+    `<div class="card gcard"><img src="${GAMES[m][1]}" alt=""><h2>${esc(t(GAMES[m][0]))}</h2>
+      <button class="btn primary wide" data-act="play" data-v="${m}">${esc(t("play"))}</button></div>`).join("");
+  return `<div class="card stack"><h2 id="lenLbl">${esc(t("length"))}</h2>
+    <div class="lenpick" role="group" aria-labelledby="lenLbl">${lens}</div></div>${cards}`;
 }
 function showHome() {
   stopGame();
-  const d = today(), day = dayFor(d), next = Session.nextPart(day, namesOn(), namesQueue(d).length);
+  const n = Math.min(10, Math.floor(Session.total(dayFor(today())) / 60));
   render(`<div class="page">${topBar()}
-    <div class="card stack center"><h1>${esc(t("title"))}</h1>${ringHTML()}</div>
-    <div class="card"><h2>${esc(t("today"))}</h2><div class="parts">${partsHTML(day)}</div></div>
-    ${next === "done" ? `<div class="card center"><p class="ringtxt">${esc(t("done"))}</p></div>`
-      : `<button class="btn primary wide" data-act="play" style="min-height:64px;font-size:21px">${esc(t("play"))}</button>`}
+    <div class="card stack center"><h1>${esc(t("title"))}</h1>${ringHTML()}<p class="mins">${esc(t("minutesToday", { n }))}</p></div>
+    ${gamesHTML()}
     <div class="card stack center">
       ${state.guest ? `<p>${esc(t("guestNote"))}</p><p class="muted">${esc(t("guestSave"))}</p>
         <button class="btn ghost wide" data-act="auth" data-v="up">${esc(t("signUp"))}</button>
@@ -500,16 +517,15 @@ function showHome() {
       : `<p class="who">${esc(t("playingAs", { name: state.name }))}</p><button class="btn link" data-act="signout">${esc(t("signOut"))}</button>`}
     </div></div>`, showHome);
 }
-function showDone() {
+// After a game: cheer, time played, play again or choose a game.
+function showCheer(mode, playMs) {
   stopGame();
-  const d = today(), next = Session.nextPart(dayFor(d), namesOn(), namesQueue(d).length);
-  render(`<div class="page">${topBar()}<div class="card stack center">
+  const m = Math.max(1, Math.round(playMs / 60000));
+  render(`<div class="page"><div class="card stack center">
     <img class="cheer" src="${Cast.ART.cheer}" alt="">
-    <h1>${esc(next === "done" ? t("done") : t("nice"))}</h1>
-    ${next === "done" ? "" : `<p class="ringtxt">${esc(t("next", { part: t(PARTS[next][0]) }))}</p>`}
-    ${ringHTML()}
-    ${next === "done" ? "" : `<button class="btn primary wide" data-act="play">${esc(t("continue"))}</button>`}
-    <button class="btn ghost wide" data-act="home">${esc(t("home"))}</button></div></div>`, showDone);
+    <h1>${esc(t("done"))}</h1><p class="ringtxt">${esc(t("played", { m }))}</p>
+    <button class="btn primary wide" data-act="play" data-v="${mode}">${esc(t("playAgain"))}</button>
+    <button class="btn ghost wide" data-act="home">${esc(t("chooseGame"))}</button></div></div>`, () => showCheer(mode, playMs));
 }
 
 /* ---------- Accounts ---------- */
@@ -564,9 +580,11 @@ async function submitAuth(form) {
 }
 
 /* ---------- Game loop: one rAF loop per game screen counts foreground time and drives timed displays ---------- */
-const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null, active: 0 };
+// playMs/lenMs: this game's own active time and length; run: Name that friend choice count and streaks.
+const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null, active: 0,
+  playMs: 0, lenMs: 0, run: null };
 const IDLE_MS = 20000, WAITS = /^(ask|ask2|meet)$/;   // a screen that waits for the player pauses the clock after 20 s idle
-let cur = null, fbTimer = 0;
+let cur = null, fbTimer = 0, toastTimer = 0;
 function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.active = performance.now(); game.raf = requestAnimationFrame(tick); } }
 function loopStop() { cancelAnimationFrame(game.raf); game.raf = 0; }
 function tick(ts) {
@@ -576,7 +594,12 @@ function tick(ts) {
   if (game.last) {
     const d = ts - game.last;
     if (d > 4 && d < 100) game.frameMs = game.frameMs * 0.9 + d * 0.1;   // measured frame interval
-    if (ts - game.active < IDLE_MS) { state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true; }
+    if (ts - game.active < IDLE_MS) {
+      const was = state.day.completedAt;
+      state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true;
+      if (d > 0 && d <= Session.MAX_DELTA_MS) game.playMs += d;   // same rule as addTime
+      if (was == null && state.day.completedAt != null) showToast(t("todayCounts"));
+    }
   }
   game.last = ts;
   if (game.onFrame) game.onFrame(ts);
@@ -588,7 +611,7 @@ function hold(t0, ms, fn) {
   game.onFrame = (ts) => { if (ts - t0 >= ms - game.frameMs / 2) { game.onFrame = null; fn(ts); } };
 }
 function stopGame() {
-  loopStop(); clearTimeout(fbTimer);
+  loopStop(); clearTimeout(fbTimer); clearTimeout(toastTimer);
   game.mode = null; game.onFrame = null; cur = null;
 }
 document.addEventListener("visibilitychange", () => {
@@ -601,7 +624,7 @@ document.addEventListener("visibilitychange", () => {
   } else {
     if (today() !== state.date) return goHome();
     loopStart();
-    if (!cur) ROUND[game.mode]();
+    if (!cur) nextRound();
   }
 });
 ["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => { game.active = performance.now(); }, true));
@@ -609,12 +632,28 @@ addEventListener("pagehide", () => { if (game.mode) { saveNow(); saveProgress();
 
 function updateClock() {
   if (!game.mode) return;
-  const s = state.day.modes[game.mode];
-  if (s === game.shownS) return;
-  game.shownS = s;
-  const goal = PARTS[game.mode][1], bar = $("gbar"), left = $("gleft");
-  if (bar) bar.style.width = Math.min(100, 100 * s / goal).toFixed(1) + "%";
-  if (left) left.textContent = t("minLeft", { m: Math.max(0, Math.ceil((goal - s) / 60)) });
+  const sec = Math.floor(game.playMs / 1000);
+  if (sec === game.shownS) return;
+  game.shownS = sec;
+  const bar = $("gbar"), left = $("gleft");
+  if (bar) bar.style.width = Math.min(100, 100 * game.playMs / game.lenMs).toFixed(1) + "%";
+  if (left) left.textContent = t("minLeft", { m: Math.max(0, Math.ceil((game.lenMs - game.playMs) / 60000)) });
+}
+// Difficulty meter: Peek level and speed step, Parade sequence length, Names choice count.
+function updateMeter() {
+  const el = $("meter");
+  if (!el) return;
+  const dots = (n, on) => Array.apply(null, Array(n)).map((x, i) => `<i class="${i < on ? "f" : ""}"></i>`).join("");
+  const p = state.progress;
+  if (game.mode === "peek") el.innerHTML = `<b>${esc(t("level", { n: p.peek.level }))}</b>${dots(5, Peek.speedStep(p.peek.ms))}`;
+  else if (game.mode === "parade") el.innerHTML = dots(p.parade.span, p.parade.span);
+  else el.innerHTML = `<b>${esc(t("choicesN", { n: game.run.choices }))}</b>`;
+}
+function showToast(msg) {
+  const el = $("toast");
+  if (!el) return;
+  el.textContent = msg; el.hidden = false; $("live").textContent = msg;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2000);
 }
 function stageHTML(mode) {
   let rug = "";
@@ -626,26 +665,25 @@ function stageHTML(mode) {
   else rug = `<img class="it center" id="pc" alt="">`;
   return `<div class="stage-wrap">
     <div class="ghead"><button class="btn small ghost" data-act="home">${esc(t("home"))}</button>
-      <div class="gprog"><span class="gname">${esc(t(PARTS[mode][0]))}</span><span class="gleft" id="gleft"></span><div class="bar"><i id="gbar"></i></div></div></div>
-    <div class="stage"><div class="ask" id="ask" hidden></div>
+      <div class="gprog"><span class="gname">${esc(t(GAMES[mode][0]))}</span><span class="gleft" id="gleft"></span><div class="bar"><i id="gbar"></i></div>
+        <div class="meter" id="meter"></div></div></div>
+    <div class="stage"><div class="ask" id="ask" hidden></div><div class="toast" id="toast" hidden></div>
     <div class="rug">${rug}<img class="fb" id="fb" alt="" hidden></div>
   </div></div>`;
 }
-function startPart() {
+function startGame(mode) {
+  if (!GAMES[mode] || (mode === "names" && !namesOn())) return;
   state.date = today(); state.day = dayFor(state.date);
-  const part = Session.nextPart(state.day, namesOn(), namesQueue(state.date).length);
-  if (part === "done") return showDone();
-  game.mode = part; game.shownS = -1; cur = null;
-  game.queue = part === "names" ? namesQueue(state.date) : null; game.met = {};
-  render(stageHTML(part));
-  updateClock(); loopStart(); ROUND[part]();
+  Object.assign(game, { mode, shownS: -1, playMs: 0, lenMs: getLen() * 60000, met: {}, queue: [], run: null });
+  cur = null;
+  if (mode === "names") game.run = Names.startRun(state.progress.names);
+  render(stageHTML(mode));
+  updateClock(); updateMeter(); loopStart(); nextRound();
 }
-function endPart() { saveNow(); saveProgress(); showDone(); }
+// The round in progress always finishes; the game ends at the next round once its time is up.
+function nextRound() { if (game.playMs >= game.lenMs) endGame(); else ROUND[game.mode](); }
+function endGame() { const mode = game.mode, ms = game.playMs; saveNow(); saveProgress(); showCheer(mode, ms); }
 function goHome() { if (game.mode) { saveNow(); saveProgress(); } showHome(); }
-function partOver() {
-  if (game.mode === "names" && !game.queue.length) return true;
-  return state.day.modes[game.mode] >= PARTS[game.mode][1];
-}
 function showAsk(html) { const a = $("ask"); a.innerHTML = html; a.hidden = false; }
 function hideAsk() { $("ask").hidden = true; }
 function clearStage() {
@@ -661,7 +699,8 @@ function feedback(ok) {
   fb.src = ok ? Cast.ART.cheer : Cast.ART.oops; fb.hidden = false;
   fb.classList.remove("pop"); void fb.offsetWidth; fb.classList.add("pop");
   $("live").textContent = t(ok ? "right" : "wrong");
-  fbTimer = setTimeout(() => { fb.hidden = true; if (partOver()) endPart(); else ROUND[game.mode](); }, 600);
+  updateMeter();
+  fbTimer = setTimeout(() => { fb.hidden = true; nextRound(); }, 600);
 }
 
 /* Peek-a-boo: show for ms, mask 250 ms, then ask. */
@@ -674,7 +713,7 @@ function drawMask() {
   x.putImageData(img, 0, 0);
 }
 function peekRound() {
-  const st = state.progress.peek, tr = Peek.makeTrial(st, Math.random, CAST_IDS), target = pick(Cast.TARGETS);
+  const st = state.progress.peek, tr = Peek.makeTrial(st, Math.random, CAST_IDS, Cast.GROUPS), target = pick(Cast.TARGETS);
   const me = cur = { tr, target, ans: {}, phase: "setup" };
   clearStage();
   const pc = $("pc"), shown = [pc];
@@ -718,10 +757,11 @@ function peekAnswer(key, v) {
   feedback(r.ok);
 }
 
-/* Toy parade: each character walks across for 1 s, then the player taps them in order. */
+/* Toy parade: a pool of 6 random friends; each walks across for 1 s, then the player taps them in order. */
 function paradeRound() {
-  const r = Parade.makeSequence(state.progress.parade, Math.random, CAST_IDS);
-  const me = cur = { r, ans: [], phase: "setup" };
+  const pool = Parade._shuffle(CAST_IDS, Math.random).slice(0, 6);
+  const r = Parade.makeSequence(state.progress.parade, Math.random, pool);
+  const me = cur = { r, pool, ans: [], phase: "setup" };
   clearStage();
   const w = $("walker");
   let i = 0;
@@ -732,7 +772,7 @@ function paradeRound() {
     i++;
     hold(ts, 1000, step);
   };
-  const imgs = CAST_IDS.map((id) => { const x = new Image(); x.src = member(id).img; return x; });
+  const imgs = pool.map((id) => { const x = new Image(); x.src = member(id).img; return x; });
   decoded(imgs).then(() => {
     if (cur !== me) return;
     game.onFrame = (ts) => { game.onFrame = null; me.phase = "walk"; step(ts); };
@@ -740,7 +780,7 @@ function paradeRound() {
 }
 function askParade() {
   showAsk(`<p class="q">${esc(t(cur.r.reverse ? "paradeQRev" : "paradeQ"))}</p><div class="slots" id="slots"></div>
-    <div class="choices">${CAST_IDS.map(charBtn).join("")}</div>
+    <div class="choices">${cur.pool.map(charBtn).join("")}</div>
     <button class="btn small link" data-act="undo">${esc(t("undo"))}</button>`);
   renderSlots();
 }
@@ -759,11 +799,17 @@ function paradeTap(id) {
   feedback(g.ok);
 }
 
-/* Name that friend: Leitner cards; a wrong card comes back at the end of the session. */
+/* Name that friend: Leitner cards; a wrong card comes back later in the game.
+   With no card due and no intro left, practice rounds show the cards due soonest and do not grade. */
 function namesRound() {
-  const id = game.queue.shift();
-  if (!id) return endPart();
-  cur = { id, phase: "ask" };
+  if (!game.queue.length) {
+    const q = namesQueue(state.date);
+    game.queue = q.length ? q.map((id) => ({ id })) : Names.practice(state.progress.names, CAST_IDS, 5).map((id) => ({ id, practice: true }));
+  }
+  const next = game.queue.shift();
+  if (!next) return endGame();
+  const id = next.id;
+  cur = { id, practice: !!next.practice, phase: "ask" };
   clearStage();
   const pc = $("pc"); pc.src = member(id).img; pc.classList.add("on");
   const isNew = !Object.prototype.hasOwnProperty.call(state.progress.names, id);
@@ -775,14 +821,18 @@ function namesRound() {
 }
 function askName() {
   cur.phase = "ask";
-  showAsk(`<p class="q">${esc(t("namesQ"))}</p><div class="names">${Names.choices(cur.id, CAST_IDS, Math.random)
+  showAsk(`<p class="q">${esc(t("namesQ"))}</p><div class="names">${Names.choices(cur.id, CAST_IDS, Math.random, game.run.choices)
     .map((x) => `<button class="btn ghost" data-act="name" data-id="${x}">${esc(member(x).name)}</button>`).join("")}</div>`);
 }
 function nameAnswer(id) {
   if (cur.phase !== "ask") return;
-  const ok = id === cur.id;
-  state.progress.names = Names.grade(state.progress.names, cur.id, ok, state.date);
-  if (!ok) game.queue.push(cur.id);
+  const ok = id === cur.id, n = game.run.choices;
+  if (!cur.practice) {
+    state.progress.names = Names.grade(state.progress.names, cur.id, ok, state.date);
+    if (!ok) game.queue.push({ id: cur.id });
+  }
+  game.run = Names.adapt(game.run, ok);
+  if (game.run.choices !== n) state.progress.names = Names.saveChoices(state.progress.names, game.run.choices);
   $("pc").classList.remove("on");
   feedback(ok);
 }
@@ -802,7 +852,8 @@ app.addEventListener("click", (e) => {
     case "profile": openProfile(state.profiles[+b.dataset.i], pendingUpload); break;
     case "signout": saveNow(); saveProgress(); resetAccount(); sync.signOut(); Object.assign(state, { key: null, name: "", guest: false, sessions: {}, progress: null }); showWelcome(); break;
     case "retry": if (failRetry) failRetry(); break;
-    case "play": startPart(); break;
+    case "play": startGame(v); break;
+    case "len": setLen(v); document.querySelectorAll("[data-act=len]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); break;
     case "home": goHome(); break;
     case "pick": if (game.mode === "peek") peekAnswer("center", b.dataset.id); else if (game.mode === "parade") paradeTap(b.dataset.id); break;
     case "pos": peekAnswer("edge", +b.dataset.p); break;

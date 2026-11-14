@@ -10,11 +10,27 @@ const Peek = {
     }
     return a;
   },
-  makeTrial(state, rng, castIds) {
+  // Speed meter value 1..5 (higher = faster)
+  speedStep(ms) {
+    if (typeof ms !== "number" || ms !== ms) return 1;
+    return ms >= 500 ? 1 : ms >= 250 ? 2 : ms >= 120 ? 3 : ms >= 60 ? 4 : 5;
+  },
+  makeTrial(state, rng, castIds, groups) {
     const ids = Peek._shuffle(castIds, rng);
     const n = state.level >= 4 ? Math.min(4, ids.length) : Math.min(2, ids.length);
     const center = ids[0];
-    const choices = Peek._shuffle(ids.slice(0, n), rng);
+    let picked = ids.slice(0, n);
+    if (groups && state.level < 4) {
+      // other choices come from groups not used yet; fill from any rest
+      const used = {}, rest = ids.slice(1);
+      used[groups[center]] = true;
+      picked = [center];
+      for (let i = 0; i < rest.length && picked.length < n; i++) {
+        if (!used[groups[rest[i]]]) { used[groups[rest[i]]] = true; picked.push(rest[i]); }
+      }
+      for (let i = 0; i < rest.length && picked.length < n; i++) if (picked.indexOf(rest[i]) < 0) picked.push(rest[i]);
+    }
+    const choices = Peek._shuffle(picked, rng);
     if (state.level < 2) return { center, choices, edge: null, distractors: [] };
     const edge = Math.floor(rng() * 8);
     const distractors = [];

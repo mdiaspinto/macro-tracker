@@ -28,10 +28,30 @@ const Names = {
     const intro = cards._introDay === today ? [] : ids.filter((id) => !Names._has(cards, id)).slice(0, 2);
     return { review, intro };
   },
-  choices(id, castIds, rng) {
-    if (castIds.length < 4) return Names._shuffle(castIds, rng);
-    const others = Names._shuffle(castIds.filter((x) => x !== id), rng).slice(0, 3);
+  choices(id, castIds, rng, n = 4) {
+    if (castIds.length < n) return Names._shuffle(castIds, rng);
+    const others = Names._shuffle(castIds.filter((x) => x !== id), rng).slice(0, n - 1);
     return Names._shuffle(others.concat(id), rng);
+  },
+  startRun(cards) {
+    return { choices: cards._choices === 6 ? 6 : 4, okRun: 0, badRun: 0 };
+  },
+  // 5 right in a row at 4 -> 6; 2 wrong in a row at 6 -> 4
+  adapt(run, ok) {
+    const r = { choices: run.choices, okRun: ok ? run.okRun + 1 : 0, badRun: ok ? 0 : run.badRun + 1 };
+    if ((r.choices === 4 && r.okRun >= 5) || (r.choices === 6 && r.badRun >= 2)) {
+      r.choices = r.choices === 4 ? 6 : 4; r.okRun = 0; r.badRun = 0;
+    }
+    return r;
+  },
+  saveChoices(cards, choices) {
+    return Object.assign({}, cards, { _choices: choices });
+  },
+  // carded cast ids, nearest due first; no grading
+  practice(cards, castIds, k) {
+    return castIds.map((id, i) => ({ id, i })).filter((x) => Names._has(cards, x.id))
+      .sort((a, b) => (cards[a.id].due < cards[b.id].due ? -1 : cards[a.id].due > cards[b.id].due ? 1 : a.i - b.i))
+      .slice(0, k).map((x) => x.id);
   },
   grade(cards, id, ok, today) {
     const out = Object.assign({}, cards);

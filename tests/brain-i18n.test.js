@@ -17,7 +17,7 @@ test("brief copy is exact", () => {
   const want = {
     title: ["Brain games", "Juegos mentales"],
     tagline: ["Short daily games linked to a sharper mind", "Juegos cortos para cada día, ligados a una mente más ágil"],
-    play: ["Play today's games", "Jugar hoy"],
+    play: ["Play", "Jugar"],
     ring: ["{n} of 3 this week", "{n} de 3 esta semana"],
     back: ["Back to tracker", "Volver al tracker"],
     peekQ1: ["Who peeked out?", "¿Quién se asomó?"],
@@ -27,7 +27,13 @@ test("brief copy is exact", () => {
     thing_gift: ["gift", "el regalo"],
     paradeQ: ["Tap them in the same order", "Tócalos en el mismo orden"],
     paradeQRev: ["Tap them in reverse order", "Tócalos al revés"],
-    done: ["Done for today. See you next time!", "¡Listo por hoy! ¡Hasta la próxima!"],
+    done: ["Well played!", "¡Bien jugado!"],
+    chooseGame: ["Choose a game", "Elige un juego"],
+    length: ["Length", "Duración"],
+    minutesToday: ["{n} of 10 minutes today", "{n} de 10 minutos hoy"],
+    todayCounts: ["Today counts!", "¡Hoy cuenta!"],
+    playAgain: ["Play again", "Jugar otra vez"],
+    level: ["Level {n}", "Nivel {n}"],
   };
   Object.keys(want).forEach((k) => {
     assert.equal(T.en[k], want[k][0], "en." + k);
