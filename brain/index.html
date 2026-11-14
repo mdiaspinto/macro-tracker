@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7E3E6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151218" media="(prefers-color-scheme: dark)">
+<title>Brain games</title>
+<link rel="icon" type="image/webp" href="img/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<style>
+  /* Tokens: light is the base, dark follows the system setting. Shared names with the tracker. */
+  :root{
+    color-scheme:light dark;
+    --bg:#F7E3E6; --panel:rgba(255,255,255,.93); --panel-solid:#FFFFFF; --panel-2:#FBF1EC;
+    --line:#EBD9D6; --line-strong:#B59E9F;
+    --text:#2A1F24; --muted:#6B5A60; --ink:#2A1F24;
+    --accent:#FFC93C; --accent-ink:#2A1F00; --accent-text:#8A5A00;
+    --brain:#7A4FD6; --brain-soft:rgba(122,79,214,.14); --streak:#D9480F;
+    --good:#1C8A4E; --over:#C93838; --focus:#2F6FD6;
+    --rug-btn:rgba(255,255,255,.88); --rug-btn-line:#E9A6B4;
+    --veil:rgba(255,255,255,0);
+    --radius:22px; --radius-sm:16px;
+    --shadow:0 1px 2px rgba(60,30,40,.06),0 10px 28px rgba(60,30,40,.12);
+    --font-display:"Bricolage Grotesque","Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#151218; --panel:rgba(30,26,34,.94); --panel-solid:#1E1A22; --panel-2:#28222D;
+      --line:#3A3240; --line-strong:#7A6E80;
+      --text:#F3EEF2; --muted:#B7ABB6; --ink:#F3EEF2;
+      --accent:#FFCF4D; --accent-ink:#2A1F00; --accent-text:#FFCF4D;
+      --brain:#B79CFF; --brain-soft:rgba(183,156,255,.16); --streak:#FF8A4C;
+      --good:#4ADE80; --over:#F87171; --focus:#7DB8FF;
+      --rug-btn:rgba(40,34,45,.9); --rug-btn-line:#E58FA3;
+      --veil:rgba(12,10,16,.55);
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:18px;line-height:1.45;background:var(--bg);color:var(--text);
+    -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;min-height:100vh;
+  }
+  /* Playroom behind every screen; a veil darkens it in dark mode. */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:linear-gradient(var(--veil),var(--veil)),url(img/bg.webp) center bottom/cover no-repeat}
+  h1,h2{font-family:var(--font-display);font-weight:700;letter-spacing:-.01em;margin:0}
+  h1{font-size:30px;line-height:1.1} h2{font-size:22px}
+  p{margin:0}
+  [hidden]{display:none!important}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 24px;
+    border-radius:var(--radius-sm);border:2px solid transparent;font:600 19px/1.2 "Archivo",sans-serif;
+    color:var(--text);background:var(--panel-solid);cursor:pointer;text-decoration:none;touch-action:manipulation}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 0 rgba(0,0,0,.12)}
+  .btn.primary:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.12)}
+  .btn.ghost{background:var(--panel-solid);border-color:var(--line)}
+  .btn.link{background:transparent;min-height:48px;padding:0 12px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+  .btn.small{min-height:48px;padding:0 16px;font-size:17px}
+  .btn.wide{width:100%}
+  .btn[disabled]{opacity:.6;cursor:default}
+
+  /* Page screens (welcome, sign-in, home, done) */
+  .page{max-width:480px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:14px;min-height:100vh}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px}
+  .back{display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 14px;border-radius:999px;
+    background:var(--panel);color:var(--text);font-weight:600;text-decoration:none;font-size:17px;box-shadow:var(--shadow)}
+  .lang{display:inline-flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:var(--shadow);margin-left:auto}
+  .lang button{min-width:52px;min-height:44px;border:0;border-radius:999px;background:transparent;color:var(--muted);
+    font:700 16px "Archivo",sans-serif;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--brain);color:#fff}
+  .card{background:var(--panel);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .center{text-align:center}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .muted{color:var(--muted)}
+  .hero{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:20px;
+    background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .hero .logo{width:132px;height:132px}
+  .hero p{color:var(--muted);max-width:30ch}
+  .err{color:var(--over);font-weight:600;min-height:1.45em}
+  label{display:block;font-weight:600;margin-bottom:6px}
+  input{width:100%;min-height:56px;padding:0 16px;border-radius:var(--radius-sm);border:2px solid var(--line);
+    background:var(--panel-solid);color:var(--text);font:500 18px "Archivo",sans-serif}
+  input:focus{border-color:var(--brain);outline:none}
+
+  .ringbox{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .ring{position:relative;width:150px;height:150px}
+  .ring svg{width:100%;height:100%}
+  .ring path{fill:none;stroke-width:12;stroke-linecap:round}
+  .ring .off{stroke:var(--brain-soft)} .ring .on{stroke:var(--brain)}
+  .ring img{position:absolute;inset:26px;width:98px;height:98px}
+  .ringtxt{font-family:var(--font-display);font-size:22px;font-weight:700}
+  .streak{color:var(--streak);font-weight:600}
+  .parts{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+  .part{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+  .part b{font-size:19px}
+  .part .t{color:var(--muted);font-size:17px}
+  .bar{grid-column:1/-1;height:12px;border-radius:999px;background:var(--brain-soft);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--brain)}
+  .ok{color:var(--good);font-weight:700;display:inline-flex;align-items:center;gap:4px}
+  .ok svg{width:20px;height:20px}
+  .who{color:var(--muted);font-size:17px}
+  .cheer{width:168px;height:168px;margin:0 auto}
+
+  /* Game stage: the playroom image at its own ratio, so the rug box always sits on the rug. */
+  .stage-wrap{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:var(--bg)}
+  .stage-wrap::before{content:"";position:absolute;inset:-30px;background:linear-gradient(var(--veil),var(--veil)),url(img/bg.webp) center bottom/cover;filter:blur(16px)}
+  .stage{position:relative;width:min(100vw,56.28vh);width:min(100vw,56.28dvh);aspect-ratio:941/1672;
+    background:linear-gradient(var(--veil),var(--veil)),url(img/bg.webp) center/100% 100% no-repeat;overflow:hidden}
+  .ghead{position:absolute;z-index:1;left:50%;transform:translateX(-50%);width:calc(min(100vw,56.28vh) - 20px);width:calc(min(100vw,56.28dvh) - 20px);
+    top:max(10px,env(safe-area-inset-top));display:flex;gap:10px;align-items:center;
+    background:var(--panel);border-radius:var(--radius-sm);padding:6px;box-shadow:var(--shadow)}
+  .gprog{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;padding-right:6px}
+  .gname{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gleft{color:var(--muted);font-size:15px;white-space:nowrap}
+  .gprog .bar{height:10px}
+  .ask{position:absolute;left:3%;right:3%;top:15%;background:var(--panel);border-radius:var(--radius);
+    padding:14px 12px 16px;box-shadow:var(--shadow);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .q{font-family:var(--font-display);font-size:23px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+  .qimg{width:44px;height:44px}
+  .choices{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .cbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:74px;padding:6px 2px 8px;min-height:48px;
+    border-radius:var(--radius-sm);border:2px solid var(--line);background:var(--panel-solid);color:var(--text);
+    font:700 17px "Archivo",sans-serif;cursor:pointer;touch-action:manipulation}
+  .cbtn img{width:60px;height:60px}
+  .cbtn:active{border-color:var(--brain)}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  .slots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;min-height:46px}
+  .slots span{width:46px;height:46px;border-radius:50%;border:2px dashed var(--line-strong);display:grid;place-items:center;overflow:hidden}
+  .slots span.f{border-style:solid;border-color:var(--brain);background:var(--panel-solid)}
+  .slots img{width:40px;height:40px}
+
+  /* The rug: box over the cloud rug in the image (percent of the stage). */
+  .rug{position:absolute;left:1.5%;width:97%;top:67.5%;height:24.2%}
+  .it{position:absolute;transform:translate(-50%,-50%);visibility:hidden;pointer-events:none;user-select:none}
+  .it.on{visibility:visible}
+  .it.center{left:50%;top:50%;width:23%}
+  .it.edge{width:14%}
+  .walker{left:50%;top:44%;width:30%}
+  @media (prefers-reduced-motion: no-preference){
+    .walker.go{animation:walk 1s linear both}
+    .fb.pop{animation:pop .6s ease-out both}
+  }
+  @keyframes walk{
+    0%{transform:translate(-200%,-50%)} 25%{transform:translate(-125%,-58%)} 50%{transform:translate(-50%,-50%)}
+    75%{transform:translate(25%,-58%)} 100%{transform:translate(100%,-50%)}
+  }
+  @keyframes pop{0%{transform:translate(-50%,-50%) scale(.6);opacity:0} 30%{transform:translate(-50%,-50%) scale(1.05);opacity:1} 100%{transform:translate(-50%,-50%) scale(1)}}
+  .pos{position:absolute;transform:translate(-50%,-50%);width:16%;min-width:48px;aspect-ratio:1;border-radius:50%;
+    border:3px solid var(--rug-btn-line);background:var(--rug-btn);cursor:pointer;touch-action:manipulation;box-shadow:var(--shadow)}
+  .pos:active{background:var(--brain);border-color:var(--brain)}
+  .mask{position:absolute;left:2%;top:-6%;width:96%;height:112%;border-radius:50%;image-rendering:pixelated;visibility:hidden}
+  .mask.on{visibility:visible}
+  .fb{position:absolute;left:50%;top:40%;width:36%;transform:translate(-50%,-50%);pointer-events:none}
+  .live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div class="live" id="live" aria-live="polite"></div>
+<script src="../brain.js?v=20261119"></script>
+<script src="cast.js?v=20261119"></script>
+<script src="peek.js?v=20261119"></script>
+<script src="parade.js?v=20261119"></script>
+<script src="names.js?v=20261119"></script>
+<script src="session.js?v=20261119"></script>
+<script src="sync.js?v=20261119"></script>
+<script>
+const T = {
+  en: {
+    title: "Brain games",
+    tagline: "Short daily games linked to a sharper mind",
+    play: "Play today's games",
+    ring: "{n} of 3 this week",
+    back: "Back to tracker",
+    peekQ1: "Who peeked out?",
+    peekQ2: "Where was the {thing}?",
+    paradeQ: "Tap them in the same order",
+    paradeQRev: "Tap them in reverse order",
+    done: "Done for today. See you next time!",
+    continueAs: "Continue as {name}",
+    signIn: "Sign in",
+    signUp: "Create account",
+    guest: "Play as guest",
+    guestNote: "You are playing as a guest. Your progress stays on this device.",
+    guestSave: "Create an account to keep it on every device.",
+    username: "Username",
+    password: "Password",
+    pwHint: "At least 6 characters",
+    cancel: "Cancel",
+    pickProfile: "Who is playing?",
+    playingAs: "Playing as {name}",
+    signOut: "Sign out",
+    loading: "Loading...",
+    retry: "Try again",
+    errBadName: "Use 2 to 20 letters, numbers or _",
+    errShortPw: "The password must have at least 6 characters.",
+    errTaken: "That username is taken. Sign in instead.",
+    errBadLogin: "Wrong username or password.",
+    errNet: "We could not connect. Check your internet and try again.",
+    errSignedOut: "Please sign in again.",
+    errTooMany: "Too many tries. Wait a few minutes and try again.",
+    errAuth: "Something went wrong. Please try again.",
+    today: "Today",
+    streak0: "Play 3 days this week to start a streak",
+    streak1: "1 week in a row",
+    streakN: "{n} weeks in a row",
+    partPeek: "Peek-a-boo",
+    partParade: "Toy parade",
+    partNames: "Name that friend",
+    partTime: "{m} of {goal} min",
+    partDone: "Done",
+    minLeft: "{m} min left",
+    home: "Home",
+    nice: "Nice work!",
+    next: "Next: {part}",
+    continue: "Continue",
+    posN: "position {n}",
+    thing_balloon: "balloon",
+    thing_star: "star",
+    thing_gift: "gift",
+    undo: "Undo",
+    namesQ: "What is this friend's name?",
+    meet: "Meet {name}!",
+    gotIt: "Got it",
+    right: "Well done!",
+    wrong: "Not this time. Keep going!",
+    langLabel: "Language",
+    langEn: "EN",
+    langEs: "ES",
+  },
+  es: {
+    title: "Juegos mentales",
+    tagline: "Juegos cortos para cada día, ligados a una mente más ágil",
+    play: "Jugar hoy",
+    ring: "{n} de 3 esta semana",
+    back: "Volver al tracker",
+    peekQ1: "¿Quién se asomó?",
+    peekQ2: "¿Dónde apareció {thing}?",
+    paradeQ: "Tócalos en el mismo orden",
+    paradeQRev: "Tócalos al revés",
+    done: "¡Listo por hoy! ¡Hasta la próxima!",
+    continueAs: "Continuar como {name}",
+    signIn: "Iniciar sesión",
+    signUp: "Crear cuenta",
+    guest: "Jugar como invitado",
+    guestNote: "Estás jugando como invitado. Tu progreso se queda en este dispositivo.",
+    guestSave: "Crea una cuenta para tenerlo en todos tus dispositivos.",
+    username: "Usuario",
+    password: "Contraseña",
+    pwHint: "Al menos 6 caracteres",
+    cancel: "Cancelar",
+    pickProfile: "¿Quién juega?",
+    playingAs: "Juega {name}",
+    signOut: "Cerrar sesión",
+    loading: "Cargando...",
+    retry: "Reintentar",
+    errBadName: "Usa de 2 a 20 letras, números o _",
+    errShortPw: "La contraseña debe tener al menos 6 caracteres.",
+    errTaken: "Ese usuario ya existe. Inicia sesión.",
+    errBadLogin: "Usuario o contraseña incorrectos.",
+    errNet: "No pudimos conectar. Revisa tu internet e inténtalo de nuevo.",
+    errSignedOut: "Vuelve a iniciar sesión, por favor.",
+    errTooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+    errAuth: "Algo salió mal. Inténtalo de nuevo.",
+    today: "Hoy",
+    streak0: "Juega 3 días esta semana para empezar una racha",
+    streak1: "1 semana seguida",
+    streakN: "{n} semanas seguidas",
+    partPeek: "Cucú",
+    partParade: "Desfile de juguetes",
+    partNames: "¿Cómo se llama?",
+    partTime: "{m} de {goal} min",
+    partDone: "Listo",
+    minLeft: "Quedan {m} min",
+    home: "Inicio",
+    nice: "¡Muy bien!",
+    next: "Ahora: {part}",
+    continue: "Seguir",
+    posN: "posición {n}",
+    thing_balloon: "el globo",
+    thing_star: "la estrella",
+    thing_gift: "el regalo",
+    undo: "Deshacer",
+    namesQ: "¿Cómo se llama este amigo?",
+    meet: "¡Te presento a {name}!",
+    gotIt: "Entendido",
+    right: "¡Muy bien!",
+    wrong: "Esta vez no. ¡Sigue así!",
+    langLabel: "Idioma",
+    langEn: "EN",
+    langEs: "ES",
+  },
+};
+
+const FIREBASE = {
+  databaseURL: "https://macro-tracker-d8908-default-rtdb.firebaseio.com",
+  apiKey: "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ",
+  emailDomain: "macro-tracker-d8908.firebaseapp.com",
+};
+const K = { profile: "brainGames.profile", guest: "brainGames.guest", lang: "brainGames.lang" };
+const CAST_IDS = Cast.MEMBERS.map((m) => m.id);
+const PARTS = { peek: ["partPeek", Session.PEEK_GOAL_S], parade: ["partParade", Session.PARADE_S], names: ["partNames", Session.NAMES_MAX_S] };
+// 8 edge positions on an ellipse inside the rug box, clockwise from the top (percent of the rug box).
+const POS = [0, 1, 2, 3, 4, 5, 6, 7].map((p) => ({ x: 50 + 41 * Math.sin(p * Math.PI / 4), y: 50 - 44 * Math.cos(p * Math.PI / 4) }));
+
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+const BrainApp = window.BrainApp = { fetchImpl: window.fetch.bind(window) };
+const sync = BrainApp.sync = Sync.create({
+  fetch: (...a) => BrainApp.fetchImpl(...a), storage: localStorage, now: () => Date.now(), firebase: FIREBASE,
+});
+const state = BrainApp.state = {
+  lang: "en", key: null, name: "", guest: false, profiles: [],
+  sessions: {}, progress: null, date: null, day: null, dirty: false,
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const t = (k, v) => String(T[state.lang][k] || T.en[k] || k).replace(/\{(\w+)\}/g, (m, x) => (v && v[x] != null ? v[x] : m));
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const member = (id) => Cast.MEMBERS.filter((m) => m.id === id)[0];
+const pad = (n) => (n < 10 ? "0" : "") + n;
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+function pickLang(profileLang) {
+  const s = store.get(K.lang);
+  if (s === "en" || s === "es") return s;
+  if (profileLang === "en" || profileLang === "es") return profileLang;
+  return /^es/i.test(navigator.language || "") ? "es" : "en";
+}
+state.lang = pickLang(null);
+
+// Preload all art once so a timed display never waits on the network.
+Cast.MEMBERS.concat(Cast.TARGETS, Cast.DISTRACTORS).map((x) => x.img).concat([Cast.ART.cheer, Cast.ART.oops])
+  .forEach((src) => { const i = new Image(); i.src = src; });
+
+/* ---------- Data ---------- */
+const dayFor = (date) => (state.sessions[date] ? Session.mergeDay(Session.newDay(), state.sessions[date]) : Session.newDay());
+function setProgress(p) {
+  state.progress = { peek: (p && p.peek) || Peek.init(), parade: (p && p.parade) || Parade.init(), names: (p && p.names) || {} };
+}
+const namesOn = () => Names.available(CAST_IDS);
+function namesQueue(date) { const p = Names.plan(state.progress.names, CAST_IDS, date); return p.review.concat(p.intro); }
+
+// Save pipeline. Guests write localStorage at once. Accounts queue dates and progress; one PATCH is in
+// flight at a time and always sends the latest merged value. A failure re-queues it and retries with backoff.
+let saveTimer = 0, retryTimer = 0, gen = 0, busy = false, backoff = 0;
+const pending = { days: {}, progress: false };
+function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 1500); }
+// Always save the merge of the loaded day and the current day, so a stale device never lowers progress.
+function saveNow() {
+  clearTimeout(saveTimer); saveTimer = 0;
+  if (state.dirty && state.date && state.day) {
+    state.dirty = false;
+    const date = state.date, have = state.sessions[date];
+    const day = have ? Session.mergeDay(have, state.day) : state.day;
+    state.sessions[date] = day;
+    if (state.guest) {
+      const g = store.get(K.guest) || {};
+      g.days = g.days || {}; g.days[date] = day; g.progress = state.progress;
+      store.set(K.guest, g);
+    } else if (state.key) pending.days[date] = true;
+  }
+  flush();
+}
+function saveProgress() {
+  if (!state.progress) return;
+  if (state.guest) { const g = store.get(K.guest) || {}; g.progress = state.progress; store.set(K.guest, g); }
+  else if (state.key) { pending.progress = true; flush(); }
+}
+async function flush() {
+  if (busy || state.guest || !state.key) return;
+  const date = Object.keys(pending.days)[0];
+  if (!date && !pending.progress) return;
+  const my = gen;
+  busy = true;
+  if (date) delete pending.days[date]; else pending.progress = false;
+  try {
+    if (date) await sync.saveDay(state.key, date, state.sessions[date]);
+    else await sync.saveProgress(state.key, state.progress);
+    if (my !== gen) return;   // the account changed while this was in flight
+    busy = false; backoff = 0; flush();
+  } catch (e) {
+    if (my !== gen) return;
+    busy = false;
+    if (e && e.message === "signed-out") { resetAccount(); return showWelcome(t("errSignedOut")); }
+    if (date) pending.days[date] = true; else pending.progress = true;
+    backoff = Math.min(60000, backoff ? backoff * 2 : 2000);
+    clearTimeout(retryTimer); retryTimer = setTimeout(flush, backoff);
+  }
+}
+// Call on every identity change: drop queued saves and the current day, so nothing crosses accounts.
+function resetAccount() {
+  gen++; busy = false; backoff = 0;
+  clearTimeout(saveTimer); clearTimeout(retryTimer); saveTimer = retryTimer = 0;
+  pending.days = {}; pending.progress = false;
+  stopGame();
+  Object.assign(state, { date: null, day: null, dirty: false });
+}
+
+/* ---------- Rendering helpers ---------- */
+const app = $("app");
+let redraw = null;
+function render(html, again) { redraw = again || null; app.innerHTML = html; document.documentElement.lang = state.lang; document.title = t("title"); window.scrollTo(0, 0); }
+const backLink = () => (sync.trackerSession() ? `<a class="back" href="../">${esc(t("back"))}</a>` : "");
+const langToggle = () => `<div class="lang" role="group" aria-label="${esc(t("langLabel"))}">` +
+  ["en", "es"].map((l) => `<button data-act="lang" data-v="${l}" aria-pressed="${state.lang === l}">${esc(t(l === "en" ? "langEn" : "langEs"))}</button>`).join("") + `</div>`;
+const topBar = () => `<div class="top">${backLink()}${langToggle()}</div>`;
+const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function arc(a0, a1) {
+  const p = (a) => [60 + 50 * Math.sin(a * Math.PI / 180), 60 - 50 * Math.cos(a * Math.PI / 180)].map((v) => v.toFixed(2)).join(" ");
+  return `M ${p(a0)} A 50 50 0 0 1 ${p(a1)}`;
+}
+function ringHTML() {
+  const d = today(), n = Math.min(Session.WEEK_TARGET, Session.weekCount(state.sessions, d));
+  const s = Session.weekStreak(state.sessions, d);
+  const segs = [0, 1, 2].map((i) => `<path class="${i < n ? "on" : "off"}" d="${arc(i * 120 + 12, i * 120 + 108)}"/>`).join("");
+  return `<div class="ringbox"><div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true">${segs}</svg><img src="${Cast.ART.logo}" alt=""></div>
+    <p class="ringtxt">${esc(t("ring", { n }))}</p>
+    <p class="streak">${esc(s === 0 ? t("streak0") : s === 1 ? t("streak1") : t("streakN", { n: s }))}</p></div>`;
+}
+
+/* ---------- Screens ---------- */
+function showWelcome(msg) {
+  stopGame();
+  const tr = sync.trackerSession();
+  render(`<div class="page">${topBar()}
+    <div class="hero"><img class="logo" src="${Cast.ART.logo}" alt=""><h1>${esc(t("title"))}</h1><p>${esc(t("tagline"))}</p></div>
+    <div class="card stack">
+      ${msg ? `<p class="err" role="alert">${esc(msg)}</p>` : ""}
+      ${tr ? `<button class="btn primary wide" data-act="tracker">${esc(t("continueAs", { name: tr.username || "" }))}</button>` : ""}
+      <button class="btn ${tr ? "ghost" : "primary"} wide" data-act="auth" data-v="in">${esc(t("signIn"))}</button>
+      <button class="btn ghost wide" data-act="auth" data-v="up">${esc(t("signUp"))}</button>
+      <button class="btn link" data-act="guest">${esc(t("guest"))}</button>
+    </div></div>`, () => showWelcome(msg));
+}
+function showAuth(mode) {
+  render(`<div class="page">${topBar()}
+    <div class="hero"><img class="logo" src="${Cast.ART.logo}" alt=""><h1>${esc(t(mode === "up" ? "signUp" : "signIn"))}</h1></div>
+    <form class="card stack" id="authForm" data-v="${mode}" novalidate>
+      <div><label for="u">${esc(t("username"))}</label><input id="u" name="u" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+      <div><label for="pw">${esc(t("password"))}</label><input id="pw" name="pw" type="password" autocomplete="${mode === "up" ? "new-password" : "current-password"}" required>
+        ${mode === "up" ? `<p class="muted">${esc(t("pwHint"))}</p>` : ""}</div>
+      <p class="err" id="authErr" role="alert"></p>
+      <button class="btn primary wide" type="submit">${esc(t(mode === "up" ? "signUp" : "signIn"))}</button>
+      <button class="btn link" type="button" data-act="welcome">${esc(t("cancel"))}</button>
+    </form></div>`, () => showAuth(mode));
+  $("u").focus();
+}
+function showLoading() {
+  render(`<div class="page"><div class="hero"><img class="logo" src="${Cast.ART.logo}" alt=""><p>${esc(t("loading"))}</p></div></div>`);
+}
+function showFail(e, retry) {
+  if (e && e.message === "signed-out") return showWelcome(t("errSignedOut"));
+  failRetry = retry;
+  render(`<div class="page">${topBar()}<div class="hero"><img class="logo" src="${Cast.ART.logo}" alt=""></div>
+    <div class="card stack center"><p class="err" role="alert">${esc(t("errNet"))}</p>
+    <button class="btn primary wide" data-act="retry">${esc(t("retry"))}</button>
+    <button class="btn link" data-act="signout">${esc(t("signOut"))}</button></div></div>`, () => showFail(e, retry));
+}
+let failRetry = null;
+function showPicker() {
+  render(`<div class="page">${topBar()}
+    <div class="hero"><img class="logo" src="${Cast.ART.logo}" alt=""><h1>${esc(t("pickProfile"))}</h1></div>
+    <div class="card stack">${state.profiles.map((p, i) => `<button class="btn ghost wide" data-act="profile" data-i="${i}">${esc(p.name)}</button>`).join("")}
+    <button class="btn link" data-act="signout">${esc(t("signOut"))}</button></div></div>`, showPicker);
+}
+function partsHTML(day) {
+  return Object.keys(PARTS).filter((m) => m !== "names" || namesOn()).map((m) => {
+    const goal = PARTS[m][1], s = Math.min(goal, day.modes[m]), full = s >= goal;
+    return `<div class="part"><b>${esc(t(PARTS[m][0]))}</b>
+      ${full ? `<span class="ok">${CHECK}${esc(t("partDone"))}</span>` : `<span class="t">${esc(t("partTime", { m: Math.floor(s / 60), goal: goal / 60 }))}</span>`}
+      <div class="bar"><i style="width:${(100 * s / goal).toFixed(1)}%"></i></div></div>`;
+  }).join("");
+}
+function showHome() {
+  stopGame();
+  const d = today(), day = dayFor(d), next = Session.nextPart(day, namesOn(), namesQueue(d).length);
+  render(`<div class="page">${topBar()}
+    <div class="card stack center"><h1>${esc(t("title"))}</h1>${ringHTML()}</div>
+    <div class="card"><h2>${esc(t("today"))}</h2><div class="parts">${partsHTML(day)}</div></div>
+    ${next === "done" ? `<div class="card center"><p class="ringtxt">${esc(t("done"))}</p></div>`
+      : `<button class="btn primary wide" data-act="play" style="min-height:64px;font-size:21px">${esc(t("play"))}</button>`}
+    <div class="card stack center">
+      ${state.guest ? `<p>${esc(t("guestNote"))}</p><p class="muted">${esc(t("guestSave"))}</p>
+        <button class="btn ghost wide" data-act="auth" data-v="up">${esc(t("signUp"))}</button>
+        <button class="btn link" data-act="auth" data-v="in">${esc(t("signIn"))}</button>`
+      : `<p class="who">${esc(t("playingAs", { name: state.name }))}</p><button class="btn link" data-act="signout">${esc(t("signOut"))}</button>`}
+    </div></div>`, showHome);
+}
+function showDone() {
+  stopGame();
+  const d = today(), next = Session.nextPart(dayFor(d), namesOn(), namesQueue(d).length);
+  render(`<div class="page">${topBar()}<div class="card stack center">
+    <img class="cheer" src="${Cast.ART.cheer}" alt="">
+    <h1>${esc(next === "done" ? t("done") : t("nice"))}</h1>
+    ${next === "done" ? "" : `<p class="ringtxt">${esc(t("next", { part: t(PARTS[next][0]) }))}</p>`}
+    ${ringHTML()}
+    ${next === "done" ? "" : `<button class="btn primary wide" data-act="play">${esc(t("continue"))}</button>`}
+    <button class="btn ghost wide" data-act="home">${esc(t("home"))}</button></div></div>`, showDone);
+}
+
+/* ---------- Accounts ---------- */
+async function enterAccount(upload) {
+  showLoading();
+  try {
+    state.profiles = await sync.profiles();
+    const saved = store.get(K.profile), hit = state.profiles.filter((p) => p.key === saved)[0];
+    if (hit) return openProfile(hit, upload);
+    if (state.profiles.length === 1) return openProfile(state.profiles[0], upload);
+    pendingUpload = upload;
+    showPicker();
+  } catch (e) { showFail(e, () => enterAccount(upload)); }
+}
+let pendingUpload = false;
+async function openProfile(p, upload) {
+  resetAccount();
+  store.set(K.profile, p.key); sync.pin();   // writes from now on refuse any other signed-in uid
+  Object.assign(state, { key: p.key, name: p.name, guest: false, lang: pickLang(p.lang) });
+  showLoading();
+  try {
+    // Guest days go up once, on an explicit sign-in; a failed upload keeps them for next time.
+    if (upload) { try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
+    const d = await sync.load(p.key);
+    state.sessions = d.sessions; setProgress(d.progress);
+    showHome();
+  } catch (e) { showFail(e, () => openProfile(p, upload)); }
+}
+function playGuest() {
+  resetAccount();
+  const g = store.get(K.guest) || {};
+  Object.assign(state, { key: null, name: "", guest: true, sessions: g.days || {} });
+  setProgress(g.progress);
+  showHome();
+}
+function authMsg(e) {
+  const m = (e && e.message) || "";
+  if (m === "invalid-username") return t("errBadName");
+  if (m.indexOf("EMAIL_EXISTS") === 0) return t("errTaken");
+  if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)) return t("errBadLogin");
+  if (m.indexOf("WEAK_PASSWORD") === 0) return t("errShortPw");
+  if (m.indexOf("TOO_MANY_ATTEMPTS_TRY_LATER") === 0) return t("errTooMany");
+  return m === "net" ? t("errNet") : t("errAuth");
+}
+async function submitAuth(form) {
+  const up = form.dataset.v === "up", u = $("u").value.trim(), pw = $("pw").value, err = $("authErr");
+  if (!/^[a-z0-9_]{2,20}$/i.test(u)) { err.textContent = t("errBadName"); return; }
+  if (pw.length < 6) { err.textContent = t("errShortPw"); return; }
+  const btn = form.querySelector("[type=submit]"); btn.disabled = true; err.textContent = "";
+  try { await (up ? sync.signUp(u, pw) : sync.signIn(u, pw)); store.set(K.profile, null); enterAccount(true); }
+  catch (e) { err.textContent = authMsg(e); btn.disabled = false; }
+}
+
+/* ---------- Game loop: one rAF loop per game screen counts foreground time and drives timed displays ---------- */
+const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null, active: 0 };
+const IDLE_MS = 20000, WAITS = /^(ask|ask2|meet)$/;   // a screen that waits for the player pauses the clock after 20 s idle
+let cur = null, fbTimer = 0;
+function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.active = performance.now(); game.raf = requestAnimationFrame(tick); } }
+function loopStop() { cancelAnimationFrame(game.raf); game.raf = 0; }
+function tick(ts) {
+  if (today() !== state.date) return goHome();   // a new day: save the old one, never add play to it
+  game.raf = requestAnimationFrame(tick);
+  if (!cur || !WAITS.test(cur.phase)) game.active = ts;   // timed displays and feedback count as play
+  if (game.last) {
+    const d = ts - game.last;
+    if (d > 4 && d < 100) game.frameMs = game.frameMs * 0.9 + d * 0.1;   // measured frame interval
+    if (ts - game.active < IDLE_MS) { state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true; }
+  }
+  game.last = ts;
+  if (game.onFrame) game.onFrame(ts);
+  updateClock();
+}
+// Keep what was painted at frame time t0 until ms have passed (to the nearest frame), then run fn(ts).
+// Timestamps, not frame counts, so a 120 Hz screen shows the same time as a 60 Hz one.
+function hold(t0, ms, fn) {
+  game.onFrame = (ts) => { if (ts - t0 >= ms - game.frameMs / 2) { game.onFrame = null; fn(ts); } };
+}
+function stopGame() {
+  loopStop(); clearTimeout(fbTimer);
+  game.mode = null; game.onFrame = null; cur = null;
+}
+document.addEventListener("visibilitychange", () => {
+  if (!game.mode) return;
+  if (document.visibilityState === "hidden") {
+    loopStop();
+    // A timed display seen only in part is not fair: drop it and start a new round on return.
+    if (cur && /setup|show|mask|walk/.test(cur.phase)) { game.onFrame = null; cur = null; clearStage(); }
+    saveNow(); saveProgress();
+  } else {
+    if (today() !== state.date) return goHome();
+    loopStart();
+    if (!cur) ROUND[game.mode]();
+  }
+});
+["pointerdown", "keydown"].forEach((ev) => addEventListener(ev, () => { game.active = performance.now(); }, true));
+addEventListener("pagehide", () => { if (game.mode) { saveNow(); saveProgress(); } else saveNow(); });
+
+function updateClock() {
+  if (!game.mode) return;
+  const s = state.day.modes[game.mode];
+  if (s === game.shownS) return;
+  game.shownS = s;
+  const goal = PARTS[game.mode][1], bar = $("gbar"), left = $("gleft");
+  if (bar) bar.style.width = Math.min(100, 100 * s / goal).toFixed(1) + "%";
+  if (left) left.textContent = t("minLeft", { m: Math.max(0, Math.ceil((goal - s) / 60)) });
+}
+function stageHTML(mode) {
+  let rug = "";
+  if (mode === "peek") {
+    rug = `<canvas class="mask" id="mask" width="96" height="40"></canvas><img class="it center" id="pc" alt="">` +
+      POS.map((q, p) => `<img class="it edge" id="s${p}" alt="" style="left:${q.x.toFixed(1)}%;top:${q.y.toFixed(1)}%">`).join("") +
+      POS.map((q, p) => `<button class="pos" data-act="pos" data-p="${p}" aria-label="${esc(t("posN", { n: p + 1 }))}" hidden style="left:${q.x.toFixed(1)}%;top:${q.y.toFixed(1)}%"></button>`).join("");
+  } else if (mode === "parade") rug = `<img class="it walker" id="walker" alt="">`;
+  else rug = `<img class="it center" id="pc" alt="">`;
+  return `<div class="stage-wrap">
+    <div class="ghead"><button class="btn small ghost" data-act="home">${esc(t("home"))}</button>
+      <div class="gprog"><span class="gname">${esc(t(PARTS[mode][0]))}</span><span class="gleft" id="gleft"></span><div class="bar"><i id="gbar"></i></div></div></div>
+    <div class="stage"><div class="ask" id="ask" hidden></div>
+    <div class="rug">${rug}<img class="fb" id="fb" alt="" hidden></div>
+  </div></div>`;
+}
+function startPart() {
+  state.date = today(); state.day = dayFor(state.date);
+  const part = Session.nextPart(state.day, namesOn(), namesQueue(state.date).length);
+  if (part === "done") return showDone();
+  game.mode = part; game.shownS = -1; cur = null;
+  game.queue = part === "names" ? namesQueue(state.date) : null; game.met = {};
+  render(stageHTML(part));
+  updateClock(); loopStart(); ROUND[part]();
+}
+function endPart() { saveNow(); saveProgress(); showDone(); }
+function goHome() { if (game.mode) { saveNow(); saveProgress(); } showHome(); }
+function partOver() {
+  if (game.mode === "names" && !game.queue.length) return true;
+  return state.day.modes[game.mode] >= PARTS[game.mode][1];
+}
+function showAsk(html) { const a = $("ask"); a.innerHTML = html; a.hidden = false; }
+function hideAsk() { $("ask").hidden = true; }
+function clearStage() {
+  document.querySelectorAll(".it.on,.mask.on").forEach((el) => el.classList.remove("on", "go"));
+  document.querySelectorAll(".pos").forEach((b) => { b.hidden = true; });
+  hideAsk();
+}
+const decoded = (imgs) => Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : 0)));
+const charBtn = (id) => { const m = member(id); return `<button class="cbtn" data-act="pick" data-id="${m.id}" aria-label="${esc(m.name)}"><img src="${m.img}" alt=""><span>${esc(m.name)}</span></button>`; };
+function feedback(ok) {
+  cur.phase = "fb"; hideAsk(); saveSoon();
+  const fb = $("fb");
+  fb.src = ok ? Cast.ART.cheer : Cast.ART.oops; fb.hidden = false;
+  fb.classList.remove("pop"); void fb.offsetWidth; fb.classList.add("pop");
+  $("live").textContent = t(ok ? "right" : "wrong");
+  fbTimer = setTimeout(() => { fb.hidden = true; if (partOver()) endPart(); else ROUND[game.mode](); }, 600);
+}
+
+/* Peek-a-boo: show for ms, mask 250 ms, then ask. */
+function drawMask() {
+  const c = $("mask"), x = c.getContext("2d"), img = x.createImageData(c.width, c.height), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = 120 + Math.random() * 135;
+    d[i] = v + Math.random() * 40; d[i + 1] = v * (0.75 + Math.random() * 0.25); d[i + 2] = v + Math.random() * 30; d[i + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+}
+function peekRound() {
+  const st = state.progress.peek, tr = Peek.makeTrial(st, Math.random, CAST_IDS), target = pick(Cast.TARGETS);
+  const me = cur = { tr, target, ans: {}, phase: "setup" };
+  clearStage();
+  const pc = $("pc"), shown = [pc];
+  pc.src = member(tr.center).img;
+  POS.forEach((q, p) => {
+    const s = $("s" + p);
+    if (p === tr.edge) s.src = target.img;
+    else if (tr.distractors.indexOf(p) >= 0) s.src = pick(Cast.DISTRACTORS).img;
+    else return;
+    shown.push(s);
+  });
+  decoded(shown).then(() => {
+    if (cur !== me) return;
+    game.onFrame = (t0) => {
+      game.onFrame = null; me.phase = "show";
+      shown.forEach((el) => el.classList.add("on"));
+      hold(t0, st.ms, (t1) => {
+        shown.forEach((el) => el.classList.remove("on"));
+        drawMask(); $("mask").classList.add("on"); me.phase = "mask";
+        hold(t1, 250, () => { $("mask").classList.remove("on"); me.phase = "ask"; askCenter(); });
+      });
+    };
+  });
+}
+function askCenter() {
+  showAsk(`<p class="q">${esc(t("peekQ1"))}</p><div class="choices">${cur.tr.choices.map(charBtn).join("")}</div>`);
+}
+function askEdge() {
+  cur.phase = "ask2";
+  showAsk(`<p class="q"><span>${esc(t("peekQ2", { thing: t("thing_" + cur.target.id) }))}</span><img class="qimg" src="${cur.target.img}" alt=""></p>`);
+  document.querySelectorAll(".pos").forEach((b) => { b.hidden = false; });
+}
+function peekAnswer(key, v) {
+  if (key === "center" && cur.phase !== "ask") return;
+  if (key === "edge" && cur.phase !== "ask2") return;
+  cur.ans[key] = v;
+  if (key === "center" && state.progress.peek.level >= 2) return askEdge();
+  document.querySelectorAll(".pos").forEach((b) => { b.hidden = true; });
+  const r = Peek.grade(state.progress.peek, cur.tr, cur.ans);
+  state.progress.peek = r.state;
+  feedback(r.ok);
+}
+
+/* Toy parade: each character walks across for 1 s, then the player taps them in order. */
+function paradeRound() {
+  const r = Parade.makeSequence(state.progress.parade, Math.random, CAST_IDS);
+  const me = cur = { r, ans: [], phase: "setup" };
+  clearStage();
+  const w = $("walker");
+  let i = 0;
+  const step = (ts) => {
+    if (i >= r.seq.length) { w.classList.remove("on", "go"); me.phase = "ask"; askParade(); return; }
+    w.src = member(r.seq[i]).img; w.alt = member(r.seq[i]).name;
+    w.classList.remove("go"); void w.offsetWidth; w.classList.add("on", "go");
+    i++;
+    hold(ts, 1000, step);
+  };
+  const imgs = CAST_IDS.map((id) => { const x = new Image(); x.src = member(id).img; return x; });
+  decoded(imgs).then(() => {
+    if (cur !== me) return;
+    game.onFrame = (ts) => { game.onFrame = null; me.phase = "walk"; step(ts); };
+  });
+}
+function askParade() {
+  showAsk(`<p class="q">${esc(t(cur.r.reverse ? "paradeQRev" : "paradeQ"))}</p><div class="slots" id="slots"></div>
+    <div class="choices">${CAST_IDS.map(charBtn).join("")}</div>
+    <button class="btn small link" data-act="undo">${esc(t("undo"))}</button>`);
+  renderSlots();
+}
+function renderSlots() {
+  $("slots").innerHTML = cur.r.seq.map((x, i) => {
+    const id = cur.ans[i];
+    return id ? `<span class="f"><img src="${member(id).img}" alt="${esc(member(id).name)}"></span>` : `<span></span>`;
+  }).join("");
+}
+function paradeTap(id) {
+  if (cur.phase !== "ask") return;
+  cur.ans.push(id); renderSlots();
+  if (cur.ans.length < cur.r.seq.length) return;
+  const g = Parade.grade(state.progress.parade, cur.r, cur.ans);
+  state.progress.parade = g.state;
+  feedback(g.ok);
+}
+
+/* Name that friend: Leitner cards; a wrong card comes back at the end of the session. */
+function namesRound() {
+  const id = game.queue.shift();
+  if (!id) return endPart();
+  cur = { id, phase: "ask" };
+  clearStage();
+  const pc = $("pc"); pc.src = member(id).img; pc.classList.add("on");
+  const isNew = !Object.prototype.hasOwnProperty.call(state.progress.names, id);
+  if (isNew && !game.met[id]) {
+    game.met[id] = true; cur.phase = "meet";
+    return showAsk(`<p class="q">${esc(t("meet", { name: member(id).name }))}</p><button class="btn primary" data-act="met">${esc(t("gotIt"))}</button>`);
+  }
+  askName();
+}
+function askName() {
+  cur.phase = "ask";
+  showAsk(`<p class="q">${esc(t("namesQ"))}</p><div class="names">${Names.choices(cur.id, CAST_IDS, Math.random)
+    .map((x) => `<button class="btn ghost" data-act="name" data-id="${x}">${esc(member(x).name)}</button>`).join("")}</div>`);
+}
+function nameAnswer(id) {
+  if (cur.phase !== "ask") return;
+  const ok = id === cur.id;
+  state.progress.names = Names.grade(state.progress.names, cur.id, ok, state.date);
+  if (!ok) game.queue.push(cur.id);
+  $("pc").classList.remove("on");
+  feedback(ok);
+}
+const ROUND = { peek: peekRound, parade: paradeRound, names: namesRound };
+
+/* ---------- Events ---------- */
+app.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const v = b.dataset.v;
+  switch (b.dataset.act) {
+    case "lang": state.lang = v; store.set(K.lang, v); if (redraw) redraw(); break;
+    case "tracker": sync.useTrackerSession(); store.set(K.profile, null); enterAccount(true); break;
+    case "auth": showAuth(v); break;
+    case "welcome": showWelcome(); break;
+    case "guest": playGuest(); break;
+    case "profile": openProfile(state.profiles[+b.dataset.i], pendingUpload); break;
+    case "signout": saveNow(); saveProgress(); resetAccount(); sync.signOut(); Object.assign(state, { key: null, name: "", guest: false, sessions: {}, progress: null }); showWelcome(); break;
+    case "retry": if (failRetry) failRetry(); break;
+    case "play": startPart(); break;
+    case "home": goHome(); break;
+    case "pick": if (game.mode === "peek") peekAnswer("center", b.dataset.id); else if (game.mode === "parade") paradeTap(b.dataset.id); break;
+    case "pos": peekAnswer("edge", +b.dataset.p); break;
+    case "undo": if (cur && cur.phase === "ask" && cur.ans.length) { cur.ans.pop(); renderSlots(); } break;
+    case "met": askName(); break;
+    case "name": nameAnswer(b.dataset.id); break;
+  }
+});
+app.addEventListener("submit", (e) => { e.preventDefault(); if (e.target.id === "authForm") submitAuth(e.target); });
+
+if (sync.session()) enterAccount(false); else showWelcome();
+</script>
+</body>
+</html>

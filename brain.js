@@ -178,8 +178,25 @@ const Brain = (() => {
     });
     return out;
   }
+  const profileKey = name => String(name || "").trim().toLowerCase().replace(/[.$#\[\]\/]/g, "_");
+  // Tick "mind" for completed brain-game sessions in last week..today, unless a newer manual change exists. Returns count ticked.
+  function applyGameSessions(user, profileData, today) {
+    const sessions = (profileData && profileData.sessions) || {}, from = addDays(weekStart(today), -7);
+    let n = 0;
+    Object.keys(sessions).forEach(d => {
+      const at = sessions[d] && sessions[d].completedAt;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || typeof at !== "number" || !isFinite(at) || !at || d < from || d > today) return;
+      const have = ((user.habitsAt || {})[d] || {}).mind;
+      if (have != null && have >= at) return;
+      user.habits = user.habits || {}; user.habitsAt = user.habitsAt || {};
+      user.habits[d] = Object.assign({}, user.habits[d], { mind: true });
+      user.habitsAt[d] = Object.assign({}, user.habitsAt[d], { mind: at });
+      n++;
+    });
+    return n;
+  }
   function retagOnRename(meal, newName) { return meal.brainManual ? (meal.brain || []) : detectTags(newName); }
 
-  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags, mealTags, weekStart, weekScore, lifetimePoints, LEVELS, levelFor, unionHabits, unionHabitsAt, retagOnRename };
+  return { CATEGORIES, LIMIT_TAGS, KEYWORDS, normalize, detectTags, mealTags, weekStart, weekScore, lifetimePoints, LEVELS, levelFor, unionHabits, unionHabitsAt, retagOnRename, profileKey, applyGameSessions };
 })();
 if (typeof module !== "undefined") module.exports = Brain; else window.Brain = Brain;

@@ -282,6 +282,11 @@
   .br-ask{width:100%;justify-content:center;min-height:48px;margin:0 0 14px;font-size:15px;border:2px solid var(--brain);
     background:color-mix(in srgb,var(--brain) 14%,var(--panel));color:var(--text)}
   .br-ask:hover{background:color-mix(in srgb,var(--brain) 22%,var(--panel))}
+  .br-play{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin-top:12px;padding:0 18px;border:2px solid var(--brain);
+    border-radius:999px;color:var(--brain);font-weight:700;font-size:15px;text-decoration:none;background:transparent}
+  .br-play:hover{background:color-mix(in srgb,var(--brain) 14%,var(--panel))}
+  .br-play .ic{width:18px;height:18px}
+  @media(min-width:560px){ .br-play{display:inline-flex;width:auto} }
   .overlay.sheet{align-items:flex-end;padding:0}
   .overlay.sheet .modal{display:flex;flex-direction:column;max-width:560px;height:85vh;height:85dvh;max-height:85vh;max-height:85dvh;overflow:hidden;
     border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
@@ -1392,14 +1397,14 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="icons.js?v=20261117"></script>
-<script src="charts.js?v=20261117"></script>
-<script src="brain.js?v=20261117"></script>
-<script src="game.js?v=20261117"></script>
-<script src="coach.js?v=20261117"></script>
-<script src="shop.js?v=20261117"></script>
-<script src="demo.js?v=20261117"></script>
-<script src="tour.js?v=20261117"></script>
+<script src="icons.js?v=20261119"></script>
+<script src="charts.js?v=20261119"></script>
+<script src="brain.js?v=20261119"></script>
+<script src="game.js?v=20261119"></script>
+<script src="coach.js?v=20261119"></script>
+<script src="shop.js?v=20261119"></script>
+<script src="demo.js?v=20261119"></script>
+<script src="tour.js?v=20261119"></script>
 <script>
 "use strict";
 document.body.insertAdjacentHTML("afterbegin", Icons.sprite());
@@ -1694,7 +1699,7 @@ const T = {
     range7:"7D", range30:"30D", range90:"90D", rangeAll:"All", statAvg7:"7-day average", statOnTarget:"Days on target",
     statLatest:"Latest", statAvg:"Average", statChange:"Change", statEntries:"Entries",
     kcalUnit:"kcal", recentEntries:"Recent entries",
-    brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain",
+    brainTitle:"Your brain this week", brainSub:"Foods and habits linked to a healthier brain", playBrain:"Play brain games",
     brainNext:"{name}: {n} more this week", brainFull:"Every brain goal met this week!",
     brainHabits:"Habits · {day}", brainIconLabel:"{name}: {n} of {target} this week",
     brainEditFor:"Brain foods in {name}", brainNone:"none yet",
@@ -1879,7 +1884,7 @@ const T = {
     range7:"7 d", range30:"30 d", range90:"90 d", rangeAll:"Todo", statAvg7:"Media 7 días", statOnTarget:"Días en objetivo",
     statLatest:"Último", statAvg:"Promedio", statChange:"Cambio", statEntries:"Entradas",
     kcalUnit:"kcal", recentEntries:"Entradas recientes",
-    brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano",
+    brainTitle:"Tu cerebro esta semana", brainSub:"Comidas y hábitos ligados a un cerebro más sano", playBrain:"Jugar juegos mentales",
     brainNext:"{name}: {n} más esta semana", brainFull:"¡Cumpliste todas las metas de la semana!",
     brainHabits:"Hábitos · {day}", brainIconLabel:"{name}: {n} de {target} esta semana",
     brainEditFor:"Comida para el cerebro en {name}", brainNone:"nada todavía",
@@ -2322,7 +2327,8 @@ function renderBrainCard(){
     <p class="br-next">${next}</p>${star}${coachBlock(u)}
     <div class="br-rings">${rings}</div>
     <div class="br-hab-lab">${t("brainHabits",{day:prettyDate(curDate)})}</div>
-    <div class="br-habits">${habits}</div>`;
+    <div class="br-habits">${habits}</div>
+    <a class="br-play" href="brain/">${Icons.svg("puzzle")} ${t("playBrain")}</a>`;
   // Grow the bar from its previous width so a tap visibly moves it.
   const bar=el.querySelector(".br-bar > span"); void bar.offsetWidth; bar.style.width=pct+"%"; lastBrainBar=pct;
 }
@@ -4389,6 +4395,17 @@ function scheduleCloudSync(){
   clearTimeout(cloudTimer);
   cloudTimer=setTimeout(()=>{ cloudPut(payloadOf()).catch(()=>{}); }, 1500);
 }
+// Read brain-game sessions and tick the mind habit. Local only: save() syncs it the normal way.
+async function pullBrain(){
+  if(demoMode || !cloudEnabled() || !session) return;
+  try{
+    const uid=session.uid, data=await dbFetch("/brain/"+uid);
+    if(demoMode || !session || session.uid!==uid || !data) return;   // the account changed while this was in flight
+    let n=0;
+    state.users.forEach(u=>{ n+=Brain.applyGameSessions(u, data[Brain.profileKey(u.name)], todayStr()); });
+    if(n>0){ save(); renderAll(); }
+  }catch(e){}
+}
 async function pullRemote(){
   if(demoMode || !cloudEnabled() || !session) return;
   try{
@@ -4399,7 +4416,11 @@ async function pullRemote(){
       localStorage.setItem(KEY, JSON.stringify(state));
       celebrateReady=true; shopReady=true;
       renderAll();
-    }else if(!shopReady){ shopReady=true; renderAll(); } // fetch succeeded, account has no state yet
+      await pullBrain();
+    }else{ // fetch succeeded, account has no state yet
+      if(!shopReady){ shopReady=true; renderAll(); }
+      await pullBrain();
+    }
   }catch(e){}
   finally{ if(!celebrateReady){ celebrateReady=true; renderAll(); } }
 }
@@ -4542,6 +4563,8 @@ async function doLogin(){
   }catch(e){ authError(authMsg(e)); authBusy(false); authEl("authOverlay").classList.toggle("from-demo", demoMode); }
 }
 function doLogout(){
+  // The brain site copies this session; sign it out too so the next person does not play as this account.
+  try{ const b=JSON.parse(localStorage.getItem("brainGames.session")||"null"); if(session && b && b.uid===session.uid){ localStorage.removeItem("brainGames.session"); localStorage.removeItem("brainGames.profile"); } }catch(e){}
   session=null; shopReady=true; localStorage.removeItem(SESSION_KEY); clearTimeout(cloudTimer);
   authEl("usersOverlay").classList.remove("on");
   openAuth();
