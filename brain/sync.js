@@ -120,15 +120,21 @@ const Sync = (() => {
     }
     const saveProgress = async (key, progress) => patch(base(key) + "/progress", progress);
 
-    const goodBestId = (id) => typeof id === "string" && /^(peek|parade|names)_[1-5]$/.test(id);
+    const goodBestId = (id) => typeof id === "string" && /^(peek|parade|names)$/.test(id);
     const goodBest = (id, rec) => goodBestId(id) && !!rec && typeof rec.score === "number" && isFinite(rec.score) && rec.score >= 0;
-    // A stored record is replaced only by a higher score; the write is PATCH {score, at}.
+    // A stored record is replaced only by a higher score; the write is PATCH {score, points, len, at}.
+    // points and len are optional: when missing or invalid they are left out and never block the save.
+    const goodPoints = (n) => typeof n === "number" && isFinite(n) && n >= 0;
+    const goodLen = (n) => typeof n === "number" && n % 1 === 0 && n >= 1 && n <= 5;
     async function saveBest(key, id, rec) {
       if (!goodBest(id, rec)) throw new Error("bad-path");
       const path = base(key) + "/best/" + id;
       const remote = await dbFetch(path);
       if (!Sc.isBetter(rec.score, remote)) return { saved: false, best: remote };
-      const best = { score: rec.score, at: rec.at != null ? rec.at : now() };
+      const best = { score: rec.score };
+      if (goodPoints(rec.points)) best.points = rec.points;
+      if (goodLen(rec.len)) best.len = rec.len;
+      best.at = rec.at != null ? rec.at : now();
       await patch(path, best);
       return { saved: true, best };
     }

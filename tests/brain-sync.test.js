@@ -330,76 +330,97 @@ const patches = (calls) => calls.filter((c) => c.method === "PATCH");
 
 test("saveBest writes when higher than the remote record or when none exists", async () => {
   const none = rig(bestRoute(null), live);
-  assert.deepStrictEqual(await none.api.saveBest("ana", "peek_3", { score: 80, at: 7 }), { saved: true, best: { score: 80, at: 7 } });
-  assert.strictEqual(dbPath(none.calls[0]), "/brain/U1/ana/best/peek_3");
+  assert.deepStrictEqual(await none.api.saveBest("ana", "peek", { score: 80, at: 7 }), { saved: true, best: { score: 80, at: 7 } });
+  assert.strictEqual(dbPath(none.calls[0]), "/brain/U1/ana/best/peek");
   assert.strictEqual(none.calls[0].method, "GET");
-  assert.strictEqual(dbPath(none.calls[1]), "/brain/U1/ana/best/peek_3");
+  assert.strictEqual(dbPath(none.calls[1]), "/brain/U1/ana/best/peek");
   assert.strictEqual(none.calls[1].method, "PATCH");
   assert.deepStrictEqual(JSON.parse(none.calls[1].body), { score: 80, at: 7 });
   const up = rig(bestRoute({ score: 70, at: 1 }), live);
-  assert.strictEqual((await up.api.saveBest("ana", "names_1", { score: 71 })).saved, true);
+  assert.strictEqual((await up.api.saveBest("ana", "names", { score: 71 })).saved, true);
   assert.deepStrictEqual(JSON.parse(patches(up.calls)[0].body), { score: 71, at: NOW });
 });
 
 test("saveBest does not lower a higher or equal remote record", async () => {
   const hi = rig(bestRoute({ score: 90, at: 3 }), live);
-  assert.deepStrictEqual(await hi.api.saveBest("ana", "peek_1", { score: 80, at: 9 }), { saved: false, best: { score: 90, at: 3 } });
+  assert.deepStrictEqual(await hi.api.saveBest("ana", "peek", { score: 80, at: 9 }), { saved: false, best: { score: 90, at: 3 } });
   assert.strictEqual(patches(hi.calls).length, 0);
   const eq = rig(bestRoute({ score: 80, at: 3 }), live);
-  assert.strictEqual((await eq.api.saveBest("ana", "peek_1", { score: 80, at: 9 })).saved, false);
+  assert.strictEqual((await eq.api.saveBest("ana", "peek", { score: 80, at: 9 })).saved, false);
   assert.strictEqual(patches(eq.calls).length, 0);
 });
 
 test("saveBest replaces a remote record with a non-numeric score", async () => {
   const { api, calls } = rig(bestRoute({ score: "high", at: 3 }), live);
-  assert.strictEqual((await api.saveBest("ana", "peek_1", { score: 0, at: 9 })).saved, true);
+  assert.strictEqual((await api.saveBest("ana", "peek", { score: 0, at: 9 })).saved, true);
   assert.strictEqual(patches(calls).length, 1);
 });
 
 test("saveBest rejects a bad id, key or score before any fetch", async () => {
   const { api, calls } = rig(bestRoute(null), live);
-  for (const id of ["peek_9", "x_1", "peek_1/../a", "peek_0", "peek_12", "", undefined, "peek_1\n"]) {
+  for (const id of ["peek_3", "peek_1", "parade_5", "x", "peek/../a", "peek_0", "", undefined, "peek\n"]) {
     await assert.rejects(() => api.saveBest("ana", id, { score: 5 }), /bad-path/);
   }
   for (const rec of [{ score: -1 }, { score: NaN }, { score: Infinity }, { score: "5" }, {}, null, undefined]) {
-    await assert.rejects(() => api.saveBest("ana", "peek_1", rec), /bad-path/);
+    await assert.rejects(() => api.saveBest("ana", "peek", rec), /bad-path/);
   }
-  await assert.rejects(() => api.saveBest("a/b", "peek_1", { score: 5 }), /bad-path/);
+  await assert.rejects(() => api.saveBest("a/b", "peek", { score: 5 }), /bad-path/);
   assert.strictEqual(calls.length, 0);
 });
 
 test("saveBest: a failed read throws and writes nothing; signed-out throws without fetching", async () => {
   const bad = rig({ "/best/": reply({}, 500) }, live);
-  await assert.rejects(() => bad.api.saveBest("ana", "peek_1", { score: 5 }), /net/);
+  await assert.rejects(() => bad.api.saveBest("ana", "peek", { score: 5 }), /net/);
   assert.strictEqual(patches(bad.calls).length, 0);
   const out = rig({}, null);
-  await assert.rejects(() => out.api.saveBest("ana", "peek_1", { score: 5 }), /signed-out/);
+  await assert.rejects(() => out.api.saveBest("ana", "peek", { score: 5 }), /signed-out/);
   assert.strictEqual(out.calls.length, 0);
 });
 
 test("load returns the stored best records", async () => {
-  const { api } = rig({ "/brain/U1/ana.json": reply({ best: { peek_1: { score: 5, at: 1 } } }) }, live);
-  assert.deepStrictEqual((await api.load("ana")).best, { peek_1: { score: 5, at: 1 } });
+  const { api } = rig({ "/brain/U1/ana.json": reply({ best: { peek: { score: 5, at: 1 } } }) }, live);
+  assert.deepStrictEqual((await api.load("ana")).best, { peek: { score: 5, at: 1 } });
 });
 
 test("uploadGuest keeps the higher best", async () => {
-  const guest = { days: {}, best: { peek_1: { score: 50, at: 1 }, peek_2: { score: 80, at: 2 } } };
-  const remote = (u) => reply(/peek_/.test(u) ? { score: 70, at: 0 } : null);
+  const guest = { days: {}, best: { peek: { score: 50, at: 1 }, parade: { score: 80, at: 2 } } };
+  const remote = (u) => reply(/peek/.test(u) ? { score: 70, at: 0 } : null);
   const { api, calls, store } = rig({ "/brain/U1/ana": remote }, live, { "brainGames.guest": guest });
   await api.uploadGuest("ana");
   const w = patches(calls);
-  assert.deepStrictEqual(w.map(dbPath), ["/brain/U1/ana/best/peek_2"]);
+  assert.deepStrictEqual(w.map(dbPath), ["/brain/U1/ana/best/parade"]);
   assert.deepStrictEqual(JSON.parse(w[0].body), { score: 80, at: 2 });
   assert.strictEqual(store.has("brainGames.guest"), false);
 });
 
 test("uploadGuest skips invalid best ids and records", async () => {
-  const guest = { days: {}, best: { "peek_9": { score: 5 }, "x/../y": { score: 5 }, peek_1: { score: -3 }, peek_2: null, names_5: { score: 9, at: 4 } } };
+  const guest = { days: {}, best: { "peek_3": { score: 5 }, "x/../y": { score: 5 }, peek: { score: -3 }, parade: null, names: { score: 9, at: 4 } } };
   const { api, calls, store } = rig({ "/best/": reply(null) }, live, { "brainGames.guest": guest });
   await api.uploadGuest("ana");
-  assert.deepStrictEqual(patches(calls).map(dbPath), ["/brain/U1/ana/best/names_5"]);
+  assert.deepStrictEqual(patches(calls).map(dbPath), ["/brain/U1/ana/best/names"]);
   assert.strictEqual(store.has("brainGames.guest"), false);
 });
+
+test("saveBest PATCHes score, points, len and at; omits an invalid points or len without blocking", async () => {
+  const ok = rig(bestRoute(null), live);
+  await ok.api.saveBest("ana", "parade", { score: 60, points: 12.5, len: 3, at: 4 });
+  assert.deepStrictEqual(JSON.parse(patches(ok.calls)[0].body), { score: 60, points: 12.5, len: 3, at: 4 });
+  const five = rig(bestRoute(null), live);
+  await five.api.saveBest("ana", "names", { score: 9, points: 0, len: 5, at: 1 });
+  assert.deepStrictEqual(JSON.parse(patches(five.calls)[0].body), { score: 9, points: 0, len: 5, at: 1 });
+  for (const bad of [{ points: -1, len: 0 }, { points: NaN, len: 6 }, { points: "5", len: 2.5 }, { points: Infinity, len: "3" }, {}]) {
+    const r = rig(bestRoute(null), live);
+    assert.strictEqual((await r.api.saveBest("ana", "peek", Object.assign({ score: 7, at: 2 }, bad))).saved, true);
+    assert.deepStrictEqual(JSON.parse(patches(r.calls)[0].body), { score: 7, at: 2 });
+  }
+});
+
+test("saveBest refuses an old best id before any fetch", async () => {
+  const { api, calls } = rig(bestRoute(null), live);
+  await assert.rejects(() => api.saveBest("ana", "peek_3", { score: 5 }), /^Error: bad-path$/);
+  assert.strictEqual(calls.length, 0);
+});
+
 
 test("a guest store without best still uploads", async () => {
   const guest = { days: { "2026-11-14": day(40, null) } };
@@ -410,7 +431,7 @@ test("a guest store without best still uploads", async () => {
 });
 
 test("uploadGuest keeps the guest store if a best write fails", async () => {
-  const guest = { days: {}, best: { peek_1: { score: 5, at: 1 } } };
+  const guest = { days: {}, best: { peek: { score: 5, at: 1 } } };
   const { api, store } = rig({ "/brain/U1/ana": (u, o) => (o.method === "PATCH" ? reply({}, 500) : reply(null)) }, live, { "brainGames.guest": guest });
   await assert.rejects(() => api.uploadGuest("ana"), /net/);
   assert.ok(store.has("brainGames.guest"));
