@@ -86,6 +86,9 @@ test("clampLen rounds, clamps to 1..5, defaults to 3", () => {
   assert.strictEqual(Session.clampLen("0"), 1);
   assert.strictEqual(Session.clampLen("abc"), 3);
   assert.strictEqual(Session.clampLen(undefined), 3);
+  assert.strictEqual(Session.clampLen(null), 3);
+  assert.strictEqual(Session.clampLen(""), 3);
+  assert.strictEqual(Session.clampLen("  "), 3);
   assert.strictEqual(Session.clampLen("2"), 2);
   assert.strictEqual(Session.clampLen(4.6), 5);
 });

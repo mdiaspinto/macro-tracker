@@ -40,7 +40,8 @@ const Session = (() => {
     total: (day) => MODES.reduce((n, m) => n + (day.modes[m] || 0), 0),
     // Game length in whole minutes: 1..5, default 3.
     clampLen(value) {
-      const n = Number(value);
+      const blank = value == null || (typeof value === "string" && value.trim() === "");
+      const n = blank ? NaN : Number(value);
       return Number.isFinite(n) ? Math.min(5, Math.max(1, Math.round(n))) : 3;
     },
     // Completed days from start to end, both inclusive.
