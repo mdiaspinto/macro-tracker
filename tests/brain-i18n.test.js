@@ -37,6 +37,7 @@ test("brief copy is exact", () => {
     points: ["{n} points", "{n} puntos"],
     newBest: ["New best!", "¡Nuevo récord!"],
     best: ["Best: {n}", "Récord: {n}"],
+    rating: ["Rating: {n}", "Marca: {n}"],
   };
   Object.keys(want).forEach((k) => {
     assert.equal(T.en[k], want[k][0], "en." + k);

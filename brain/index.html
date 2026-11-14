@@ -178,14 +178,14 @@
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261122"></script>
-<script src="cast.js?v=20261122"></script>
-<script src="peek.js?v=20261122"></script>
-<script src="parade.js?v=20261122"></script>
-<script src="names.js?v=20261122"></script>
-<script src="session.js?v=20261122"></script>
-<script src="score.js?v=20261122"></script>
-<script src="sync.js?v=20261122"></script>
+<script src="../brain.js?v=20261123"></script>
+<script src="cast.js?v=20261123"></script>
+<script src="peek.js?v=20261123"></script>
+<script src="parade.js?v=20261123"></script>
+<script src="names.js?v=20261123"></script>
+<script src="session.js?v=20261123"></script>
+<script src="score.js?v=20261123"></script>
+<script src="sync.js?v=20261123"></script>
 <script>
 const T = {
   en: {
@@ -210,6 +210,7 @@ const T = {
     points: "{n} points",
     newBest: "New best!",
     best: "Best: {n}",
+    rating: "Rating: {n}",
     choicesN: "{n} choices",
     continueAs: "Continue as {name}",
     signIn: "Sign in",
@@ -278,6 +279,7 @@ const T = {
     points: "{n} puntos",
     newBest: "¡Nuevo récord!",
     best: "Récord: {n}",
+    rating: "Marca: {n}",
     choicesN: "{n} opciones",
     continueAs: "Continuar como {name}",
     signIn: "Iniciar sesión",
@@ -373,13 +375,27 @@ Cast.MEMBERS.concat(Cast.TARGETS, Cast.DISTRACTORS).map((x) => x.img).concat([Ca
 /* ---------- Data ---------- */
 const dayFor = (date) => (state.sessions[date] ? Session.mergeDay(Session.newDay(), state.sessions[date]) : Session.newDay());
 function setProgress(p) {
-  state.progress = { peek: (p && p.peek) || Peek.init(), parade: (p && p.parade) || Parade.init(), names: (p && p.names) || {} };
+  // Parade.upgrade runs once on a saved v2 state (no ms); the next progress save stores the result.
+  state.progress = { peek: (p && p.peek) || Peek.init(), parade: Parade.upgrade(p && p.parade), names: (p && p.names) || {} };
+}
+// Convert old guest records ("<game>_<len>") to one record per game and store them beside the old keys.
+// Run it before sync.uploadGuest, which skips old ids.
+function migrateGuestBest() {
+  const g = store.get(K.guest);
+  if (!g) return {};
+  const best = Score.migrateBest(g.best);
+  g.best = Object.assign({}, g.best, best); store.set(K.guest, g);
+  return best;
 }
 const namesOn = () => Names.available(CAST_IDS);
 // Game length in minutes, stored as a plain string.
 function getLen() { try { return Session.clampLen(localStorage.getItem(K.len)); } catch (e) { return 3; } }
 function setLen(n) { try { localStorage.setItem(K.len, String(Session.clampLen(n))); } catch (e) {} }
-function namesQueue(date) { const p = Names.plan(state.progress.names, CAST_IDS, date); return p.review.concat(p.intro); }
+// Queue items; intro marks the day's planned new friends.
+function namesQueue(date) {
+  const p = Names.plan(state.progress.names, CAST_IDS, date);
+  return p.review.map((id) => ({ id })).concat(p.intro.map((id) => ({ id, intro: true })));
+}
 
 // Save pipeline. Guests write localStorage at once. Accounts queue dates and progress; one PATCH is in
 // flight at a time and always sends the latest merged value. A failure re-queues it and retries with backoff.
@@ -505,13 +521,13 @@ function showPicker() {
     <div class="card stack">${state.profiles.map((p, i) => `<button class="btn ghost wide" data-act="profile" data-i="${i}">${esc(p.name)}</button>`).join("")}
     <button class="btn link" data-act="signout">${esc(t("signOut"))}</button></div></div>`, showPicker);
 }
-// "Best: n" for a game at a length, or "" when there is no record.
-function bestTxt(mode, len) { const rec = state.best[Score.bestId(mode, len)]; return rec && typeof rec.score === "number" && isFinite(rec.score) ? t("best", { n: rec.score }) : ""; }
+// "Best: n" (the rating record) for a game, or "" when there is no record. The same for every length.
+function bestTxt(mode) { const rec = state.best[Score.bestId(mode)]; return rec && typeof rec.score === "number" && isFinite(rec.score) ? t("best", { n: rec.score }) : ""; }
 function gamesHTML() {
   const len = getLen();
-  const lens = [1, 2, 3, 4, 5].map((n) => `<button data-act="len" data-v="${n}" aria-pressed="${n === len}">${esc(t("lenN", { n }))}</button>`).join("");
+  const lens = [1, 2, 3].map((n) => `<button data-act="len" data-v="${n}" aria-pressed="${n === len}">${esc(t("lenN", { n }))}</button>`).join("");
   const cards = Object.keys(GAMES).filter((m) => m !== "names" || namesOn()).map((m) =>
-    `<div class="card gcard"><img src="${GAMES[m][1]}" alt=""><div><h2>${esc(t(GAMES[m][0]))}</h2><p class="best" data-best="${m}"${bestTxt(m, len) ? "" : " hidden"}>${esc(bestTxt(m, len))}</p></div>
+    `<div class="card gcard"><img src="${GAMES[m][1]}" alt=""><div><h2>${esc(t(GAMES[m][0]))}</h2><p class="best"${bestTxt(m) ? "" : " hidden"}>${esc(bestTxt(m))}</p></div>
       <button class="btn primary wide" data-act="play" data-v="${m}">${esc(t("play"))}</button></div>`).join("");
   return `<div class="card stack"><h2 id="lenLbl">${esc(t("length"))}</h2>
     <div class="lenpick" role="group" aria-labelledby="lenLbl">${lens}</div></div>${cards}`;
@@ -530,15 +546,15 @@ function showHome() {
     </div></div>`, showHome);
 }
 // After a game: cheer, time played, play again or choose a game.
-function showCheer(mode, playMs, score, newBest) {
+function showCheer(mode, playMs, score, rating, newBest) {
   stopGame();
   const m = Math.max(1, Math.round(playMs / 60000));
   render(`<div class="page"><div class="card stack center">
     <img class="cheer" src="${Cast.ART.cheer}" alt="">
-    <h1>${esc(t("done"))}</h1><p class="ringtxt">${esc(t("points", { n: score }))}</p>
+    <h1>${esc(t("done"))}</h1><p class="ringtxt">${esc(t("points", { n: score }))}</p><p class="best">${esc(t("rating", { n: rating }))}</p>
     ${newBest ? `<p class="streak">${esc(t("newBest"))}</p>` : ""}<p class="mins">${esc(t("played", { m }))}</p>
     <button class="btn primary wide" data-act="play" data-v="${mode}">${esc(t("playAgain"))}</button>
-    <button class="btn ghost wide" data-act="home">${esc(t("chooseGame"))}</button></div></div>`, () => showCheer(mode, playMs, score, newBest));
+    <button class="btn ghost wide" data-act="home">${esc(t("chooseGame"))}</button></div></div>`, () => showCheer(mode, playMs, score, rating, newBest));
 }
 
 /* ---------- Accounts ---------- */
@@ -561,17 +577,19 @@ async function openProfile(p, upload) {
   showLoading();
   try {
     // Guest days go up once, on an explicit sign-in; a failed upload keeps them for next time.
-    if (upload) { try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
+    if (upload) { migrateGuestBest(); try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
     const d = await sync.load(p.key);
-    state.sessions = d.sessions; state.best = d.best; setProgress(d.progress);
+    state.sessions = d.sessions; state.best = Score.migrateBest(d.best); setProgress(d.progress);
     sendPendingBest(p.key);
+    // A record converted from old ids (not the remote new-id record itself) goes up once.
+    Object.keys(state.best).forEach((id) => { if (state.best[id] !== d.best[id]) sendBest(p.key, id, state.best[id], 0); });
     showHome();
   } catch (e) { showFail(e, () => openProfile(p, upload)); }
 }
 function playGuest() {
   resetAccount();
-  const g = store.get(K.guest) || {};
-  Object.assign(state, { key: null, name: "", guest: true, sessions: g.days || {}, best: g.best || {} });
+  const best = migrateGuestBest(), g = store.get(K.guest) || {};
+  Object.assign(state, { key: null, name: "", guest: true, sessions: g.days || {}, best });
   setProgress(g.progress);
   showHome();
 }
@@ -594,9 +612,10 @@ async function submitAuth(form) {
 }
 
 /* ---------- Game loop: one rAF loop per game screen counts foreground time and drives timed displays ---------- */
-// playMs/lenMs: this game's own active time and length; run: Name that friend choice count and streaks.
+// playMs/lenMs: this game's own active time and length; run: Name that friend choice count and streaks;
+// streak: Name that friend correct answers in a row that can earn an extra new friend.
 const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null, active: 0,
-  playMs: 0, lenMs: 0, run: null, score: 0 };
+  playMs: 0, lenMs: 0, run: null, score: 0, streak: 0 };
 const IDLE_MS = 20000, WAITS = /^(ask|ask2|meet)$/;   // a screen that waits for the player pauses the clock after 20 s idle
 let cur = null, fbTimer = 0, toastTimer = 0;
 function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.active = performance.now(); game.raf = requestAnimationFrame(tick); } }
@@ -689,7 +708,7 @@ function stageHTML(mode) {
 function startGame(mode) {
   if (!GAMES[mode] || (mode === "names" && !namesOn())) return;
   state.date = today(); state.day = dayFor(state.date);
-  Object.assign(game, { mode, shownS: -1, playMs: 0, lenMs: getLen() * 60000, met: {}, queue: [], run: null, score: 0 });
+  Object.assign(game, { mode, shownS: -1, playMs: 0, lenMs: getLen() * 60000, met: {}, queue: [], run: null, score: 0, streak: 0 });
   cur = null;
   if (mode === "names") game.run = Names.startRun(state.progress.names);
   render(stageHTML(mode));
@@ -698,15 +717,16 @@ function startGame(mode) {
 // The round in progress always finishes; the game ends at the next round once its time is up.
 function nextRound() { if (game.playMs >= game.lenMs) endGame(); else ROUND[game.mode](); }
 function endGame() {
-  const mode = game.mode, ms = game.playMs, score = game.score, newBest = score > 0 && recordBest(mode, Math.round(game.lenMs / 60000), score);
-  saveNow(); saveProgress(); showCheer(mode, ms, score, newBest);
+  const mode = game.mode, ms = game.playMs, score = game.score, len = Math.round(game.lenMs / 60000);
+  const rating = Score.rating(score, len), newBest = recordBest(mode, len, score, rating);
+  saveNow(); saveProgress(); showCheer(mode, ms, score, rating, newBest);
 }
-// Keep a higher score as the record for this game and length; true when it beat the old record.
+// Keep a higher rating as the record for this game; true when it beat the old record.
 // Accounts save in the background: an error keeps the local record and never blocks the cheer screen.
-function recordBest(mode, len, score) {
-  const id = Score.bestId(mode, len);
-  if (!Score.isBetter(score, state.best[id])) return false;
-  const rec = { score, at: Date.now() };
+function recordBest(mode, len, points, rating) {
+  const id = Score.bestId(mode);
+  if (!(rating > 0) || !Score.isBetter(rating, state.best[id])) return false;
+  const rec = { score: rating, points, len, at: Date.now() };
   state.best[id] = rec;
   if (state.guest) { const g = store.get(K.guest) || {}; g.best = g.best || {}; g.best[id] = rec; store.set(K.guest, g); }
   else if (state.key) {
@@ -730,7 +750,7 @@ function sendBest(key, id, rec, attempt) {
     const msg = e && e.message;
     if (msg === "signed-out" || msg === "bad-path") return;
     const m = pendingMap();
-    if (!m[pk] || rec.score > m[pk].score) m[pk] = { score: rec.score, at: rec.at };
+    if (!m[pk] || rec.score > m[pk].score) m[pk] = { score: rec.score, points: rec.points, len: rec.len, at: rec.at };
     store.set(K.pendingBest, m);
     if (my !== gen || attempt >= BEST_RETRY.length) return;
     bestTimers.push(setTimeout(() => { if (my === gen) sendBest(key, id, pendingMap()[pk] || m[pk], attempt + 1); }, BEST_RETRY[attempt]));
@@ -741,6 +761,15 @@ function sendPendingBest(key) {
   const s = sync.session(), uid = s && s.uid;
   if (!uid) return;
   const prefix = uid + "/" + key + "/", m = pendingMap();
+  // An entry queued under an old id ("<game>_<len>") moves to the game id as a rating; nothing is dropped.
+  Object.keys(m).forEach((pk) => {
+    const old = pk.indexOf(prefix) === 0 && /^(peek|parade|names)_([1-5])$/.exec(pk.slice(prefix.length));
+    if (!old) return;
+    const len = +old[2], to = prefix + old[1], rec = { score: Score.rating(m[pk].score, len), points: m[pk].score, len, at: m[pk].at };
+    if (!m[to] || rec.score > m[to].score) m[to] = rec;
+    delete m[pk];
+  });
+  store.set(K.pendingBest, m);
   Object.keys(m).forEach((pk) => { if (pk.indexOf(prefix) === 0) sendBest(key, pk.slice(prefix.length), m[pk], 0); });
 }
 function goHome() { if (game.mode) { saveNow(); saveProgress(); } showHome(); }
@@ -820,10 +849,11 @@ function peekAnswer(key, v) {
   feedback(r.ok, Score.peek({ ok: r.ok, answerMs, level: cur.level, step: cur.step }));
 }
 
-/* Toy parade: a pool of 6 random friends; each walks across for 1 s, then the player taps them in order. */
+/* Toy parade: a pool of span + 1 random friends (up to 6); each walks across for the state's ms, then the player taps them in order. */
 function paradeRound() {
-  const pool = Parade._shuffle(CAST_IDS, Math.random).slice(0, 6);
-  const r = Parade.makeSequence(state.progress.parade, Math.random, pool);
+  const st = state.progress.parade, ms = st.ms;
+  const pool = Parade._shuffle(CAST_IDS, Math.random).slice(0, Parade.gridSize(st.span));
+  const r = Parade.makeSequence(st, Math.random, pool);
   const me = cur = { r, pool, ans: [], phase: "setup" };
   clearStage();
   const w = $("walker");
@@ -831,9 +861,10 @@ function paradeRound() {
   const step = (ts) => {
     if (i >= r.seq.length) { w.classList.remove("on", "go"); me.phase = "ask"; askParade(); return; }
     w.src = member(r.seq[i]).img; w.alt = member(r.seq[i]).name;
+    w.style.animationDuration = ms + "ms";
     w.classList.remove("go"); void w.offsetWidth; w.classList.add("on", "go");
     i++;
-    hold(ts, 1000, step);
+    hold(ts, ms, step);
   };
   const imgs = pool.map((id) => { const x = new Image(); x.src = member(id).img; return x; });
   decoded(imgs).then(() => {
@@ -867,12 +898,12 @@ function paradeTap(id) {
 function namesRound() {
   if (!game.queue.length) {
     const q = namesQueue(state.date);
-    game.queue = q.length ? q.map((id) => ({ id })) : Names.practice(state.progress.names, CAST_IDS, 5).map((id) => ({ id, practice: true }));
+    game.queue = q.length ? q : Names.practice(state.progress.names, CAST_IDS, 5).map((id) => ({ id, practice: true }));
   }
   const next = game.queue.shift();
   if (!next) return endGame();
   const id = next.id;
-  cur = { id, practice: !!next.practice, phase: "ask" };
+  cur = { id, practice: !!next.practice, intro: !!next.intro, phase: "ask" };
   clearStage();
   const pc = $("pc"); pc.src = member(id).img; pc.classList.add("on");
   const isNew = !Object.prototype.hasOwnProperty.call(state.progress.names, id);
@@ -893,6 +924,13 @@ function nameAnswer(id) {
   if (!cur.practice) {
     state.progress.names = Names.grade(state.progress.names, cur.id, ok, state.date);
     if (!ok) game.queue.push({ id: cur.id });
+  }
+  // Planned intros do not count; after 3 right in a row, and once those intros are graded, one more new friend.
+  if (!ok) game.streak = 0; else if (!cur.intro) game.streak++;
+  if (game.streak >= 3 && !game.queue.some((q) => q.intro)) {
+    game.streak = 0;
+    const extra = Names.extraIntro(state.progress.names, CAST_IDS, state.date);
+    if (extra) game.queue.unshift({ id: extra });
   }
   game.run = Names.adapt(game.run, ok);
   if (game.run.choices !== n) state.progress.names = Names.saveChoices(state.progress.names, game.run.choices);
@@ -916,8 +954,7 @@ app.addEventListener("click", (e) => {
     case "signout": saveNow(); saveProgress(); resetAccount(); sync.signOut(); Object.assign(state, { key: null, name: "", guest: false, sessions: {}, progress: null }); showWelcome(); break;
     case "retry": if (failRetry) failRetry(); break;
     case "play": startGame(v); break;
-    case "len": setLen(v); document.querySelectorAll("[data-act=len]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-      document.querySelectorAll("[data-best]").forEach((x) => { x.textContent = bestTxt(x.dataset.best, getLen()); x.hidden = !x.textContent; }); break;
+    case "len": setLen(v); document.querySelectorAll("[data-act=len]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); break;
     case "home": goHome(); break;
     case "pick": if (game.mode === "peek") peekAnswer("center", b.dataset.id); else if (game.mode === "parade") paradeTap(b.dataset.id); break;
     case "pos": peekAnswer("edge", +b.dataset.p); break;
