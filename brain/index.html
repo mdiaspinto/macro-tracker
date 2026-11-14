@@ -331,7 +331,7 @@ const FIREBASE = {
   apiKey: "AIzaSyB55M91PmvJia0hN2WbICCn_vTtKLZu4pQ",
   emailDomain: "macro-tracker-d8908.firebaseapp.com",
 };
-const K = { profile: "brainGames.profile", guest: "brainGames.guest", lang: "brainGames.lang", len: "brainGames.len" };
+const K = { profile: "brainGames.profile", guest: "brainGames.guest", lang: "brainGames.lang", len: "brainGames.len", pendingBest: "brainGames.pendingBest" };
 const CAST_IDS = Cast.MEMBERS.map((m) => m.id);
 // Game name key and card art per game.
 const GAMES = { peek: ["partPeek", Cast.TARGETS[0].img], parade: ["partParade", "img/teo.webp"], names: ["partNames", "img/flor.webp"] };
@@ -383,7 +383,7 @@ function namesQueue(date) { const p = Names.plan(state.progress.names, CAST_IDS,
 
 // Save pipeline. Guests write localStorage at once. Accounts queue dates and progress; one PATCH is in
 // flight at a time and always sends the latest merged value. A failure re-queues it and retries with backoff.
-let saveTimer = 0, retryTimer = 0, gen = 0, busy = false, backoff = 0;
+let saveTimer = 0, retryTimer = 0, gen = 0, busy = false, backoff = 0, bestTimers = [];
 const pending = { days: {}, progress: false };
 function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 1500); }
 // Always save the merge of the loaded day and the current day, so a stale device never lowers progress.
@@ -432,6 +432,7 @@ async function flush() {
 function resetAccount() {
   gen++; busy = false; backoff = 0;
   clearTimeout(saveTimer); clearTimeout(retryTimer); saveTimer = retryTimer = 0;
+  bestTimers.forEach(clearTimeout); bestTimers = [];
   pending.days = {}; pending.progress = false;
   stopGame();
   Object.assign(state, { date: null, day: null, dirty: false, best: {} });
@@ -563,6 +564,7 @@ async function openProfile(p, upload) {
     if (upload) { try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
     const d = await sync.load(p.key);
     state.sessions = d.sessions; state.best = d.best; setProgress(d.progress);
+    sendPendingBest(p.key);
     showHome();
   } catch (e) { showFail(e, () => openProfile(p, upload)); }
 }
@@ -679,7 +681,7 @@ function stageHTML(mode) {
   return `<div class="stage-wrap">
     <div class="ghead"><button class="btn small ghost" data-act="home">${esc(t("home"))}</button>
       <div class="gprog"><span class="gname">${esc(t(GAMES[mode][0]))}</span><span class="gleft" id="gleft"></span><div class="bar"><i id="gbar"></i></div>
-        <div class="meter" id="meter"></div><span class="gscore" id="gscore" aria-live="polite"></span></div></div>
+        <div class="meter" id="meter"></div><span class="gscore" id="gscore"></span></div></div>
     <div class="stage"><div class="ask" id="ask" hidden></div><div class="toast" id="toast" hidden></div>
     <div class="rug">${rug}<img class="fb" id="fb" alt="" hidden></div>
   </div></div>`;
@@ -696,22 +698,50 @@ function startGame(mode) {
 // The round in progress always finishes; the game ends at the next round once its time is up.
 function nextRound() { if (game.playMs >= game.lenMs) endGame(); else ROUND[game.mode](); }
 function endGame() {
-  const mode = game.mode, ms = game.playMs, score = game.score, newBest = score > 0 && saveBest(mode, Math.round(game.lenMs / 60000), score);
+  const mode = game.mode, ms = game.playMs, score = game.score, newBest = score > 0 && recordBest(mode, Math.round(game.lenMs / 60000), score);
   saveNow(); saveProgress(); showCheer(mode, ms, score, newBest);
 }
 // Keep a higher score as the record for this game and length; true when it beat the old record.
 // Accounts save in the background: an error keeps the local record and never blocks the cheer screen.
-function saveBest(mode, len, score) {
+function recordBest(mode, len, score) {
   const id = Score.bestId(mode, len);
   if (!Score.isBetter(score, state.best[id])) return false;
   const rec = { score, at: Date.now() };
   state.best[id] = rec;
   if (state.guest) { const g = store.get(K.guest) || {}; g.best = g.best || {}; g.best[id] = rec; store.set(K.guest, g); }
   else if (state.key) {
-    const my = gen, best = state.best;
-    sync.saveBest(state.key, id, rec).then((r) => { if (my === gen && best === state.best && r && r.best) best[id] = r.best; }, () => {});
+    sendBest(state.key, id, rec, 0);
   }
   return true;
+}
+// A failed account record stays in localStorage (higher score per entry) and is retried after 2 s, 8 s and 30 s.
+// An entry leaves the list once a call resolves. Another account never sends it.
+const BEST_RETRY = [2000, 8000, 30000];
+function pendingMap() { const m = store.get(K.pendingBest); return m && typeof m === "object" ? m : {}; }
+function sendBest(key, id, rec, attempt) {
+  const s = sync.session(), uid = s && s.uid;
+  if (!uid) return;
+  const pk = uid + "/" + key + "/" + id, my = gen, best = state.best;
+  sync.saveBest(key, id, rec).then((r) => {
+    const m = pendingMap();
+    if (m[pk] && m[pk].score <= rec.score) { delete m[pk]; store.set(K.pendingBest, m); }
+    if (my === gen && best === state.best && r && r.best) best[id] = r.best;
+  }, (e) => {
+    const msg = e && e.message;
+    if (msg === "signed-out" || msg === "bad-path") return;
+    const m = pendingMap();
+    if (!m[pk] || rec.score > m[pk].score) m[pk] = { score: rec.score, at: rec.at };
+    store.set(K.pendingBest, m);
+    if (my !== gen || attempt >= BEST_RETRY.length) return;
+    bestTimers.push(setTimeout(() => { if (my === gen) sendBest(key, id, pendingMap()[pk] || m[pk], attempt + 1); }, BEST_RETRY[attempt]));
+  });
+}
+// Send the saved records of this account and profile; call it right after a load.
+function sendPendingBest(key) {
+  const s = sync.session(), uid = s && s.uid;
+  if (!uid) return;
+  const prefix = uid + "/" + key + "/", m = pendingMap();
+  Object.keys(m).forEach((pk) => { if (pk.indexOf(prefix) === 0) sendBest(key, pk.slice(prefix.length), m[pk], 0); });
 }
 function goHome() { if (game.mode) { saveNow(); saveProgress(); } showHome(); }
 function showAsk(html) { const a = $("ask"); a.innerHTML = html; a.hidden = false; }
