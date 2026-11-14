@@ -105,3 +105,69 @@ test("choices returns all ids when the cast is under 4", () => {
   const c = Names.choices("a", ["a", "b", "c"], mk());
   assert.deepStrictEqual(c.slice().sort(), ["a", "b", "c"]);
 });
+
+test("choices with n=6", () => {
+  const out = Names.choices("c3", CAST, mk(), 6);
+  assert.strictEqual(out.length, 6);
+  assert.strictEqual(new Set(out).size, 6);
+  assert.ok(out.includes("c3"));
+  assert.strictEqual(Names.choices("c3", CAST.slice(0, 5), mk(), 6).length, 5);
+});
+
+test("startRun reads _choices and defaults to 4", () => {
+  assert.deepStrictEqual(Names.startRun({}), { choices: 4, okRun: 0, badRun: 0 });
+  assert.strictEqual(Names.startRun({ _choices: 6 }).choices, 6);
+  assert.strictEqual(Names.startRun({ _choices: 5 }).choices, 4);
+});
+
+test("adapt 5 correct goes to 6", () => {
+  let r = Names.startRun({});
+  for (let i = 0; i < 4; i++) r = Names.adapt(r, true);
+  assert.deepStrictEqual(r, { choices: 4, okRun: 4, badRun: 0 });
+  r = Names.adapt(r, true);
+  assert.deepStrictEqual(r, { choices: 6, okRun: 0, badRun: 0 });
+});
+
+test("adapt 2 wrong at 6 goes to 4", () => {
+  let r = Names.adapt({ choices: 6, okRun: 0, badRun: 0 }, false);
+  assert.deepStrictEqual(r, { choices: 6, okRun: 0, badRun: 1 });
+  r = Names.adapt(r, false);
+  assert.deepStrictEqual(r, { choices: 4, okRun: 0, badRun: 0 });
+});
+
+test("adapt resets runs on change", () => {
+  let r = Names.adapt({ choices: 4, okRun: 3, badRun: 0 }, false);
+  assert.deepStrictEqual(r, { choices: 4, okRun: 0, badRun: 1 });
+  r = Names.adapt({ choices: 6, okRun: 2, badRun: 1 }, true);
+  assert.deepStrictEqual(r, { choices: 6, okRun: 3, badRun: 0 });
+  const src = { choices: 4, okRun: 4, badRun: 0 };
+  Names.adapt(src, true);
+  assert.deepStrictEqual(src, { choices: 4, okRun: 4, badRun: 0 });
+});
+
+test("saveChoices does not mutate", () => {
+  const cards = { c0: { box: 1, due: TODAY } };
+  const out = Names.saveChoices(cards, 6);
+  assert.strictEqual(out._choices, 6);
+  assert.strictEqual(out.c0, cards.c0);
+  assert.strictEqual("_choices" in cards, false);
+});
+
+test("practice orders by due and skips _ keys", () => {
+  const cards = {
+    _choices: 4, _introDay: TODAY,
+    c2: { box: 1, due: "2026-12-01" }, c1: { box: 1, due: "2026-11-20" },
+    c4: { box: 1, due: "2026-11-20" }, c0: { box: 3, due: "2026-11-30" },
+  };
+  assert.deepStrictEqual(Names.practice(cards, CAST, 3), ["c1", "c4", "c0"]);
+  assert.deepStrictEqual(Names.practice(cards, CAST, 10), ["c1", "c4", "c0", "c2"]);
+  assert.deepStrictEqual(Names.practice({}, CAST, 3), []);
+});
+
+test("cards for ids not in the cast are ignored", () => {
+  const cards = { rosa: { box: 1, due: "2026-11-01" }, luna: { box: 2, due: "2026-11-02" }, c0: { box: 1, due: "2026-11-01" } };
+  const p = Names.plan(cards, CAST, TODAY);
+  assert.deepStrictEqual(p.review, ["c0"]);
+  assert.ok(p.intro.indexOf("rosa") < 0 && p.intro.indexOf("luna") < 0);
+  assert.deepStrictEqual(Names.practice(cards, CAST, 5), ["c0"]);
+});
