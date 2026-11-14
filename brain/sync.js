@@ -3,6 +3,7 @@
 const Sync = (() => {
   const B = typeof require !== "undefined" ? require("../brain.js") : window.Brain;
   const S = typeof require !== "undefined" ? require("./session.js") : window.Session;
+  const Sc = typeof require !== "undefined" ? require("./score.js") : window.Score;
   const SESSION = "brainGames.session", PROFILE = "brainGames.profile", GUEST = "brainGames.guest";
   const TRACKER = "macroTracker.session";
   const normUser = (u) => String(u || "").trim().toLowerCase();
@@ -108,7 +109,7 @@ const Sync = (() => {
 
     async function load(key) {
       const d = await dbFetch(base(key));
-      return { sessions: (d && d.sessions) || {}, progress: (d && d.progress) || null };
+      return { sessions: (d && d.sessions) || {}, progress: (d && d.progress) || null, best: (d && d.best) || {} };
     }
     async function saveDay(key, date, day) {
       const path = base(key);
@@ -119,22 +120,38 @@ const Sync = (() => {
     }
     const saveProgress = async (key, progress) => patch(base(key) + "/progress", progress);
 
+    const goodBestId = (id) => typeof id === "string" && /^(peek|parade|names)_[1-5]$/.test(id);
+    const goodBest = (id, rec) => goodBestId(id) && !!rec && typeof rec.score === "number" && isFinite(rec.score) && rec.score >= 0;
+    // A stored record is replaced only by a higher score; the write is PATCH {score, at}.
+    async function saveBest(key, id, rec) {
+      if (!goodBest(id, rec)) throw new Error("bad-path");
+      const path = base(key) + "/best/" + id;
+      const remote = await dbFetch(path);
+      if (!Sc.isBetter(rec.score, remote)) return { saved: false, best: remote };
+      const best = { score: rec.score, at: rec.at != null ? rec.at : now() };
+      await patch(path, best);
+      return { saved: true, best };
+    }
+
     async function uploadGuest(key) {
       const g = read(GUEST);
       if (!g) return;
       const days = g.days || {};
       if (!Object.keys(days).every(goodDate)) throw new Error("bad-path");
+      const guestBest = g.best && typeof g.best === "object" ? g.best : {};
+      const bestIds = Object.keys(guestBest).filter((id) => goodBest(id, guestBest[id]));
       const remote = await load(key);
       for (const date of Object.keys(days)) {
         const have = remote.sessions[date];
         await saveDay(key, date, have ? S.mergeDay(have, days[date]) : days[date]);
       }
       if (g.progress && !remote.progress) await saveProgress(key, g.progress);
+      for (const id of bestIds) await saveBest(key, id, guestBest[id]);
       storage.removeItem(GUEST);
     }
 
     return {
-      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, uploadGuest,
+      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, saveBest, uploadGuest,
       signUp: (u, pw) => authCall("signUp", u, pw),
       signIn: (u, pw) => authCall("signInWithPassword", u, pw),
     };
