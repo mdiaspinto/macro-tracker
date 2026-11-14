@@ -34,6 +34,9 @@ test("brief copy is exact", () => {
     todayCounts: ["Today counts!", "¡Hoy cuenta!"],
     playAgain: ["Play again", "Jugar otra vez"],
     level: ["Level {n}", "Nivel {n}"],
+    points: ["{n} points", "{n} puntos"],
+    newBest: ["New best!", "¡Nuevo récord!"],
+    best: ["Best: {n}", "Récord: {n}"],
   };
   Object.keys(want).forEach((k) => {
     assert.equal(T.en[k], want[k][0], "en." + k);
