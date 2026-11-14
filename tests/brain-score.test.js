@@ -68,8 +68,19 @@ test("migrateBest converts old records and keeps the highest", () => {
     { peek: { score: 140, points: 500, len: 5, at: 4 } });
 });
 
-test("migrateBest keeps a valid new-id record over any old one", () => {
+test("migrateBest takes the highest of the new-id record and the converted old ones", () => {
   const input = { peek: { score: 10, points: 10, len: 1, at: 9 }, peek_3: { score: 780, at: 2 } };
+  const copy = JSON.parse(JSON.stringify(input));
+  assert.deepStrictEqual(Score.migrateBest(input), { peek: { score: 312, points: 780, len: 3, at: 2 } });
+  assert.deepStrictEqual(input, copy);
+  assert.deepStrictEqual(Score.migrateBest({ peek: { score: 312 }, peek_3: { score: 1300 } }),
+    { peek: { score: 520, points: 1300, len: 3, at: undefined } });
+  const high = { peek: { score: 400, points: 400, len: 1, at: 9 }, peek_3: { score: 780, at: 2 } };
+  assert.deepStrictEqual(Score.migrateBest(high), { peek: high.peek });
+});
+
+test("migrateBest keeps the new-id record on a tie", () => {
+  const input = { peek: { score: 312, points: 312, len: 1, at: 9 }, peek_3: { score: 780, at: 2 } };
   assert.deepStrictEqual(Score.migrateBest(input), { peek: input.peek });
 });
 

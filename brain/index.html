@@ -580,9 +580,14 @@ async function openProfile(p, upload) {
     if (upload) { migrateGuestBest(); try { await sync.uploadGuest(p.key); } catch (e) { if (e.message === "signed-out") throw e; } }
     const d = await sync.load(p.key);
     state.sessions = d.sessions; state.best = Score.migrateBest(d.best); setProgress(d.progress);
+    // A converted record higher than the remote new-id record joins the pending list, so each id is sent once.
+    const s = sync.session(), m = pendingMap();
+    if (s) Object.keys(state.best).forEach((id) => {
+      const pk = s.uid + "/" + p.key + "/" + id, rec = state.best[id];
+      if (Score.isBetter(rec.score, d.best[id]) && Score.isBetter(rec.score, m[pk])) m[pk] = rec;
+    });
+    store.set(K.pendingBest, m);
     sendPendingBest(p.key);
-    // A record converted from old ids (not the remote new-id record itself) goes up once.
-    Object.keys(state.best).forEach((id) => { if (state.best[id] !== d.best[id]) sendBest(p.key, id, state.best[id], 0); });
     showHome();
   } catch (e) { showFail(e, () => openProfile(p, upload)); }
 }
@@ -745,7 +750,8 @@ function sendBest(key, id, rec, attempt) {
   sync.saveBest(key, id, rec).then((r) => {
     const m = pendingMap();
     if (m[pk] && m[pk].score <= rec.score) { delete m[pk]; store.set(K.pendingBest, m); }
-    if (my === gen && best === state.best && r && r.best) best[id] = r.best;
+    // Never lower the local record: keep the higher of it and the returned one.
+    if (my === gen && best === state.best && r && r.best && Score.isBetter(r.best.score, best[id])) best[id] = r.best;
   }, (e) => {
     const msg = e && e.message;
     if (msg === "signed-out" || msg === "bad-path") return;
