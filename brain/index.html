@@ -130,7 +130,7 @@
   .meter i{width:11px;height:11px;border-radius:50%;background:var(--brain-soft)}
   .meter i.f{background:var(--brain)}
   .meter b{margin-right:4px}
-  .toast{position:absolute;z-index:2;left:50%;top:13%;transform:translateX(-50%);padding:10px 22px;border-radius:999px;
+  .toast{position:absolute;z-index:2;left:50%;top:1%;transform:translateX(-50%);padding:6px 20px;pointer-events:none;border-radius:999px;
     background:var(--accent);color:var(--accent-ink);font:700 21px var(--font-display);box-shadow:var(--shadow);white-space:nowrap}
   .ask{position:absolute;left:3%;right:3%;top:15%;background:var(--panel);border-radius:var(--radius);
     padding:14px 12px 16px;box-shadow:var(--shadow);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
@@ -667,7 +667,7 @@ function stageHTML(mode) {
     <div class="ghead"><button class="btn small ghost" data-act="home">${esc(t("home"))}</button>
       <div class="gprog"><span class="gname">${esc(t(GAMES[mode][0]))}</span><span class="gleft" id="gleft"></span><div class="bar"><i id="gbar"></i></div>
         <div class="meter" id="meter"></div></div></div>
-    <div class="stage"><div class="ask" id="ask" hidden></div><div class="toast" id="toast" role="status" hidden></div>
+    <div class="stage"><div class="ask" id="ask" hidden></div><div class="toast" id="toast" hidden></div>
     <div class="rug">${rug}<img class="fb" id="fb" alt="" hidden></div>
   </div></div>`;
 }
