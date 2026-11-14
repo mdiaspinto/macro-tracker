@@ -8,8 +8,9 @@ test("speedBonus: one question", () => {
   assert.strictEqual(Score.speedBonus(5000), 0);
   assert.strictEqual(Score.speedBonus(6000), 0);
   assert.strictEqual(Score.speedBonus(500), 10);
-  assert.strictEqual(Score.speedBonus(0), 10);
-  assert.strictEqual(Score.speedBonus(-50), 10);
+  assert.strictEqual(Score.speedBonus(499), 0);
+  assert.strictEqual(Score.speedBonus(0), 0);
+  assert.strictEqual(Score.speedBonus(-50), 0);
   assert.strictEqual(Score.speedBonus(NaN), 0);
   assert.strictEqual(Score.speedBonus(Infinity), 0);
   assert.strictEqual(Score.speedBonus(undefined), 0);
@@ -17,6 +18,8 @@ test("speedBonus: one question", () => {
 
 test("speedBonus: two questions", () => {
   assert.strictEqual(Score.speedBonus(2000, true), 10);
+  assert.strictEqual(Score.speedBonus(1000, true), 10);
+  assert.strictEqual(Score.speedBonus(999, true), 0);
   assert.strictEqual(Score.speedBonus(6000, true), 5);
   assert.strictEqual(Score.speedBonus(10000, true), 0);
 });
@@ -56,4 +59,9 @@ test("isBetter", () => {
   assert.strictEqual(Score.isBetter(0, { score: NaN }), true);
   assert.strictEqual(Score.isBetter(0, {}), true);
   assert.strictEqual(Score.isBetter(NaN, {}), false);
+});
+
+test("peek: an answer faster than the minimum time gets no speed bonus", () => {
+  assert.strictEqual(Score.peek({ ok: true, answerMs: 200, level: 1, step: 1 }), 10);
+  assert.strictEqual(Score.peek({ ok: true, answerMs: 500, level: 1, step: 1 }), 20);
 });
