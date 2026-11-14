@@ -1,6 +1,13 @@
 // Toy parade: working-memory span staircase (pure, no DOM).
 const Parade = {
-  init() { return { span: 3, okRun: 0, badRun: 0, count: 0 }; },
+  init() { return { span: 2, ms: 1800, okRun: 0, badRun: 0, count: 0 }; },
+  gridSize(span) { return Math.min(6, span + 1); },
+  // one-time migration of a saved v2 state: slower and one step shorter
+  upgrade(state) {
+    if (state == null) return Parade.init();
+    if (Number.isFinite(state.ms)) return state;
+    return { ...state, ms: 1800, span: Math.max(2, (state.span || 2) - 1) };
+  },
   // Fisher-Yates on a copy
   _shuffle(a, rng) {
     a = a.slice();
@@ -27,7 +34,9 @@ const Parade = {
     let span = state.span, okRun = ok ? state.okRun + 1 : 0, badRun = ok ? 0 : state.badRun + 1;
     if (okRun >= 2) { span++; okRun = 0; badRun = 0; }
     else if (badRun >= 2) { span = Math.max(2, span - 1); okRun = 0; badRun = 0; }
-    return { state: { span, okRun, badRun, count: state.count + 1 }, ok };
+    const ms0 = Number.isFinite(state.ms) ? state.ms : 1800;
+    const ms = Math.round(Math.min(2000, Math.max(800, ok ? ms0 * 0.9 : ms0 * 1.15)));
+    return { state: { span, ms, okRun, badRun, count: state.count + 1 }, ok };
   },
 };
 if (typeof module !== "undefined") module.exports = Parade; else window.Parade = Parade;
