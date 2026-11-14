@@ -171,3 +171,45 @@ test("cards for ids not in the cast are ignored", () => {
   assert.ok(p.intro.indexOf("rosa") < 0 && p.intro.indexOf("luna") < 0);
   assert.deepStrictEqual(Names.practice(cards, CAST, 5), ["c0"]);
 });
+
+test("first game introduces 2 and _introN counts them", () => {
+  let cards = {};
+  Names.plan(cards, CAST, TODAY).intro.forEach((id) => { cards = Names.grade(cards, id, true, TODAY); });
+  assert.strictEqual(cards._introN, 2);
+  assert.strictEqual(Names.DAILY_NEW, 5);
+});
+
+test("extraIntro returns the next uncarded id until 5 are introduced", () => {
+  let cards = {};
+  Names.plan(cards, CAST, TODAY).intro.forEach((id) => { cards = Names.grade(cards, id, true, TODAY); });
+  for (let n = 2; n < 5; n++) {
+    const id = Names.extraIntro(cards, CAST, TODAY);
+    assert.strictEqual(id, "c" + n);
+    cards = Names.grade(cards, id, true, TODAY);
+    assert.strictEqual(cards._introN, n + 1);
+  }
+  assert.strictEqual(Names.extraIntro(cards, CAST, TODAY), null);
+});
+
+test("a new day resets the intro count", () => {
+  const cards = { _introDay: "2026-11-13", _introN: 5, c0: { box: 1, due: TODAY } };
+  assert.strictEqual(Names.extraIntro(cards, CAST, TODAY), "c1");
+  const out = Names.grade(cards, "c1", true, TODAY);
+  assert.strictEqual(out._introN, 1);
+  assert.strictEqual(out._introDay, TODAY);
+});
+
+test("old saved cards without _introN count as 2 today", () => {
+  const cards = { _introDay: TODAY, c0: { box: 1, due: TODAY }, c1: { box: 1, due: TODAY } };
+  assert.strictEqual(Names.extraIntro(cards, CAST, TODAY), "c2");
+  assert.strictEqual(Names.grade(cards, "c2", true, TODAY)._introN, 3);
+});
+
+test("extraIntro never introduces ids outside the cast and returns null when none are left", () => {
+  const cards = { rosa: { box: 1, due: TODAY }, _introDay: TODAY, _introN: 2 };
+  assert.strictEqual(Names.extraIntro(cards, CAST, TODAY), "c0");
+  const all = {};
+  CAST.forEach((id) => { all[id] = { box: 1, due: TODAY }; });
+  all._introDay = TODAY; all._introN = 2;
+  assert.strictEqual(Names.extraIntro(all, CAST, TODAY), null);
+});

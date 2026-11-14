@@ -81,8 +81,8 @@ test("total sums modes and treats missing modes as 0", () => {
   assert.strictEqual(Session.total({ modes: {} }), 0);
 });
 
-test("clampLen rounds, clamps to 1..5, defaults to 3", () => {
-  assert.strictEqual(Session.clampLen("9"), 5);
+test("clampLen rounds, clamps to 1..3, defaults to 3", () => {
+  assert.strictEqual(Session.clampLen("9"), 3);
   assert.strictEqual(Session.clampLen("0"), 1);
   assert.strictEqual(Session.clampLen("abc"), 3);
   assert.strictEqual(Session.clampLen(undefined), 3);
@@ -90,7 +90,10 @@ test("clampLen rounds, clamps to 1..5, defaults to 3", () => {
   assert.strictEqual(Session.clampLen(""), 3);
   assert.strictEqual(Session.clampLen("  "), 3);
   assert.strictEqual(Session.clampLen("2"), 2);
-  assert.strictEqual(Session.clampLen(4.6), 5);
+  assert.strictEqual(Session.clampLen("4"), 3);
+  assert.strictEqual(Session.clampLen("5"), 3);
+  assert.strictEqual(Session.clampLen(2), 2);
+  assert.strictEqual(Session.clampLen(4.6), 3);
 });
 
 test("weekCount counts only this Mon-Sun week", () => {

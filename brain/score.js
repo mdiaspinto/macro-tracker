@@ -20,7 +20,28 @@ const Score = {
   names({ ok, choices }) {
     return ok ? (choices === 6 ? 15 : 10) : 0;
   },
-  bestId: (game, len) => game + "_" + len,
+  bestId: (game) => game,
+  // Points per minute with a small bonus for longer games. 0 for bad input; len 4-5 only converts old records.
+  rating(points, len) {
+    if (typeof points !== "number" || !isFinite(points) || typeof len !== "number" || !(len >= 1 && len <= 5)) return 0;
+    return Math.round(points / len * (1 + 0.1 * (len - 1)));
+  },
+  // Old records are "<game>_<len>"; new ones are "<game>". Each game gets the highest of the new-id record
+  // and every converted old record (a tie keeps the new-id record). Returns a new object, never changes the input.
+  migrateBest(best) {
+    const ok = (r) => !!r && typeof r === "object" && typeof r.score === "number" && isFinite(r.score) && r.score >= 0;
+    const src = best && typeof best === "object" ? best : {}, out = {};
+    ["peek", "parade", "names"].forEach((g) => {
+      for (let len = 1; len <= 5; len++) {
+        const rec = src[g + "_" + len];
+        if (!ok(rec)) continue;
+        const score = Score.rating(rec.score, len);
+        if (!out[g] || score >= out[g].score) out[g] = { score, points: rec.score, len, at: rec.at };
+      }
+      if (ok(src[g]) && (!out[g] || src[g].score >= out[g].score)) out[g] = src[g];
+    });
+    return out;
+  },
   isBetter: (score, rec) => typeof score === "number" && isFinite(score) && (!rec || !(typeof rec.score === "number" && isFinite(rec.score)) || score > rec.score),
 };
 if (typeof module !== "undefined") module.exports = Score; else window.Score = Score;
