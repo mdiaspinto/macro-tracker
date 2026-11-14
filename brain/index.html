@@ -208,6 +208,8 @@ const T = {
     errBadLogin: "Wrong username or password.",
     errNet: "We could not connect. Check your internet and try again.",
     errSignedOut: "Please sign in again.",
+    errTooMany: "Too many tries. Wait a few minutes and try again.",
+    errAuth: "Something went wrong. Please try again.",
     today: "Today",
     streak0: "Play 3 days this week to start a streak",
     streak1: "1 week in a row",
@@ -243,7 +245,7 @@ const T = {
     ring: "{n} de 3 esta semana",
     back: "Volver al tracker",
     peekQ1: "¿Quién se asomó?",
-    peekQ2: "¿Dónde estaba el {thing}?",
+    peekQ2: "¿Dónde apareció {thing}?",
     paradeQ: "Tócalos en el mismo orden",
     paradeQRev: "Tócalos al revés",
     done: "¡Listo por hoy! ¡Hasta la próxima!",
@@ -268,6 +270,8 @@ const T = {
     errBadLogin: "Usuario o contraseña incorrectos.",
     errNet: "No pudimos conectar. Revisa tu internet e inténtalo de nuevo.",
     errSignedOut: "Vuelve a iniciar sesión, por favor.",
+    errTooMany: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+    errAuth: "Algo salió mal. Inténtalo de nuevo.",
     today: "Hoy",
     streak0: "Juega 3 días esta semana para empezar una racha",
     streak1: "1 semana seguida",
@@ -283,9 +287,9 @@ const T = {
     next: "Ahora: {part}",
     continue: "Seguir",
     posN: "posición {n}",
-    thing_balloon: "globo",
-    thing_star: "lucero",
-    thing_gift: "regalo",
+    thing_balloon: "el globo",
+    thing_star: "la estrella",
+    thing_gift: "el regalo",
     undo: "Deshacer",
     namesQ: "¿Cómo se llama este amigo?",
     meet: "¡Te presento a {name}!",
@@ -349,29 +353,61 @@ function setProgress(p) {
 const namesOn = () => Names.available(CAST_IDS);
 function namesQueue(date) { const p = Names.plan(state.progress.names, CAST_IDS, date); return p.review.concat(p.intro); }
 
-let saveTimer = 0;
+// Save pipeline. Guests write localStorage at once. Accounts queue dates and progress; one PATCH is in
+// flight at a time and always sends the latest merged value. A failure re-queues it and retries with backoff.
+let saveTimer = 0, retryTimer = 0, gen = 0, busy = false, backoff = 0;
+const pending = { days: {}, progress: false };
 function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 1500); }
 // Always save the merge of the loaded day and the current day, so a stale device never lowers progress.
 function saveNow() {
   clearTimeout(saveTimer); saveTimer = 0;
-  if (!state.dirty || !state.date || !state.day) return;
-  state.dirty = false;
-  const date = state.date, have = state.sessions[date];
-  const day = have ? Session.mergeDay(have, state.day) : state.day;
-  state.sessions[date] = day;
-  if (state.guest) {
-    const g = store.get(K.guest) || {};
-    g.days = g.days || {}; g.days[date] = day; g.progress = state.progress;
-    store.set(K.guest, g);
-  } else if (state.key) sync.saveDay(state.key, date, day).catch(onSaveErr);
+  if (state.dirty && state.date && state.day) {
+    state.dirty = false;
+    const date = state.date, have = state.sessions[date];
+    const day = have ? Session.mergeDay(have, state.day) : state.day;
+    state.sessions[date] = day;
+    if (state.guest) {
+      const g = store.get(K.guest) || {};
+      g.days = g.days || {}; g.days[date] = day; g.progress = state.progress;
+      store.set(K.guest, g);
+    } else if (state.key) pending.days[date] = true;
+  }
+  flush();
 }
 function saveProgress() {
   if (!state.progress) return;
   if (state.guest) { const g = store.get(K.guest) || {}; g.progress = state.progress; store.set(K.guest, g); }
-  else if (state.key) sync.saveProgress(state.key, state.progress).catch(onSaveErr);
+  else if (state.key) { pending.progress = true; flush(); }
 }
-// A failed save is retried by the next one (it always sends the whole day); only a lost login stops play.
-function onSaveErr(e) { if (e && e.message === "signed-out") { stopGame(); showWelcome(t("errSignedOut")); } }
+async function flush() {
+  if (busy || state.guest || !state.key) return;
+  const date = Object.keys(pending.days)[0];
+  if (!date && !pending.progress) return;
+  const my = gen;
+  busy = true;
+  if (date) delete pending.days[date]; else pending.progress = false;
+  try {
+    if (date) await sync.saveDay(state.key, date, state.sessions[date]);
+    else await sync.saveProgress(state.key, state.progress);
+    if (my !== gen) return;   // the account changed while this was in flight
+    busy = false; backoff = 0; flush();
+  } catch (e) {
+    if (my !== gen) return;
+    busy = false;
+    if (e && e.message === "signed-out") { resetAccount(); return showWelcome(t("errSignedOut")); }
+    if (date) pending.days[date] = true; else pending.progress = true;
+    backoff = Math.min(60000, backoff ? backoff * 2 : 2000);
+    clearTimeout(retryTimer); retryTimer = setTimeout(flush, backoff);
+  }
+}
+// Call on every identity change: drop queued saves and the current day, so nothing crosses accounts.
+function resetAccount() {
+  gen++; busy = false; backoff = 0;
+  clearTimeout(saveTimer); clearTimeout(retryTimer); saveTimer = retryTimer = 0;
+  pending.days = {}; pending.progress = false;
+  stopGame();
+  Object.assign(state, { date: null, day: null, dirty: false });
+}
 
 /* ---------- Rendering helpers ---------- */
 const app = $("app");
@@ -490,6 +526,7 @@ async function enterAccount(upload) {
 }
 let pendingUpload = false;
 async function openProfile(p, upload) {
+  resetAccount();
   store.set(K.profile, p.key);
   Object.assign(state, { key: p.key, name: p.name, guest: false, lang: pickLang(p.lang) });
   showLoading();
@@ -502,6 +539,7 @@ async function openProfile(p, upload) {
   } catch (e) { showFail(e, () => openProfile(p, upload)); }
 }
 function playGuest() {
+  resetAccount();
   const g = store.get(K.guest) || {};
   Object.assign(state, { key: null, name: "", guest: true, sessions: g.days || {} });
   setProgress(g.progress);
@@ -513,7 +551,8 @@ function authMsg(e) {
   if (m.indexOf("EMAIL_EXISTS") === 0) return t("errTaken");
   if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)) return t("errBadLogin");
   if (m.indexOf("WEAK_PASSWORD") === 0) return t("errShortPw");
-  return t("errNet");
+  if (m.indexOf("TOO_MANY_ATTEMPTS_TRY_LATER") === 0) return t("errTooMany");
+  return m === "net" ? t("errNet") : t("errAuth");
 }
 async function submitAuth(form) {
   const up = form.dataset.v === "up", u = $("u").value.trim(), pw = $("pw").value, err = $("authErr");
@@ -525,19 +564,26 @@ async function submitAuth(form) {
 }
 
 /* ---------- Game loop: one rAF loop per game screen counts foreground time and drives timed displays ---------- */
-const game = { mode: null, raf: 0, last: 0, onFrame: null, shownS: -1, queue: null, met: null };
+const game = { mode: null, raf: 0, last: 0, frameMs: 1000 / 60, onFrame: null, shownS: -1, queue: null, met: null };
 let cur = null, fbTimer = 0;
 function loopStart() { if (!game.raf && game.mode) { game.last = 0; game.raf = requestAnimationFrame(tick); } }
 function loopStop() { cancelAnimationFrame(game.raf); game.raf = 0; }
 function tick(ts) {
   game.raf = requestAnimationFrame(tick);
-  if (game.last) { state.day = Session.addTime(state.day, game.mode, ts - game.last, Date.now()); state.dirty = true; }
+  if (game.last) {
+    const d = ts - game.last;
+    if (d > 4 && d < 100) game.frameMs = game.frameMs * 0.9 + d * 0.1;   // measured frame interval
+    state.day = Session.addTime(state.day, game.mode, d, Date.now()); state.dirty = true;
+  }
   game.last = ts;
-  if (game.onFrame) game.onFrame();
+  if (game.onFrame) game.onFrame(ts);
   updateClock();
 }
-// Run fn after n more frames.
-function after(n, fn) { game.onFrame = () => { if (--n <= 0) { game.onFrame = null; fn(); } }; }
+// Keep what was painted at frame time t0 until ms have passed (to the nearest frame), then run fn(ts).
+// Timestamps, not frame counts, so a 120 Hz screen shows the same time as a 60 Hz one.
+function hold(t0, ms, fn) {
+  game.onFrame = (ts) => { if (ts - t0 >= ms - game.frameMs / 2) { game.onFrame = null; fn(ts); } };
+}
 function stopGame() {
   loopStop(); clearTimeout(fbTimer);
   game.mode = null; game.onFrame = null; cur = null;
@@ -613,7 +659,7 @@ function feedback(ok) {
   fbTimer = setTimeout(() => { fb.hidden = true; if (partOver()) endPart(); else ROUND[game.mode](); }, 600);
 }
 
-/* Peek-a-boo: show for Peek.frames(ms) frames, mask 250 ms, then ask. */
+/* Peek-a-boo: show for ms, mask 250 ms, then ask. */
 function drawMask() {
   const c = $("mask"), x = c.getContext("2d"), img = x.createImageData(c.width, c.height), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -637,13 +683,13 @@ function peekRound() {
   });
   decoded(shown).then(() => {
     if (cur !== me) return;
-    game.onFrame = () => {
+    game.onFrame = (t0) => {
       game.onFrame = null; me.phase = "show";
       shown.forEach((el) => el.classList.add("on"));
-      after(Peek.frames(st.ms), () => {
+      hold(t0, st.ms, (t1) => {
         shown.forEach((el) => el.classList.remove("on"));
         drawMask(); $("mask").classList.add("on"); me.phase = "mask";
-        after(Peek.frames(250), () => { $("mask").classList.remove("on"); me.phase = "ask"; askCenter(); });
+        hold(t1, 250, () => { $("mask").classList.remove("on"); me.phase = "ask"; askCenter(); });
       });
     };
   });
@@ -674,17 +720,17 @@ function paradeRound() {
   clearStage();
   const w = $("walker");
   let i = 0;
-  const step = () => {
+  const step = (ts) => {
     if (i >= r.seq.length) { w.classList.remove("on", "go"); me.phase = "ask"; askParade(); return; }
     w.src = member(r.seq[i]).img; w.alt = member(r.seq[i]).name;
     w.classList.remove("go"); void w.offsetWidth; w.classList.add("on", "go");
     i++;
-    after(Peek.frames(1000), step);
+    hold(ts, 1000, step);
   };
   const imgs = CAST_IDS.map((id) => { const x = new Image(); x.src = member(id).img; return x; });
   decoded(imgs).then(() => {
     if (cur !== me) return;
-    game.onFrame = () => { game.onFrame = null; me.phase = "walk"; step(); };
+    game.onFrame = (ts) => { game.onFrame = null; me.phase = "walk"; step(ts); };
   });
 }
 function askParade() {
@@ -749,7 +795,7 @@ app.addEventListener("click", (e) => {
     case "welcome": showWelcome(); break;
     case "guest": playGuest(); break;
     case "profile": openProfile(state.profiles[+b.dataset.i], pendingUpload); break;
-    case "signout": stopGame(); sync.signOut(); Object.assign(state, { key: null, name: "", guest: false, sessions: {}, progress: null }); showWelcome(); break;
+    case "signout": saveNow(); saveProgress(); resetAccount(); sync.signOut(); Object.assign(state, { key: null, name: "", guest: false, sessions: {}, progress: null }); showWelcome(); break;
     case "retry": if (failRetry) failRetry(); break;
     case "play": startPart(); break;
     case "home": goHome(); break;
