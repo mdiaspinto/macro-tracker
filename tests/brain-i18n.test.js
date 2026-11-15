@@ -57,6 +57,19 @@ test("progress copy is exact", () => {
     assert.equal(T.es[k], want[k][1], "es." + k);
   });
 });
+test("leaderboard copy is exact", () => {
+  const want = {
+    leaderboard: ["Leaderboard", "Clasificación"],
+    lbSignIn: ["Sign in to see the leaderboard.", "Inicia sesión para ver la clasificación."],
+    lbEmpty: ["No scores yet.", "Aún no hay récords."],
+    lbYou: ["You: #{rank}", "Tú: n.º {rank}"],
+    retry: ["Try again", "Reintentar"],
+  };
+  Object.keys(want).forEach((k) => {
+    assert.equal(T.en[k], want[k][0], "en." + k);
+    assert.equal(T.es[k], want[k][1], "es." + k);
+  });
+});
 test("no medical claims", () => {
   each((l, k, v) => assert.ok(!/alzheimer|prevent|prevenir|cura/i.test(v), l + "." + k + ": " + v));
 });
