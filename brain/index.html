@@ -88,6 +88,10 @@
   .hero p{color:var(--muted);max-width:30ch}
   .bars{display:flex;align-items:flex-end;gap:6px;height:96px;border-bottom:2px solid var(--line)}
   .bars .col{flex:1;height:100%;display:flex;align-items:flex-end}
+  .vals{display:flex;gap:6px;margin-top:-4px}
+  .vals span{flex:1;min-width:0;text-align:center;font-size:1rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .vals span:nth-child(even){margin-top:1.3em}   /* stagger, so 4-digit values never touch at 375 px */
+  .vals{margin-bottom:1.3em}
   .lb{display:flex;flex-direction:column;gap:6px}
   .lb .lrow{display:flex;gap:12px;align-items:baseline;padding:8px 12px;border-radius:12px;font-size:1.2rem}
   .lb .lrow.me{background:var(--brain);color:#fff;font-weight:700}
@@ -187,16 +191,16 @@
 <body>
 <main id="app"></main>
 <div class="live" id="live" aria-live="polite"></div>
-<script src="../brain.js?v=20261126"></script>
-<script src="cast.js?v=20261126"></script>
-<script src="peek.js?v=20261126"></script>
-<script src="parade.js?v=20261126"></script>
-<script src="names.js?v=20261126"></script>
-<script src="session.js?v=20261126"></script>
-<script src="score.js?v=20261126"></script>
-<script src="stats.js?v=20261126"></script>
-<script src="board.js?v=20261126"></script>
-<script src="sync.js?v=20261126"></script>
+<script src="../brain.js?v=20261127"></script>
+<script src="cast.js?v=20261127"></script>
+<script src="peek.js?v=20261127"></script>
+<script src="parade.js?v=20261127"></script>
+<script src="names.js?v=20261127"></script>
+<script src="session.js?v=20261127"></script>
+<script src="score.js?v=20261127"></script>
+<script src="stats.js?v=20261127"></script>
+<script src="board.js?v=20261127"></script>
+<script src="sync.js?v=20261127"></script>
 <script>
 const T = {
   en: {
@@ -244,7 +248,7 @@ const T = {
     lbEmpty: "No scores yet.",
     lbYou: "You: #{rank}",
     avgWeek: "This week: {a} · Last week: {b}",
-    gamesWeek: "{n} games this week",
+    gamesWeek: "Games this week: {n}",
     daysWeek: "Days played this week: {n}",
     noStats: "Your progress shows here after your first game.",
     errBadName: "Use 2 to 20 letters, numbers or _",
@@ -322,7 +326,7 @@ const T = {
     lbEmpty: "Aún no hay récords.",
     lbYou: "Tú: n.º {rank}",
     avgWeek: "Esta semana: {a} · Semana pasada: {b}",
-    gamesWeek: "{n} partidas esta semana",
+    gamesWeek: "Partidas esta semana: {n}",
     daysWeek: "Días jugados esta semana: {n}",
     noStats: "Tu progreso aparece aquí después de tu primera partida.",
     errBadName: "Usa de 2 a 20 letras, números o _",
@@ -584,8 +588,9 @@ function showProgress() {
   const games = Object.keys(GAMES).filter((m) => m !== "names" || namesOn()).map((m) => {
     const w = Stats.weekly(state.stats, m, td, 8), top = Math.max.apply(null, w.map((x) => x.avg || 0)) || 1;
     const dash = (x) => (x.avg == null ? "–" : x.avg);
+    const vals = w.map((x) => `<span>${x.avg == null ? "" : x.avg}</span>`).join("");
     const bars = w.map((x) => `<div class="col">${x.avg == null ? "" : `<div class="bar" style="height:${Math.round(x.avg / top * 100)}%"></div>`}</div>`).join("");
-    return `<div class="card stack"><h2>${esc(t(GAMES[m][0]))}</h2><div class="bars" aria-hidden="true">${bars}</div>
+    return `<div class="card stack"><h2>${esc(t(GAMES[m][0]))}</h2><div class="bars" aria-hidden="true">${bars}</div><div class="vals" aria-hidden="true">${vals}</div>
       <p>${esc(t("avgWeek", { a: dash(w[7]), b: dash(w[6]) }))}</p><p class="muted">${esc(t("gamesWeek", { n: w[7].n }))}</p></div>`;
   }).join("");
   render(`<div class="page">${topBar()}
@@ -827,13 +832,13 @@ function recordStats(mode, rating) {
 }
 // A failed stats write keeps the full {n, sum, best} entry in localStorage and retries after 2 s, 8 s and 30 s.
 // The write always sends the newest entry (higher n), so a game is never lost or counted twice.
-const newer = (a, b) => (a && (!b || a.n > b.n) ? a : b);
 const pendingStatsMap = () => { const m = store.get(K.pendingStats); return m && typeof m === "object" ? m : {}; };
+// The pending key uses the uid that sync.pin() fixed when the profile opened; another live session never sends or keeps it.
 function sendStats(key, date, game, attempt) {
-  const s = sync.session(), uid = s && s.uid;
+  const s = sync.session(), uid = sync.pinnedUid() || (s && s.uid);
   if (!uid) return;
   const pk = uid + "/" + key + "/" + date + "/" + game, my = gen;
-  const e = newer(state.stats[date] && state.stats[date][game], pendingStatsMap()[pk]);
+  const e = Stats.newer(state.stats[date] && state.stats[date][game], pendingStatsMap()[pk]);
   if (!e) return;
   const sent = { n: e.n, sum: e.sum, best: e.best };
   sync.saveStats(key, date, game, sent).then(() => {
@@ -841,16 +846,18 @@ function sendStats(key, date, game, attempt) {
     if (m[pk] && m[pk].n <= sent.n) { delete m[pk]; store.set(K.pendingStats, m); }
   }, (err) => {
     const m = pendingStatsMap(), msg = err && err.message;
-    if (msg === "signed-out" || msg === "bad-path") { delete m[pk]; store.set(K.pendingStats, m); return; }
+    if (msg === "bad-path") { delete m[pk]; store.set(K.pendingStats, m); return; }
+    // signed-out keeps the entry: the right account sends it after its next load. Only bad-path drops it.
     const cur = my === gen && state.stats[date] && state.stats[date][game];
-    m[pk] = newer(cur, newer(m[pk], sent));
+    m[pk] = Stats.newer(cur, Stats.newer(m[pk], sent));
     store.set(K.pendingStats, m);
-    if (my !== gen || attempt >= BEST_RETRY.length) return;
+    if (msg === "signed-out" || my !== gen || attempt >= BEST_RETRY.length) return;
     bestTimers.push(setTimeout(() => { if (my === gen) sendStats(key, date, game, attempt + 1); }, BEST_RETRY[attempt]));
   });
 }
 // Call right after a load. A pending entry of this account and profile with more games than the loaded one
-// goes into state.stats and is sent; any other pending entry is dropped.
+// goes into state.stats and is sent. An entry under this uid and key prefix that does not win, or is bad, is dropped.
+// Entries under another uid or key stay untouched.
 function sendPendingStats(key) {
   const s = sync.session(), uid = s && s.uid;
   if (!uid) return;
@@ -859,7 +866,7 @@ function sendPendingStats(key) {
     if (pk.indexOf(prefix) !== 0) return;
     const r = /^(\d{4}-\d{2}-\d{2})\/(peek|parade|names)$/.exec(pk.slice(prefix.length)), e = m[pk];
     const have = r && state.stats[r[1]] && state.stats[r[1]][r[2]];
-    if (!r || !e || !(e.n > 0) || (have && have.n >= e.n)) { delete m[pk]; return; }
+    if (!r || !Stats.pendingWins(e, have)) { delete m[pk]; return; }
     state.stats[r[1]] = Object.assign({}, state.stats[r[1]], { [r[2]]: e });
     send.push([r[1], r[2]]);
   });
@@ -875,9 +882,7 @@ function recordBest(mode, len, points, rating) {
   state.best[id] = rec;
   if (state.guest) { const g = store.get(K.guest) || {}; g.best = g.best || {}; g.best[id] = rec; store.set(K.guest, g); }
   else if (state.key) {
-    sendBest(state.key, id, rec, 0);
-    const row = Board.row(rec, state.name, Date.now());
-    if (row) sync.postBoard(id, state.key, row).catch(() => {});
+    sendBest(state.key, id, rec, 0);   // the board row follows from sendBest, only when saveBest stored the record
   }
   return true;
 }
@@ -894,6 +899,11 @@ function sendBest(key, id, rec, attempt) {
     if (m[pk] && m[pk].score <= rec.score) { delete m[pk]; store.set(K.pendingBest, m); }
     // Never lower the local record: keep the higher of it and the returned one.
     if (my === gen && best === state.best && r && r.best && Score.isBetter(r.best.score, best[id])) best[id] = r.best;
+    // A new best that saveBest stored also goes to the shared board; a stale device never lowers the row.
+    if (r && r.saved && my === gen && key === state.key) {
+      const row = Board.row(r.best, state.name, Date.now());
+      if (row) sync.postBoard(id, key, row).catch(() => {});
+    }
   }, (e) => {
     const msg = e && e.message;
     if (msg === "signed-out" || msg === "bad-path") return;
@@ -905,21 +915,24 @@ function sendBest(key, id, rec, attempt) {
   });
 }
 // Background, after Home shows: write each best that the shared board lacks and remove rows of deleted profiles.
-// Errors are ignored: the next load repairs. With no profile list, only the current key counts as live, so no row goes by mistake.
+// Errors are ignored: the next load repairs. If state.profiles is empty, the removal step is skipped, because
+// the live list would be incomplete and other profiles' rows would look stale. enterAccount always fills it today.
 async function syncBoard(key) {
   const s = sync.session(), uid = s && s.uid, my = gen;
   if (!uid) return;
   try {
     const d = await sync.leaderboard();
     const live = (state.profiles || []).map((p) => p.key);
-    if (live.indexOf(key) < 0) live.push(key);
+    const canRemove = live.length > 0;
+    if (canRemove && live.indexOf(key) < 0) live.push(key);
     for (const g of Board.GAMES) {
       if (my !== gen) return;
       const rows = d[g] || {};
       try {
         const row = Board.row(state.best[g], state.name, Date.now());
-        if (row && Board.needsWrite(row, rows[Board.entryKey(uid, key)])) await sync.postBoard(g, key, row);
-        const stale = Board.staleKeys(rows, uid, live);
+        const out = row && Board.toWrite(row, rows[Board.entryKey(uid, key)]);
+        if (out) await sync.postBoard(g, key, out);
+        const stale = canRemove ? Board.staleKeys(rows, uid, live) : [];
         if (my === gen && stale.length) await sync.removeBoard(g, stale);
       } catch (e) { if (e && e.message === "signed-out") return; }
     }

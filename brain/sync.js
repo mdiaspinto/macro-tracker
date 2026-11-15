@@ -210,7 +210,7 @@ const Sync = (() => {
     }
 
     return {
-      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, saveBest, saveStats, leaderboard, postBoard, removeBoard, uploadGuest,
+      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, pinnedUid: () => pinned, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, saveBest, saveStats, leaderboard, postBoard, removeBoard, uploadGuest,
       signUp: (u, pw) => authCall("signUp", u, pw),
       signIn: (u, pw) => authCall("signInWithPassword", u, pw),
     };

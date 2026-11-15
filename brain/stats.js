@@ -23,6 +23,12 @@ const Stats = (() => {
       const x = a || {}, y = b || {};
       return { n: num(x.n) + num(y.n), sum: num(x.sum) + num(y.sum), best: Math.max(num(x.best), num(y.best)) };
     },
+    // The entry with the higher n (the later one of one day and game). A tie keeps `a`.
+    newer(a, b) { return a && (!b || a.n > b.n) ? a : b; },
+    // True when a pending entry must replace the loaded one: it has games and more than the loaded entry, or none is loaded.
+    pendingWins(pending, loaded) {
+      return !!pending && pending.n > 0 && (!loaded || pending.n > loaded.n);
+    },
     // `weeks` entries, oldest first, ending with the week of `today` (Monday to Sunday).
     weekly(stats, game, today, weeks) {
       const out = [], st = stats || {};

@@ -545,3 +545,12 @@ test("rules file has the leaderboard rule", () => {
   assert.strictEqual(l.$game.$entry[".write"], "auth != null && $entry.beginsWith(auth.uid + '_')");
   assert.match(l.$game.$entry[".validate"], /peek\|parade\|names/);
 });
+
+test("pinnedUid: null before pin, the pinned uid after, and it stays when the session changes", () => {
+  const { api, store } = rig({}, live);
+  assert.strictEqual(api.pinnedUid(), null);
+  api.pin();
+  assert.strictEqual(api.pinnedUid(), live.uid);
+  store.set("brainGames.session", JSON.stringify(Object.assign({}, live, { uid: "U2" })));
+  assert.strictEqual(api.pinnedUid(), live.uid);
+});

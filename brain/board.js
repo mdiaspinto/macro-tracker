@@ -4,7 +4,7 @@ const Board = (() => {
   const GAMES = ["peek", "parade", "names"];
   const fin = (x) => typeof x === "number" && isFinite(x);
   const hasAt = (r) => fin(r.at);
-  return {
+  const Board = {
     GAMES,
     entryKey(uid, profileKey) { return uid + "_" + profileKey; },
     // Row to write for a best record. Returns null when best has no valid score.
@@ -12,9 +12,18 @@ const Board = (() => {
       if (!best || !fin(best.score)) return null;
       return { name: String(name == null ? "" : name).trim().slice(0, 40), score: best.score, at: fin(best.at) ? best.at : now };
     },
-    // True when the remote row is missing, lower, or has another name.
+    // True when the remote row is missing, lower, or has another name. A higher remote score with the same name needs no write.
     needsWrite(row, remote) {
-      return !remote || !fin(remote.score) || remote.score < row.score || remote.name !== row.name;
+      if (!remote || !fin(remote.score)) return true;
+      return remote.score < row.score || remote.name !== row.name;
+    },
+    // The row to PATCH, or null. A higher remote score is kept with its own at, so a stale device never lowers a row.
+    toWrite(row, remote) {
+      if (!row || !Board.needsWrite(row, remote)) return null;
+      if (remote && fin(remote.score) && remote.score > row.score) {
+        return { name: row.name, score: remote.score, at: fin(remote.at) ? remote.at : row.at };
+      }
+      return row;
     },
     // Sorted top rows. `me` is set only when myKey is outside the top.
     rank(rows, myKey, top) {
@@ -36,5 +45,6 @@ const Board = (() => {
       return Object.keys(rows || {}).filter((k) => k.indexOf(prefix) === 0 && keep.indexOf(k.slice(prefix.length)) < 0);
     },
   };
+  return Board;
 })();
 if (typeof module !== "undefined") module.exports = Board; else window.Board = Board;

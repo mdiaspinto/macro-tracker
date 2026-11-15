@@ -66,3 +66,31 @@ test("staleKeys keeps current profiles and other accounts", () => {
   assert.deepStrictEqual(Board.staleKeys(rows, "u1", ["mama"]), ["u1_old"]);
   assert.deepStrictEqual(Board.staleKeys(null, "u1", []), []);
 });
+
+test("needsWrite: remote higher with the same name needs no write", () => {
+  const row = { name: "Ana", score: 100, at: 5 };
+  assert.strictEqual(Board.needsWrite(row, { name: "Ana", score: 150, at: 1 }), false);
+});
+
+test("needsWrite: remote higher with another name still needs a write", () => {
+  const row = { name: "Ana", score: 100, at: 5 };
+  assert.strictEqual(Board.needsWrite(row, { name: "Ann", score: 150, at: 1 }), true);
+});
+
+test("toWrite: name differs, remote higher keeps the remote score and at", () => {
+  const row = { name: "Ana", score: 100, at: 5 };
+  assert.deepStrictEqual(Board.toWrite(row, { name: "Ann", score: 150, at: 1 }), { name: "Ana", score: 150, at: 1 });
+});
+
+test("toWrite: remote higher without a valid at keeps the local at", () => {
+  const row = { name: "Ana", score: 100, at: 5 };
+  assert.deepStrictEqual(Board.toWrite(row, { name: "Ann", score: 150 }), { name: "Ana", score: 150, at: 5 });
+});
+
+test("toWrite: missing or lower remote writes the local row; no write gives null", () => {
+  const row = { name: "Ana", score: 100, at: 5 };
+  assert.deepStrictEqual(Board.toWrite(row, null), row);
+  assert.deepStrictEqual(Board.toWrite(row, { name: "Ana", score: 90, at: 1 }), row);
+  assert.strictEqual(Board.toWrite(row, { name: "Ana", score: 100, at: 5 }), null);
+  assert.strictEqual(Board.toWrite(row, { name: "Ana", score: 150, at: 1 }), null);
+});

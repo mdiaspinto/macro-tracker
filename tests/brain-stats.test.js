@@ -60,3 +60,23 @@ test("daysPlayed counts days with play time this week only", () => {
   assert.strictEqual(Stats.daysPlayed({ "2026-11-16": { modes: { peek: 5, parade: 0, names: 0 } } }, "2026-11-17"), 1);
   assert.strictEqual(Stats.daysPlayed(undefined, "2026-11-17"), 0);
 });
+
+test("newer: picks the entry with the higher n", () => {
+  const a = { n: 2, sum: 10, best: 6 }, b = { n: 3, sum: 15, best: 7 };
+  assert.strictEqual(Stats.newer(a, b), b);
+  assert.strictEqual(Stats.newer(b, a), b);
+  assert.strictEqual(Stats.newer(a, undefined), a);
+  assert.strictEqual(Stats.newer(undefined, b), b);
+  assert.strictEqual(Stats.newer(undefined, undefined), undefined);
+  assert.strictEqual(Stats.newer(a, { n: 2, sum: 9, best: 5 }).n, 2);
+});
+
+test("pendingWins: keep pending only if its n is higher than the loaded n, or loaded is missing", () => {
+  assert.strictEqual(Stats.pendingWins({ n: 3 }, { n: 2 }), true);
+  assert.strictEqual(Stats.pendingWins({ n: 2 }, { n: 2 }), false);
+  assert.strictEqual(Stats.pendingWins({ n: 1 }, { n: 2 }), false);
+  assert.strictEqual(Stats.pendingWins({ n: 1 }, undefined), true);
+  assert.strictEqual(Stats.pendingWins({ n: 0 }, undefined), false);
+  assert.strictEqual(Stats.pendingWins(null, undefined), false);
+  assert.strictEqual(Stats.pendingWins({ n: "x" }, undefined), false);
+});

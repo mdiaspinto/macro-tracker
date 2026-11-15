@@ -48,7 +48,7 @@ test("progress copy is exact", () => {
   const want = {
     progress: ["My progress", "Mi progreso"],
     avgWeek: ["This week: {a} · Last week: {b}", "Esta semana: {a} · Semana pasada: {b}"],
-    gamesWeek: ["{n} games this week", "{n} partidas esta semana"],
+    gamesWeek: ["Games this week: {n}", "Partidas esta semana: {n}"],
     daysWeek: ["Days played this week: {n}", "Días jugados esta semana: {n}"],
     noStats: ["Your progress shows here after your first game.", "Tu progreso aparece aquí después de tu primera partida."],
   };
