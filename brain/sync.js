@@ -4,6 +4,8 @@ const Sync = (() => {
   const B = typeof require !== "undefined" ? require("../brain.js") : window.Brain;
   const S = typeof require !== "undefined" ? require("./session.js") : window.Session;
   const Sc = typeof require !== "undefined" ? require("./score.js") : window.Score;
+  const St = typeof require !== "undefined" ? require("./stats.js") : window.Stats;
+  const Bd = typeof require !== "undefined" ? require("./board.js") : window.Board;
   const SESSION = "brainGames.session", PROFILE = "brainGames.profile", GUEST = "brainGames.guest";
   const TRACKER = "macroTracker.session";
   const normUser = (u) => String(u || "").trim().toLowerCase();
@@ -109,7 +111,7 @@ const Sync = (() => {
 
     async function load(key) {
       const d = await dbFetch(base(key));
-      return { sessions: (d && d.sessions) || {}, progress: (d && d.progress) || null, best: (d && d.best) || {} };
+      return { sessions: (d && d.sessions) || {}, progress: (d && d.progress) || null, best: (d && d.best) || {}, stats: (d && d.stats) || {} };
     }
     async function saveDay(key, date, day) {
       const path = base(key);
@@ -119,6 +121,41 @@ const Sync = (() => {
       await patch(path + "/sessions/" + date, body);
     }
     const saveProgress = async (key, progress) => patch(base(key) + "/progress", progress);
+
+    async function saveStats(key, date, game, entry) {
+      const path = base(key);
+      if (!goodDate(date) || Bd.GAMES.indexOf(game) < 0) throw new Error("bad-path");
+      await patch(path + "/stats/" + date + "/" + game, { n: entry.n, sum: entry.sum, best: entry.best });
+    }
+
+    // Leaderboard: reads need a session; writes also need a good game and the pinned uid.
+    function uidFor() {
+      const s = session();
+      if (!s || (pinned && s.uid !== pinned)) throw new Error("signed-out");
+      return s.uid;
+    }
+    const goodGame = (g) => Bd.GAMES.indexOf(g) >= 0;
+    async function leaderboard() {
+      uidFor();
+      const d = await dbFetch("/leaderboard");
+      const out = {};
+      Bd.GAMES.forEach((g) => { out[g] = (d && d[g]) || {}; });
+      return out;
+    }
+    async function postBoard(game, key, row) {
+      if (!goodGame(game) || !goodKey(key)) throw new Error("bad-path");
+      const uid = uidFor();
+      await patch("/leaderboard/" + game + "/" + encodeURIComponent(Bd.entryKey(uid, key)), row);
+    }
+    async function removeBoard(game, entryKeys) {
+      if (!goodGame(game)) throw new Error("bad-path");
+      const uid = uidFor();
+      if (!entryKeys.every((k) => typeof k === "string" && k.indexOf(uid + "_") === 0 && k.length > uid.length + 1)) throw new Error("bad-path");
+      if (!entryKeys.length) return;
+      const body = {};
+      entryKeys.forEach((k) => { body[k] = null; });
+      await patch("/leaderboard/" + game, body);
+    }
 
     const goodBestId = (id) => typeof id === "string" && /^(peek|parade|names)$/.test(id);
     const goodBest = (id, rec) => goodBestId(id) && !!rec && typeof rec.score === "number" && isFinite(rec.score) && rec.score >= 0;
@@ -146,6 +183,8 @@ const Sync = (() => {
       if (!Object.keys(days).every(goodDate)) throw new Error("bad-path");
       const guestBest = g.best && typeof g.best === "object" ? g.best : {};
       const bestIds = Object.keys(guestBest).filter((id) => goodBest(id, guestBest[id]));
+      const guestStats = g.stats && typeof g.stats === "object" ? g.stats : {};
+      if (!Object.keys(guestStats).every(goodDate)) throw new Error("bad-path");
       const remote = await load(key);
       for (const date of Object.keys(days)) {
         const have = remote.sessions[date];
@@ -153,11 +192,25 @@ const Sync = (() => {
       }
       if (g.progress && !remote.progress) await saveProgress(key, g.progress);
       for (const id of bestIds) await saveBest(key, id, guestBest[id]);
+      for (const date of Object.keys(guestStats)) {
+        for (const game of Object.keys(guestStats[date] || {}).filter((x) => Bd.GAMES.indexOf(x) >= 0)) {
+          const have = remote.stats[date] && remote.stats[date][game];
+          await saveStats(key, date, game, St.merge(have, guestStats[date][game]));
+          dropGuestStats(date, game);   // gone at once, so a retry never adds this entry twice
+        }
+      }
       storage.removeItem(GUEST);
+    }
+    function dropGuestStats(date, game) {
+      const cur = read(GUEST);
+      if (!cur || !cur.stats || !cur.stats[date]) return;
+      delete cur.stats[date][game];
+      if (!Object.keys(cur.stats[date]).length) delete cur.stats[date];
+      write(GUEST, cur);
     }
 
     return {
-      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, saveBest, uploadGuest,
+      session, trackerSession, pin: () => { const s = session(); pinned = s ? s.uid : null; }, useTrackerSession, signOut, profiles, load, saveDay, saveProgress, saveBest, saveStats, leaderboard, postBoard, removeBoard, uploadGuest,
       signUp: (u, pw) => authCall("signUp", u, pw),
       signIn: (u, pw) => authCall("signInWithPassword", u, pw),
     };

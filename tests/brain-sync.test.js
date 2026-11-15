@@ -108,9 +108,9 @@ test("profiles falls back to username for empty account", async () => {
 
 test("load returns defaults for missing data and the stored data otherwise", async () => {
   const none = rig({ "/brain/U1/ana.json": reply(null) }, live);
-  assert.deepStrictEqual(await none.api.load("ana"), { sessions: {}, progress: null, best: {} });
+  assert.deepStrictEqual(await none.api.load("ana"), { sessions: {}, progress: null, best: {}, stats: {} });
   const some = rig({ "/brain/U1/ana.json": reply({ sessions: { "2026-11-14": day(5) } }) }, live);
-  assert.deepStrictEqual(await some.api.load("ana"), { sessions: { "2026-11-14": day(5) }, progress: null, best: {} });
+  assert.deepStrictEqual(await some.api.load("ana"), { sessions: { "2026-11-14": day(5) }, progress: null, best: {}, stats: {} });
 });
 
 test("writes only PATCH under /brain/<uid>/<key>", async () => {
@@ -124,8 +124,12 @@ test("writes only PATCH under /brain/<uid>/<key>", async () => {
   assert.ok(writes.length >= 4);
   writes.forEach((c) => {
     assert.strictEqual(c.method, "PATCH");
-    assert.ok(dbPath(c).startsWith("/brain/U1/ana/"), dbPath(c));
+    assert.ok(/^\/brain\/U1\/ana\/|^\/leaderboard\/(peek|parade|names)\/U1_|^\/leaderboard\/(peek|parade|names)$/.test(dbPath(c)), dbPath(c));
   });
+  await api.saveStats("ana", "2026-11-14", "peek", { n: 1, sum: 5, best: 5 });
+  await api.postBoard("peek", "ana", { name: "Ana", score: 5 });
+  await api.removeBoard("peek", ["U1_old"]);
+  calls.filter((c) => c.method !== "GET").forEach((c) => assert.strictEqual(c.method, "PATCH"));
   assert.ok(calls.every((c) => !/\/users\/|\/brain\/U1\.json/.test(c.url) || c.method === "GET"));
   assert.deepStrictEqual(writes.map(dbPath).slice(0, 2), ["/brain/U1/ana/sessions/2026-11-12", "/brain/U1/ana/progress"]);
 });
@@ -435,4 +439,109 @@ test("uploadGuest keeps the guest store if a best write fails", async () => {
   const { api, store } = rig({ "/brain/U1/ana": (u, o) => (o.method === "PATCH" ? reply({}, 500) : reply(null)) }, live, { "brainGames.guest": guest });
   await assert.rejects(() => api.uploadGuest("ana"), /net/);
   assert.ok(store.has("brainGames.guest"));
+});
+
+const rules = require("../database.rules.json");
+const E = { n: 1, sum: 100, best: 100 };
+
+test("load defaults stats to {}", async () => {
+  const { api } = rig({ "/brain/U1/ana.json": reply({ stats: { "2026-11-14": { peek: E } } }) }, live);
+  assert.deepStrictEqual((await api.load("ana")).stats, { "2026-11-14": { peek: E } });
+});
+
+test("saveStats PATCHes the day and game path", async () => {
+  const { api, calls } = rig({ "/brain/": reply({}) }, live);
+  await api.saveStats("ana", "2026-11-14", "peek", { n: 2, sum: 3, best: 2 });
+  assert.strictEqual(calls[0].method, "PATCH");
+  assert.strictEqual(dbPath(calls[0]), "/brain/U1/ana/stats/2026-11-14/peek");
+  assert.deepStrictEqual(JSON.parse(calls[0].body), { n: 2, sum: 3, best: 2 });
+});
+
+test("saveStats rejects a bad date or game before any fetch", async () => {
+  const { api, calls } = rig({}, live);
+  await assert.rejects(() => api.saveStats("ana", "2026-1-4", "peek", E), /bad-path/);
+  await assert.rejects(() => api.saveStats("ana", "2026-11-14", "x", E), /bad-path/);
+  assert.strictEqual(calls.length, 0);
+});
+
+test("uploadGuest merges stats with remote", async () => {
+  const guest = { days: {}, stats: { "2026-11-14": { peek: { n: 2, sum: 300, best: 200 } } } };
+  const { api, calls, store } = rig({ "/brain/U1/ana.json": reply({ stats: { "2026-11-14": { peek: E } } }) }, live, { "brainGames.guest": guest });
+  await api.uploadGuest("ana");
+  const w = patches(calls);
+  assert.deepStrictEqual(w.map(dbPath), ["/brain/U1/ana/stats/2026-11-14/peek"]);
+  assert.deepStrictEqual(JSON.parse(w[0].body), { n: 3, sum: 400, best: 200 });
+  assert.strictEqual(store.has("brainGames.guest"), false);
+});
+
+test("uploadGuest stats retry does not double count", async () => {
+  const g = (n) => ({ n, sum: n * 10, best: 10 });
+  const guest = { days: {}, stats: { "2026-11-13": { peek: g(1) }, "2026-11-14": { peek: g(2) } } };
+  let fail = true;
+  const route = (u, o) => (o.method === "PATCH" && fail && /2026-11-14/.test(u) ? reply({}, 500) : reply(null));
+  const { api, calls, store } = rig({ "/brain/U1/ana": route }, live, { "brainGames.guest": guest });
+  await assert.rejects(() => api.uploadGuest("ana"), /net/);
+  assert.deepStrictEqual(JSON.parse(store.get("brainGames.guest")).stats, { "2026-11-14": { peek: g(2) } });
+  fail = false;
+  calls.length = 0;
+  await api.uploadGuest("ana");
+  assert.deepStrictEqual(patches(calls).map(dbPath), ["/brain/U1/ana/stats/2026-11-14/peek"]);
+  assert.strictEqual(store.has("brainGames.guest"), false);
+});
+
+test("leaderboard defaults missing games", async () => {
+  const { api, calls } = rig({ "/leaderboard.json": reply({ peek: { U1_ana: { name: "Ana", score: 5 } } }) }, live);
+  assert.deepStrictEqual(await api.leaderboard(), { peek: { U1_ana: { name: "Ana", score: 5 } }, parade: {}, names: {} });
+  assert.strictEqual(dbPath(calls[0]), "/leaderboard");
+  const none = rig({ "/leaderboard.json": reply(null) }, live);
+  assert.deepStrictEqual(await none.api.leaderboard(), { peek: {}, parade: {}, names: {} });
+});
+
+test("postBoard PATCHes the row under uid_key", async () => {
+  const { api, calls } = rig({ "/leaderboard/": reply({}) }, live);
+  await api.postBoard("parade", "ana", { name: "Ana", score: 7, at: 1 });
+  assert.strictEqual(calls[0].method, "PATCH");
+  assert.strictEqual(dbPath(calls[0]), "/leaderboard/parade/U1_ana");
+  assert.deepStrictEqual(JSON.parse(calls[0].body), { name: "Ana", score: 7, at: 1 });
+});
+
+test("removeBoard PATCHes null for each key; an empty list does nothing", async () => {
+  const { api, calls } = rig({ "/leaderboard/": reply({}) }, live);
+  await api.removeBoard("names", []);
+  assert.strictEqual(calls.length, 0);
+  await api.removeBoard("names", ["U1_a", "U1_b"]);
+  assert.strictEqual(dbPath(calls[0]), "/leaderboard/names");
+  assert.deepStrictEqual(JSON.parse(calls[0].body), { U1_a: null, U1_b: null });
+});
+
+test("leaderboard writes refuse other uids and bad games", async () => {
+  const { api, calls } = rig({}, live);
+  for (const keys of [["other_x"], ["U1_"], ["U1_ok", "other_x"], ["U1"]]) {
+    await assert.rejects(() => api.removeBoard("peek", keys), /bad-path/);
+  }
+  await assert.rejects(() => api.removeBoard("chess", ["U1_x"]), /bad-path/);
+  await assert.rejects(() => api.postBoard("chess", "ana", { name: "A", score: 1 }), /bad-path/);
+  await assert.rejects(() => api.postBoard("peek", "A/b", { name: "A", score: 1 }), /bad-path/);
+  assert.strictEqual(calls.length, 0);
+});
+
+test("leaderboard calls throw signed-out without a session or after a uid change", async () => {
+  const out = rig({}, null);
+  await assert.rejects(() => out.api.leaderboard(), /signed-out/);
+  await assert.rejects(() => out.api.postBoard("peek", "ana", { name: "A", score: 1 }), /signed-out/);
+  await assert.rejects(() => out.api.removeBoard("peek", ["U1_x"]), /signed-out/);
+  assert.strictEqual(out.calls.length, 0);
+  const { api, calls, store } = rig({ "/leaderboard": reply({}) }, live);
+  api.pin();
+  store.set("brainGames.session", JSON.stringify(Object.assign({}, live, { uid: "U2" })));
+  await assert.rejects(() => api.postBoard("peek", "ana", { name: "A", score: 1 }), /signed-out/);
+  await assert.rejects(() => api.removeBoard("peek", ["U2_x"]), /signed-out/);
+  assert.strictEqual(calls.length, 0);
+});
+
+test("rules file has the leaderboard rule", () => {
+  const l = rules.rules.leaderboard;
+  assert.strictEqual(l[".read"], "auth != null");
+  assert.strictEqual(l.$game.$entry[".write"], "auth != null && $entry.beginsWith(auth.uid + '_')");
+  assert.match(l.$game.$entry[".validate"], /peek\|parade\|names/);
 });
