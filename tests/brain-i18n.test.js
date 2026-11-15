@@ -44,6 +44,19 @@ test("brief copy is exact", () => {
     assert.equal(T.es[k], want[k][1], "es." + k);
   });
 });
+test("progress copy is exact", () => {
+  const want = {
+    progress: ["My progress", "Mi progreso"],
+    avgWeek: ["This week: {a} · Last week: {b}", "Esta semana: {a} · Semana pasada: {b}"],
+    gamesWeek: ["{n} games this week", "{n} partidas esta semana"],
+    daysWeek: ["Days played this week: {n}", "Días jugados esta semana: {n}"],
+    noStats: ["Your progress shows here after your first game.", "Tu progreso aparece aquí después de tu primera partida."],
+  };
+  Object.keys(want).forEach((k) => {
+    assert.equal(T.en[k], want[k][0], "en." + k);
+    assert.equal(T.es[k], want[k][1], "es." + k);
+  });
+});
 test("no medical claims", () => {
   each((l, k, v) => assert.ok(!/alzheimer|prevent|prevenir|cura/i.test(v), l + "." + k + ": " + v));
 });
