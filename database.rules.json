@@ -14,6 +14,15 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "leaderboard": {
+      ".read": "auth != null",
+      "$game": {
+        "$entry": {
+          ".write": "auth != null && $entry.beginsWith(auth.uid + '_')",
+          ".validate": "$game.matches(/^(peek|parade|names)$/) && newData.hasChildren(['name', 'score']) && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('score').isNumber() && newData.child('score').val() >= 0"
+        }
+      }
+    },
     "accounts": {
       "$username": {
         ".read": "auth != null && auth.token.email === $username + '@macro-tracker-d8908.firebaseapp.com'"
