@@ -15,7 +15,8 @@ const Adapt = (() => {
 
   // The unveil week is named by its Sunday.
   const weekKey = today => addDays(today, -parseDate(today).getDay());
-  const due = (user, today) => !!(user && user.adaptive && user.adaptive.on) && user.adaptive.week !== weekKey(today);
+  // On by default: only an explicit on:false turns it off.
+  const due = (user, today) => { const a = (user && user.adaptive) || {}; return a.on !== false && a.week !== weekKey(today); };
 
   // The 7 days before today: days with eaten food, their average kcal, and the latest weight on record.
   function week(user, today) {
