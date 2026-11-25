@@ -12,9 +12,10 @@ test("weekKey: the Sunday on or before the date", () => {
   assert.equal(Adapt.weekKey("2026-11-29"), "2026-11-29");
 });
 
-test("due: only when on and this week is not unveiled yet", () => {
-  assert.equal(Adapt.due({}, "2026-11-25"), false);
+test("due: on by default, until turned off, when this week is not unveiled yet", () => {
+  assert.equal(Adapt.due({}, "2026-11-25"), true);
   assert.equal(Adapt.due({ adaptive: { on: false } }, "2026-11-25"), false);
+  assert.equal(Adapt.due({ adaptive: { on: false, week: "2026-11-15" } }, "2026-11-25"), false);
   assert.equal(Adapt.due({ adaptive: { on: true } }, "2026-11-25"), true);
   assert.equal(Adapt.due({ adaptive: { on: true, week: "2026-11-22" } }, "2026-11-25"), false);
   assert.equal(Adapt.due({ adaptive: { on: true, week: "2026-11-22" } }, "2026-11-29"), true);
