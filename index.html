@@ -397,6 +397,30 @@
   .confetti i{position:absolute;top:-16px;width:9px;height:14px;border-radius:2px;animation:confetti-fall 1.7s cubic-bezier(.25,.6,.5,1) both}
   @keyframes confetti-fall{to{transform:translate3d(var(--dx),110vh,0) rotate(var(--rot))}}
 
+  /* Adaptive weekly macros: check-in + unveil */
+  .wk{max-width:400px;text-align:center}
+  .wk .body{padding:28px 22px 22px}
+  .wk-kicker{margin:0 0 6px;font-size:13.5px;font-weight:800;color:var(--accent-text)}
+  .wk h3{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .wk-msg{font-size:14.5px;line-height:1.5;color:var(--muted);margin:10px 0 18px}
+  .wk-q{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;text-align:left;font-weight:700;font-size:14.5px}
+  .wk-seg{display:flex;gap:6px;flex:none}
+  .wk-seg button{min-height:44px;padding:8px 14px;border-radius:999px;border:2px solid var(--line-strong);background:transparent;color:var(--text);font-weight:700;font-size:14px}
+  .wk-seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .wk-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 12px}
+  .wk-num{background:var(--panel-2);border-radius:var(--radius-sm);padding:14px 4px 8px;border-bottom:4px solid var(--k)}
+  .wk-num b{display:block;font-family:var(--font-display);font-size:40px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--faint)}
+  .wk-num.in{animation:wkPop .45s cubic-bezier(.2,1.6,.4,1)}
+  .wk-num.in b{color:var(--text)}
+  .wk-num span{display:block;font-size:12.5px;font-weight:700;color:var(--k);margin-top:6px}
+  .wk-num small{display:block;min-height:18px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  @keyframes wkPop{0%{transform:scale(.8)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+  .wk-after{visibility:hidden;opacity:0}
+  .wk .done .wk-after{visibility:visible;opacity:1;transition:opacity .4s}
+  .wk-kcal{margin:0;font-size:15px;font-weight:700}
+  .wk-actions{display:flex;flex-direction:column;gap:8px}
+  .wk-actions .btn{min-height:48px;font-size:16px}
+
   /* ---------- Section ---------- */
   .section{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
   .section > .head{padding:15px 18px 14px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
@@ -1179,6 +1203,10 @@
         <span><b data-i18n="insSetting">Weight-change breakdown</b><small data-i18n="insSettingHint">After each weigh-in, explain what you ate and why your weight moved.</small></span>
         <input type="checkbox" id="insightsToggle">
       </label>
+      <label class="setting-row" style="margin-top:14px">
+        <span><b data-i18n="wkSetting">Adaptive weekly macros</b><small data-i18n="wkSettingHint"></small></span>
+        <input type="checkbox" id="adaptiveToggle">
+      </label>
       <button class="btn btn-ghost full" id="replayTourBtn" style="margin-top:16px" data-i18n="tourReplay">Replay tour</button>
       <button class="btn btn-ghost full" id="demoExitBtn" data-i18n="demoExit">Exit demo</button>
       <div class="divider"></div>
@@ -1321,6 +1349,13 @@
   </div>
 </div>
 
+<!-- Adaptive weekly macros: check-in and unveil -->
+<div class="overlay" id="weekOverlay">
+  <div class="modal wk" role="dialog" aria-modal="true" aria-labelledby="wkTitle">
+    <div class="body" id="wkBody" aria-live="polite"></div>
+  </div>
+</div>
+
 <!-- Level-up celebration -->
 <div class="overlay" id="levelOverlay">
   <div class="modal lvlup" role="dialog" aria-modal="true" aria-labelledby="lvlUpName">
@@ -1401,6 +1436,7 @@
 <script src="charts.js?v=20261119"></script>
 <script src="brain.js?v=20261119"></script>
 <script src="game.js?v=20261119"></script>
+<script src="adapt.js?v=20261125"></script>
 <script src="coach.js?v=20261119"></script>
 <script src="shop.js?v=20261119"></script>
 <script src="demo.js?v=20261119"></script>
@@ -1746,7 +1782,24 @@ const T = {
     shopNew:"New", shopCompleted:"Completed {date}", shopNext:"{n} more characters: {name} backdrop", shopNext1:"One more character: {name} backdrop", shopAllMilestones:"Every character backdrop unlocked", shopBackdrop:"Backdrop", shopLockedAt:"{n} characters", shopSecretReward:"Secret reward", shopUnlocked:"New backdrop: {name}",
     passport:"Passport", passportStamps:"{n} stamps", passportStamp1:"1 stamp",
     shopDup:"You already have {name}! +{r} points back", shopColDone:"Collection complete!", shopNice:"Nice!", shopClose:"Close",
-    undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted"
+    undo:"Undo", undone:"Restored ✓", deletedItem:"Deleted {name}", deletedUser:"User deleted",
+
+    wkSetting:"Adaptive weekly macros", wkSettingHint:"Each Sunday, get new targets for the week. They follow your weight trend, your food log and how you feel. They start from your current targets and change in small steps.",
+    wkKicker:"Week of {date}", wkAskTitle:"How was your week?", wkAskMsg:"Your answers shape this week's macros.",
+    wkHunger:"Hunger", wkHungerOk:"Fine", wkHungerHigh:"Very hungry", wkEnergy:"Energy", wkEnergyOk:"Good", wkEnergyLow:"Low",
+    wkShow:"Show my macros", wkCalc:"Working out your week…", wkTitle:"Your macros this week",
+    wkUse:"Use these", wkKeep:"Keep last week's", wkOk:"Let's go", wkUsed:"New macros set for the week", wkKept:"Macros unchanged this week",
+    wkWhy_first:"This is your starting point: the targets you already use. Log your food and your weight this week, and next Sunday they adapt.",
+    wkWhy_fewDays:"Fewer than 4 days of food were logged last week. That is too little to judge, so your macros stay the same.",
+    wkWhy_noData:"There are not enough weigh-ins yet to measure how much you burn. Log your weight about twice a week. Your macros stay the same for now.",
+    wkWhy_offTarget:"What you ate last week was far from your target, so a new target would not help. Aim for these again this week.",
+    wkWhy_holdFeedback:"Your weight is moving slower than planned, but you are hungry and low on energy. Your macros hold steady this week.",
+    wkWhy_halfCut:"Your weight is moving slower than planned. Because of how you feel, this is only half the usual step down.",
+    wkWhy_cut:"Your weight is moving slower than planned, so your calories go down a small step.",
+    wkWhy_raise:"Your body can take more food at this pace, so your calories go up a small step. That protects your muscle and your energy.",
+    wkWhy_floor:"Your calories are already as low as is sensible, so they stay the same.",
+    wkWhy_onPace:"You are right on pace. Keep going.",
+    wkProtein:"Protein goes up a little to protect muscle.", wkCapped:"The change is limited to 150 kcal per week.", wkFloored:"A safety floor limits the cut."
   },
   es: {
     switchUser:"Cambiar usuario", manageUsers:"Administrar usuarios y objetivos",
@@ -1931,7 +1984,24 @@ const T = {
     shopNew:"Nuevo", shopCompleted:"Completada el {date}", shopNext:"Te faltan {n} personajes: fondo {name}", shopNext1:"Te falta 1 personaje: fondo {name}", shopAllMilestones:"Todos los fondos de personajes desbloqueados", shopBackdrop:"Fondo", shopLockedAt:"{n} personajes", shopSecretReward:"Premio secreto", shopUnlocked:"Nuevo fondo: {name}",
     passport:"Pasaporte", passportStamps:"{n} sellos", passportStamp1:"1 sello",
     shopDup:"¡Ya tienes a {name}! +{r} puntos de vuelta", shopColDone:"¡Colección completa!", shopNice:"¡Genial!", shopClose:"Cerrar",
-    undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado"
+    undo:"Deshacer", undone:"Restaurado ✓", deletedItem:"Eliminado {name}", deletedUser:"Usuario eliminado",
+
+    wkSetting:"Macros semanales adaptables", wkSettingHint:"Cada domingo recibes objetivos nuevos para la semana. Siguen la tendencia de tu peso, tu registro de comidas y cómo te sientes. Parten de tus objetivos actuales y cambian poco a poco.",
+    wkKicker:"Semana del {date}", wkAskTitle:"¿Cómo fue tu semana?", wkAskMsg:"Tus respuestas dan forma a los macros de esta semana.",
+    wkHunger:"Hambre", wkHungerOk:"Bien", wkHungerHigh:"Mucha hambre", wkEnergy:"Energía", wkEnergyOk:"Buena", wkEnergyLow:"Baja",
+    wkShow:"Ver mis macros", wkCalc:"Calculando tu semana…", wkTitle:"Tus macros de esta semana",
+    wkUse:"Usar estos", wkKeep:"Seguir con los anteriores", wkOk:"¡Vamos!", wkUsed:"Macros nuevos para la semana", wkKept:"Los macros no cambian esta semana",
+    wkWhy_first:"Este es tu punto de partida: los objetivos que ya usas. Registra tus comidas y tu peso esta semana, y el próximo domingo se adaptan.",
+    wkWhy_fewDays:"La semana pasada registraste comida menos de 4 días. Es muy poco para decidir, así que tus macros siguen igual.",
+    wkWhy_noData:"Todavía faltan pesajes para medir cuánto gastas. Registra tu peso unas dos veces por semana. Por ahora tus macros siguen igual.",
+    wkWhy_offTarget:"Lo que comiste la semana pasada estuvo lejos de tu objetivo, así que un objetivo nuevo no ayudaría. Apunta a estos otra vez esta semana.",
+    wkWhy_holdFeedback:"Tu peso cambia más despacio de lo previsto, pero tienes hambre y poca energía. Tus macros se mantienen esta semana.",
+    wkWhy_halfCut:"Tu peso cambia más despacio de lo previsto. Por cómo te sientes, la bajada es solo la mitad de lo habitual.",
+    wkWhy_cut:"Tu peso cambia más despacio de lo previsto, así que tus calorías bajan un poco.",
+    wkWhy_raise:"A este ritmo tu cuerpo admite más comida, así que tus calorías suben un poco. Eso protege tu músculo y tu energía.",
+    wkWhy_floor:"Tus calorías ya están tan bajas como es razonable, así que siguen igual.",
+    wkWhy_onPace:"Vas justo al ritmo previsto. ¡Sigue así!",
+    wkProtein:"La proteína sube un poco para proteger el músculo.", wkCapped:"El cambio se limita a 150 kcal por semana.", wkFloored:"Un mínimo de seguridad limita la bajada."
   }
 };
 function lang(){ return (user().lang==="es") ? "es" : "en"; }
@@ -2445,6 +2515,7 @@ function renderTargets(){
     <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
     <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
   document.getElementById("insightsToggle").checked = u.insightsOn!==false;
+  document.getElementById("adaptiveToggle").checked = !!(u.adaptive && u.adaptive.on);
   renderProfileForm();
 }
 // About-me fields, in groups so Meet-your-coach can show one step at a time.
@@ -2623,6 +2694,77 @@ function startDemoTour(){
 function maybeStartTour(){
   if(demoMode || Tour.active() || (user().tourSeenV||0)>=TOUR_VERSION || !celebrateReady || document.querySelector(".overlay.on")) return;
   startTour();
+}
+/* ---------- Adaptive weekly macros (rule in adapt.js) ----------
+   user.adaptive = { on, week: Sunday of the last unveiled week, at: ms of the last change }. */
+let wkPlan=null, wkTimer=0;
+function adaptiveInput(feedback){
+  const u=user(), today=todayStr(), m=estimateMaintenance(today);
+  return Object.assign(Adapt.week(u,today), { goal:u.goal, targets:targets(), maintenance:m.source==="data" ? m.kcal : null,
+    first:!(u.adaptive && u.adaptive.week), feedback });
+}
+// Once per week (from Sunday), when the app is fully up and nothing else is open.
+function maybeShowWeekly(){
+  if(Tour.active() || !celebrateReady || document.querySelector(".overlay.on") || !Adapt.due(user(),todayStr())) return;
+  const pre=Adapt.plan(adaptiveInput({}));
+  document.getElementById("weekOverlay").classList.add("on");
+  if(["first","fewDays","noData"].includes(pre.reason)) renderUnveil(pre); else renderWeeklyAsk();   // no check-in when the answers cannot matter
+}
+function wkKicker(){
+  const [y,m,d]=Adapt.weekKey(todayStr()).split("-").map(Number);
+  const date=new Date(y,m-1,d).toLocaleDateString(lang()==="es"?"es-ES":"en-US",{month:"long",day:"numeric"});
+  return `<p class="wk-kicker">${escapeHtml(t("wkKicker",{date}))}</p>`;
+}
+function renderWeeklyAsk(){
+  const q=(k,label,ok,bad)=>`<div class="wk-q"><span>${t(label)}</span><div class="wk-seg" data-wk="${k}">
+    <button type="button" aria-pressed="true">${t(ok)}</button><button type="button" aria-pressed="false" data-bad>${t(bad)}</button></div></div>`;
+  const body=document.getElementById("wkBody");
+  body.className="body";
+  body.innerHTML=wkKicker()+`<h3 id="wkTitle">${t("wkAskTitle")}</h3><p class="wk-msg">${t("wkAskMsg")}</p>`
+    + q("hungry","wkHunger","wkHungerOk","wkHungerHigh") + q("lowEnergy","wkEnergy","wkEnergyOk","wkEnergyLow")
+    + `<div class="wk-actions" style="margin-top:20px"><button class="btn btn-primary full" data-wk-show>${t("wkShow")}</button></div>`;
+}
+function renderUnveil(p){
+  wkPlan=p;
+  const signed=n=>(n>0?"+":"−")+Math.abs(Math.round(n));
+  const num=(k,label)=>{ const d=p.to[k]-p.from[k];
+    return `<div class="wk-num" style="--k:var(--${label})"><b data-k="${k}">0</b><span>${t(label)}</span><small>${d ? signed(d)+" g" : ""}</small></div>`; };
+  const dk=p.kcalTo-p.kcalFrom;
+  const why=[t("wkWhy_"+p.reason), p.protein && t("wkProtein"), p.capped && t("wkCapped"), p.floored && p.reason!=="floor" && t("wkFloored")].filter(Boolean).join(" ");
+  const body=document.getElementById("wkBody");
+  body.className="body";
+  body.innerHTML=wkKicker()+`<h3 id="wkTitle">${t("wkCalc")}</h3>
+    <div class="wk-nums">${num("p","protein")+num("c","carbs")+num("f","fat")}</div>
+    <div class="wk-after"><p class="wk-kcal">${Math.round(p.kcalTo)} kcal${dk ? " ("+signed(dk)+")" : ""}</p><p class="wk-msg">${escapeHtml(why)}</p>
+    <div class="wk-actions">${p.changed
+      ? `<button class="btn btn-primary full" data-wk-use>${t("wkUse")}</button><button class="btn btn-ghost full" data-wk-keep>${t("wkKeep")}</button>`
+      : `<button class="btn btn-primary full" data-wk-keep>${t("wkOk")}</button>`}</div></div>`;
+  playUnveil(p);
+}
+// The numbers roll, then land one by one: protein, carbs, fat. With reduced motion they show at once.
+function playUnveil(p){
+  const body=document.getElementById("wkBody"), keys=["p","c","f"], land={p:900,c:1500,f:2100}, t0=Date.now();
+  const cell=k=>body.querySelector(`[data-k="${k}"]`);
+  const set=k=>{ cell(k).textContent=Math.round(p.to[k]); cell(k).parentNode.classList.add("in"); };
+  const finish=()=>{ clearInterval(wkTimer); keys.forEach(set);
+    document.getElementById("wkTitle").textContent=t("wkTitle"); body.classList.add("done"); body.querySelector(".wk-actions .btn").focus(); };
+  clearInterval(wkTimer);
+  if(reducedMotion()){ finish(); return; }
+  wkTimer=setInterval(()=>{
+    const e=Date.now()-t0;
+    keys.forEach(k=>{ if(e>=land[k]){ if(!cell(k).parentNode.classList.contains("in")) set(k); }
+      else cell(k).textContent=Math.floor(Math.random()*Math.max(100,p.to[k]*1.5)); });
+    if(e>=land.f+350){ finish(); confetti(); }
+  },70);
+}
+function closeWeekly(use){
+  const u=user(), p=wkPlan;
+  clearInterval(wkTimer); wkPlan=null;
+  u.adaptive=Object.assign({}, u.adaptive, {week:Adapt.weekKey(todayStr()), at:Date.now()});
+  if(use && p && p.changed) u.targets[u.goal]={p:p.to.p, c:p.to.c, f:p.to.f};
+  document.getElementById("weekOverlay").classList.remove("on");
+  save(); renderAll();
+  toast(t(use ? "wkUsed" : "wkKept"));
 }
 function saveTargets(){
   const u=user(), v=id=>parseFloat(document.getElementById(id).value)||0;
@@ -4108,7 +4250,7 @@ document.getElementById("recentRow").addEventListener("click",e=>{
   const b=e.target.closest("[data-recent]"), m=b && recentList[+b.dataset.recent]; if(m) relogMeal(m);
 });
 document.getElementById("levelOverlay").addEventListener("click",e=>{
-  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk"){ e.currentTarget.classList.remove("on"); maybeStartTour(); maybeShowMeetCoach(); }
+  if(e.target.id==="levelOverlay"||e.target.id==="lvlUpOk"){ e.currentTarget.classList.remove("on"); maybeStartTour(); maybeShowMeetCoach(); maybeShowWeekly(); }
 });
 document.getElementById("brainOverlay").addEventListener("click",e=>{
   if(e.target.id==="brainOverlay"||e.target.closest("[data-close-brain]")){ closeChipPicker(); return; }
@@ -4146,6 +4288,7 @@ document.getElementById("usersBtn").addEventListener("click",openUsers);
 document.getElementById("usersOverlay").addEventListener("click",e=>{
   if(e.target.id==="usersOverlay"||e.target.hasAttribute("data-close")){
     e.currentTarget.classList.remove("on"); maybeStartTour(); // a profile switched to in here gets its first tour now
+    maybeShowWeekly();
   }
 });
 document.getElementById("replayTourBtn").addEventListener("click",()=>{
@@ -4212,6 +4355,21 @@ document.getElementById("newUserName").addEventListener("keydown",e=>{if(e.key==
 });
 document.getElementById("qHeightU").addEventListener("change",()=>{ syncHeightUnit(); renderQuizPreview(); });
 document.getElementById("saveTargets").addEventListener("click",saveTargets);
+document.getElementById("adaptiveToggle").addEventListener("change",e=>{
+  const u=user();
+  u.adaptive=Object.assign({}, u.adaptive, {on:e.target.checked, at:Date.now()}); save();
+  if(e.target.checked){ document.getElementById("usersOverlay").classList.remove("on"); maybeShowWeekly(); }   // week 1 unveils at once
+});
+document.getElementById("weekOverlay").addEventListener("click",e=>{
+  const opt=e.target.closest(".wk-seg button");
+  if(opt){ opt.parentNode.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", String(b===opt))); return; }
+  if(e.target.closest("[data-wk-show]")){
+    const bad=k=>!!document.querySelector(`#wkBody [data-wk="${k}"] [data-bad][aria-pressed="true"]`);
+    renderUnveil(Adapt.plan(adaptiveInput({hungry:bad("hungry"), lowEnergy:bad("lowEnergy")})));
+  }
+  else if(e.target.closest("[data-wk-use]")) closeWeekly(true);
+  else if(e.target.closest("[data-wk-keep]")) closeWeekly(false);
+});
 document.getElementById("insightsToggle").addEventListener("change",e=>{
   user().insightsOn=e.target.checked; save();
   if(curTab==="metrics") renderInsight();
@@ -4353,7 +4511,10 @@ function unionFridge(a,b){
 function mergeUser(primary,secondary){
   // Profile: the most recently edited copy wins (a migration-made profile has no profileAt, so any real edit beats it).
   const pf = !primary.profile || (secondary.profileAt||0) > (primary.profileAt||0) ? secondary : primary;
+  // Weekly macros: the later change wins, and its targets come with it (else this device would push its old targets back).
+  const ad = Adapt.mergeAdaptive(primary.adaptive, secondary.adaptive);
   return Object.assign({}, secondary, primary, {
+    adaptive: ad, targets: (ad && ad!==primary.adaptive && secondary.targets) || primary.targets,
     profile: pf.profile, profileAt: pf.profileAt,
     coachIntroSeen: !!(primary.coachIntroSeen || secondary.coachIntroSeen),
     tourSeen: !!(primary.tourSeen || secondary.tourSeen),
@@ -4584,8 +4745,9 @@ function startApp(){
   renderAll();
   updateAccountUI();
   maybeStartTour();   // signed out: now; signed in: waits for the pull below (celebrateReady)
+  maybeShowWeekly();
   if(cloudEnabled() && session){
-    pullRemote().then(()=>{ maybeStartTour(); maybeShowMeetCoach(); });   // after the pull, so an intro/tour done on another device counts
+    pullRemote().then(()=>{ maybeStartTour(); maybeShowMeetCoach(); maybeShowWeekly(); });   // after the pull, so an intro/tour done on another device counts
     if(!focusHooked){ window.addEventListener("focus", pullRemote); focusHooked=true; }
   }
 }
