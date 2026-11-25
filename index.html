@@ -1436,7 +1436,7 @@
 <script src="charts.js?v=20261119"></script>
 <script src="brain.js?v=20261119"></script>
 <script src="game.js?v=20261119"></script>
-<script src="adapt.js?v=20261125"></script>
+<script src="adapt.js?v=20261126"></script>
 <script src="coach.js?v=20261119"></script>
 <script src="shop.js?v=20261119"></script>
 <script src="demo.js?v=20261119"></script>
@@ -2515,7 +2515,7 @@ function renderTargets(){
     <label>${t("carbs")}</label><input type="number" id="tLc" value="${u.targets.lean.c}"><input type="number" id="tBc" value="${u.targets.bulk.c}">
     <label>${t("fat")}</label><input type="number" id="tLf" value="${u.targets.lean.f}"><input type="number" id="tBf" value="${u.targets.bulk.f}">`;
   document.getElementById("insightsToggle").checked = u.insightsOn!==false;
-  document.getElementById("adaptiveToggle").checked = !!(u.adaptive && u.adaptive.on);
+  document.getElementById("adaptiveToggle").checked = adaptiveOn();
   renderProfileForm();
 }
 // About-me fields, in groups so Meet-your-coach can show one step at a time.
@@ -2698,6 +2698,8 @@ function maybeStartTour(){
 /* ---------- Adaptive weekly macros (rule in adapt.js) ----------
    user.adaptive = { on, week: Sunday of the last unveiled week, at: ms of the last change }. */
 let wkPlan=null, wkTimer=0;
+// On by default for a profile. In the demo it is off until the guest turns it on.
+function adaptiveOn(){ const a=user().adaptive; return a && typeof a.on==="boolean" ? a.on : !demoMode; }
 function adaptiveInput(feedback){
   const u=user(), today=todayStr(), m=estimateMaintenance(today);
   return Object.assign(Adapt.week(u,today), { goal:u.goal, targets:targets(), maintenance:m.source==="data" ? m.kcal : null,
@@ -2705,7 +2707,7 @@ function adaptiveInput(feedback){
 }
 // Once per week (from Sunday), when the app is fully up and nothing else is open.
 function maybeShowWeekly(){
-  if(Tour.active() || !celebrateReady || document.querySelector(".overlay.on") || !Adapt.due(user(),todayStr())) return;
+  if(Tour.active() || !celebrateReady || document.querySelector(".overlay.on") || !adaptiveOn() || !Adapt.due(user(),todayStr())) return;
   const pre=Adapt.plan(adaptiveInput({}));
   document.getElementById("weekOverlay").classList.add("on");
   if(["first","fewDays","noData"].includes(pre.reason)) renderUnveil(pre); else renderWeeklyAsk();   // no check-in when the answers cannot matter
